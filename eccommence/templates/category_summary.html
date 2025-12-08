@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<ul>
+  {% for category in categories %}
+    <li>
+      <a class="dropdown-item" href="{% url 'eccommence:category' category %}">
+        {{ category.name }}
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+
+<h1>Category Page</h1>
+{% endblock %}

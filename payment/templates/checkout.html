@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="fw-bold text-center text-primary mb-5">
+        <i class="bi bi-bag-check-fill"></i> Checkout
+    </h2>
+
+    <div class="row g-4">
+        <!-- Left: Shipping & Payment Form -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold text-dark mb-4">
+                        <i class="bi bi-truck"></i> Shipping Information
+                    </h4>
+
+                    <form method="POST" action="{% url 'payment:checkout_info' %}">
+                        {% csrf_token %}
+                       <div class="row g-3">
+   <!-- Full Name -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Full Name</label>
+    {{ shipping_form.shipping_full_name }}
+</div>
+
+<!-- Email -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Email Address</label>
+    {{ shipping_form.shipping_email }}
+</div>
+<!-- Phone 
+ <div class="col-md-6"> 
+    <label class="form-label fw-semibold">Phone Number</label> 
+    {{ shipping_form.user.Profile.phone }} </div>
+     -->
+
+<!-- Address -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Address</label>
+    {{ shipping_form.shipping_address1 }}
+</div>
+
+<!-- Address 2 -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Address 2</label>
+    {{ shipping_form.shipping_address2 }}
+</div>
+
+<!-- City -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">City / Town</label>
+    {{ shipping_form.shipping_city }}
+</div>
+
+<!-- State -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">State</label>
+    {{ shipping_form.shipping_state }}
+</div>
+
+<!-- Country -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Country</label>
+    {{ shipping_form.shipping_country }}
+</div>
+
+
+
+                            <!-- Payment Method -->
+                            <div class="col-12 mt-3">
+                                <label class="form-label fw-semibold">Payment Method</label>
+                                <select name="payment_method" class="form-select" required>
+                                    <option value="">Select Payment Method</option>
+                                    <option value="mobile_money">Mobile Money</option>
+                                    <option value="cash_on_delivery">Cash on Delivery</option>
+                                    <option value="credit_card">Credit/Debit Card</option>
+                                </select>
+                            </div>
+
+                            <!-- Additional Notes -->
+                            <div class="col-12 mt-3">
+                                <label class="form-label fw-semibold">Order Notes (optional)</label>
+                                <textarea name="notes" class="form-control" rows="3" placeholder="Special instructions..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="mt-4 text-center">
+                            <button type="submit" class="btn btn-success btn-lg px-5 fw-semibold">
+                                <i class="bi bi-check2-circle"></i> Confirm Order
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <!-- Right: Order Summary -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-lg rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold text-dark mb-4">
+                        <i class="bi bi-receipt"></i> Order Summary
+                    </h4>
+
+                    {% if cart_products %}
+                        <ul class="list-group list-group-flush mb-4">
+                            {% for product in cart_products %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center border-0">
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">{{ product.name }}</h6>
+<strong class="text-primary">
+    Quantity: {% for key, value in quantities.items %}
+            {% if key|stringformat:"s" == product.id|stringformat:"s" %}
+                {{ value }}
+            {% endif %}
+         {% empty %}
+            1
+         {% endfor %}
+</strong>
+                                    </div>
+                                    <span class="fw-bold text-success">UGX {{ product.sale_price }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="d-flex justify-content-between fw-bold fs-5">
+                            <span>Total:</span>
+                            <span class="text-primary">UGX: {{ totals }}</span>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mt-4">No items in your cart.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Back to Cart -->
+            <div class="text-center mt-4">
+                <a href="{% url 'cart:cart_summary' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Cart
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

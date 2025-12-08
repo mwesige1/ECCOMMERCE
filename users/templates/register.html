@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="registration-page-wrapper">
+    <div class="registration-card-container">
+        <div class="registration-card-header">
+            <div class="registration-icon-wrapper">
+                <i class="fas fa-user-plus registration-main-icon"></i>
+            </div>
+            <h1 class="registration-title">Create an Account</h1>
+            <p class="registration-subtitle">Join us today and get started!</p>
+        </div>
+        
+        <div class="registration-card-body">
+            {% if messages %}
+                <div class="registration-messages-container">
+                    {% for message in messages %}
+                        <div class="registration-alert registration-alert-{{ message.tags }}" role="alert">
+                            <span class="registration-alert-text">{{ message }}</span>
+                            <button type="button" class="registration-alert-close" data-bs-dismiss="alert" aria-label="Close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form id="registrationForm" class="registration-form" action="{% url 'register' %}" method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="registration-alert registration-alert-danger">
+                        <span class="registration-alert-text">{{ form.non_field_errors }}</span>
+                    </div>
+                {% endif %}
+
+                <div class="registration-form-group">
+                    <label for="{{ form.username.id_for_label }}" class="registration-form-label">
+                        <i class="fas fa-user registration-label-icon"></i>
+                        <span class="registration-label-text">{{ form.username.label }}</span>
+                    </label>
+                    <input type="text" 
+                           class="registration-form-input {% if form.username.errors %}registration-form-input-error{% endif %}" 
+                           id="{{ form.username.id_for_label }}"
+                           name="{{ form.username.name }}"
+                           value="{{ form.username.value|default:'' }}"
+                           placeholder="Choose a username">
+                    {% if form.username.errors %}
+                        <div class="registration-form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>{{ form.username.errors }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="registration-form-row">
+                    <div class="registration-form-col">
+                        <label for="{{ form.first_name.id_for_label }}" class="registration-form-label">
+                            <i class="fas fa-id-card registration-label-icon"></i>
+                            <span class="registration-label-text">{{ form.first_name.label }}</span>
+                        </label>
+                        <input type="text" 
+                               class="registration-form-input {% if form.first_name.errors %}registration-form-input-error{% endif %}" 
+                               id="{{ form.first_name.id_for_label }}"
+                               name="{{ form.first_name.name }}"
+                               value="{{ form.first_name.value|default:'' }}"
+                               placeholder="First name">
+                        {% if form.first_name.errors %}
+                            <div class="registration-form-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>{{ form.first_name.errors }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="registration-form-col">
+                        <label for="{{ form.last_name.id_for_label }}" class="registration-form-label">
+                            <i class="fas fa-id-card registration-label-icon"></i>
+                            <span class="registration-label-text">{{ form.last_name.label }}</span>
+                        </label>
+                        <input type="text" 
+                               class="registration-form-input {% if form.last_name.errors %}registration-form-input-error{% endif %}" 
+                               id="{{ form.last_name.id_for_label }}"
+                               name="{{ form.last_name.name }}"
+                               value="{{ form.last_name.value|default:'' }}"
+                               placeholder="Last name">
+                        {% if form.last_name.errors %}
+                            <div class="registration-form-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>{{ form.last_name.errors }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="registration-form-group">
+                    <label for="{{ form.email.id_for_label }}" class="registration-form-label">
+                        <i class="fas fa-envelope registration-label-icon"></i>
+                        <span class="registration-label-text">{{ form.email.label }}</span>
+                    </label>
+                    <input type="email" 
+                           class="registration-form-input {% if form.email.errors %}registration-form-input-error{% endif %}" 
+                           id="{{ form.email.id_for_label }}"
+                           name="{{ form.email.name }}"
+                           value="{{ form.email.value|default:'' }}"
+                           placeholder="your.email@example.com">
+                    {% if form.email.errors %}
+                        <div class="registration-form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>{{ form.email.errors }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="registration-form-group">
+                    <label for="{{ form.password1.id_for_label }}" class="registration-form-label">
+                        <i class="fas fa-lock registration-label-icon"></i>
+                        <span class="registration-label-text">{{ form.password1.label }}</span>
+                    </label>
+                    <input type="password" 
+                           class="registration-form-input {% if form.password1.errors %}registration-form-input-error{% endif %}" 
+                           id="{{ form.password1.id_for_label }}"
+                           name="{{ form.password1.name }}"
+                           placeholder="Enter a strong password">
+                    {% if form.password1.errors %}
+                        <div class="registration-form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>{{ form.password1.errors }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="registration-form-group">
+                    <label for="{{ form.password2.id_for_label }}" class="registration-form-label">
+                        <i class="fas fa-lock registration-label-icon"></i>
+                        <span class="registration-label-text">{{ form.password2.label }}</span>
+                    </label>
+                    <input type="password" 
+                           class="registration-form-input {% if form.password2.errors %}registration-form-input-error{% endif %}" 
+                           id="{{ form.password2.id_for_label }}"
+                           name="{{ form.password2.name }}"
+                           placeholder="Confirm your password">
+                    {% if form.password2.errors %}
+                        <div class="registration-form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>{{ form.password2.errors }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="registration-submit-btn" id="registrationSubmitBtn">
+                    <i class="fas fa-user-plus registration-btn-icon"></i>
+                    <span class="registration-btn-text">Create Account</span>
+                </button>
+            </form>
+
+            <div class="registration-divider">
+                <span class="registration-divider-text">OR</span>
+            </div>
+
+            <div class="registration-login-link">
+                <p class="registration-login-text">
+                    Already have an account? 
+                    <a href="{% url 'login' %}" class="registration-login-anchor">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

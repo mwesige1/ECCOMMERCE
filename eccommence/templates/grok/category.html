@@ -1,0 +1,59 @@
+
+  
+   {% extends 'grok/base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+        <div class="hero-content">
+            <h1>Shop by Category</h1>
+            <p>Discover millions of products across all departments — delivered fast in Uganda</p>
+        </div>
+    </section>
+
+    <<!-- Main Categories Grid -->
+<main class="categories-main">
+    <h2 class="section-title">All Departments</h2>
+
+    <div class="categories-grid">
+        {% for category in all_categories %}
+            {% if category.slug %}
+                <a href="{% url 'eccommence:category' item=category.slug %}" class="category-card">
+                    {% with category.product_set.first as first_product %}
+                        {% if first_product %}
+                            <img src="{{ first_product.image.url }}" alt="{{ category.name }}" class="category-image">
+                        {% else %}
+                            <img src="{% static 'images/placeholder.png' %}" alt="{{ category.name }}" class="category-image">
+                        {% endif %}
+                    {% endwith %}
+                    <div class="category-info">
+                        <div class="category-name">{{ category.name }}</div>
+                        <p class="category-desc">{{ category.product_set.count }} products</p>
+                        <span class="category-link">Shop Now →</span>
+                    </div>
+                </a>
+            {% else %}
+                <!-- Optional: handle categories without a slug -->
+                <div class="category-card disabled">
+                    <div class="category-name">{{ category.name }} (No slug)</div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</main>
+
+
+ <script>
+        // Dark Mode Toggle (same as your product page)
+        const themeToggle = document.getElementById('themeToggle');
+        let isDarkMode = false;
+
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            themeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        });
+    </script>
+{% endblock %}

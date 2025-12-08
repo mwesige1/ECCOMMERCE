@@ -1,0 +1,239 @@
+
+{% extends 'grok/base.html' %}
+{% load static %}
+
+{% block content %}
+  
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+    <div class="breadcrumb-container">
+        <a href="{% url 'eccommence:home' %}">Home</a> ›
+        <a href="#">Your Account</a> ›
+        <span>Profile Information</span>
+    </div>
+</div>
+
+<!-- Main Profile Layout -->
+<main class="profile-main">
+
+    <!-- Profile Sidebar -->
+    <aside class="profile-sidebar">
+        <div class="profile-header">
+            <!-- Hidden File Input -->
+        <form method="POST" enctype="multipart/form-data" action="{% url 'change_profile_picture' %}" id="profilePicForm">
+            {% csrf_token %}
+            <input type="file" name="profile_picture" id="profilePictureInput"
+                   accept="image/*" style="display:none;" 
+                   onchange="document.getElementById('profilePicForm').submit();">
+        </form>
+
+        <!-- Clickable Profile Image -->
+        <img src="{{ user.profile.profile_picture.url }}"
+             alt="{{ request.user.first_name }} {{ request.user.last_name }}"
+             class="profile-avatar"
+             id="profilePictureDisplay"
+             style="cursor:pointer;">
+
+        <!-- Camera Button -->
+        <button class="avatar-edit" id="profilePictureButton">
+            <i class="fas fa-camera"></i> edit
+        </button>
+
+        <h2 class="profile-name">{{ request.user.first_name }} {{ request.user.last_name }}</h2>
+        <p class="profile-email">{{ request.user.email }}</p>
+        </div>
+
+        <ul class="profile-menu">
+            <li class="profile-menu-item">
+                <a href="#" class="profile-menu-link active">
+                    <i class="fas fa-user"></i>
+                    <span>Profile Information</span>
+                </a>
+            </li>
+            <li class="profile-menu-item">
+                <a href="#" class="profile-menu-link">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Address Book</span>
+                </a>
+            </li>
+            <li class="profile-menu-item">
+                <a href="#" class="profile-menu-link">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Order History</span>
+                </a>
+            </li>
+            <li class="profile-menu-item">
+                <a href="#" class="profile-menu-link">
+                    <i class="fas fa-heart"></i>
+                    <span>Wishlist</span>
+                </a>
+            </li>
+            <li class="profile-menu-item">
+                <a href="" class="profile-menu-link">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Security Settings</span>
+                </a>
+            </li>
+            <li class="profile-menu-item">
+                <a href="{% url 'logout' %}" class="profile-menu-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Profile Content -->
+    <section class="profile-content">
+        <form id="profileForm" method="post" action="{% url 'update_user' %}">
+            {% csrf_token %}
+
+            <!-- Display Django Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="profile-section">
+                <h2 class="section-title">Personal Information</h2>
+                <div class="form-grid">
+
+                    <div class="input-group">
+                        <label class="input-label">First Name</label>
+                        <input type="text" class="input-field" name="first_name"
+                               value="{{ request.user.first_name }}" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Last Name</label>
+                        <input type="text" class="input-field" name="last_name"
+                               value="{{ request.user.last_name }}" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Username</label>
+                        <input type="text" class="input-field" name="username"
+                               value="{{ request.user.username }}" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Email Address</label>
+                        <input type="email" class="input-field" name="email"
+                               value="{{ request.user.email }}" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Phone Number</label>
+                        <input type="tel" class="input-field" name="phone"
+                               value="{{ request.user.profile.phone }}" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Date of Birth</label>
+                        <input type="date" class="input-field" name="dob"
+                               value="{{ request.user.profile.dob|date:'Y-m-d' }}">
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h2 class="section-title">Address Information</h2>
+                <div class="form-grid">
+
+                    <div class="input-group">
+                        <label class="input-label">Street Address1</label>
+                        <input type="text" class="input-field" name="street"
+                               value="{{ request.user.profile.address1  }}" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Street Address2</label>
+                        <input type="text" class="input-field" name="street"
+                               value="{{ request.user.profile.address2  }}" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">City / Town</label>
+                        <input type="text" class="input-field" name="city"
+                               value="{{ request.user.profile.city }}" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">State / Region</label>
+                        <input type="text" class="input-field" name="state"
+                               value="{{ request.user.profile.state }}" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Postal Code</label>
+                        <input type="text" class="input-field" name="postalCode"
+                               value="{{ request.user.profile.zipcode }}">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Country</label>
+                        <input type="text" class="input-field" name="country"
+                               value="{{ request.user.profile.country }}" required>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+
+        </form>
+    </section>
+</main>
+
+
+   
+
+    <script>
+        
+    document.getElementById("profilePictureDisplay").onclick = function () {
+        document.getElementById("profilePictureInput").click();
+    };
+
+    document.getElementById("profilePictureButton").onclick = function () {
+        document.getElementById("profilePictureInput").click();
+    };
+        // Dark Mode Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        let isDarkMode = false;
+
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            
+            if (isDarkMode) {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                themeToggle.title = 'Toggle light mode';
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                themeToggle.title = 'Toggle dark mode';
+            }
+        });
+
+        // Profile menu functionality
+        document.querySelectorAll('.profile-menu-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.profile-menu-link').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+
+       
+    </script>
+    {% endblock %}
+
+ 

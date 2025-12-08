@@ -1,0 +1,102 @@
+<!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="{% url 'eccommence:home' %}" class="logo">
+                <i class="fas fa-box-open"></i>
+                HOMIES
+            </a>
+
+            <button class="mobile-toggle" id="mobileToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav>
+                <ul class="nav-menu" id="navMenu">
+                    <li><a href="{% url 'eccommence:home' %}">Home</a></li>
+                    <li><a href="{% url 'eccommence:home' %}" class="active">Products</a></li>
+                    <li><a href="{% url 'eccommence:category_summary'%}">Categories</a></li>
+                  
+                </ul>
+            </nav>
+
+            <div class="search-bar">
+                <input type="text" placeholder="Search products, brands, categories...">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-icon" title="Theme Toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                
+                <a href="{% url 'cart:cart_summary' %}">
+                <button class="btn-icon" title="Cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="badge" id="cart_quantity">{{ cart|length }}</span>
+                    </a>
+                </button>
+
+                
+            </div>
+             <!-- Account Dropdown Component -->
+                <div class="account-dropdown">
+                    <button class="account-button" id="accountButton">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Account</span>
+                        <i class="fas fa-chevron-down chevron"></i>
+                    </button>
+                    
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <div class="dropdown-header">
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" 
+                                 alt="User Avatar" 
+                                 class="user-avatar">
+                            <div class="user-info">
+                                <h4>ENG PATRICK</h4>
+                                <p>mwesigedeveloper@gmail.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-items">
+                            <a href="{% url 'update_user' %}" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span>My Profile</span>
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-shopping-bag"></i>
+                                <span>My Orders</span>
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-heart"></i>
+                                <span>Wishlist</span>
+                            </a>
+                            <a href="{% url 'user_info' %}" class="dropdown-item">
+                                <i class="fas fa-user-edit"></i>                       <span>Other Info</span>
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Payment Methods</span>
+                            </a>
+                            
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Help & Support</span>
+                            </a>
+                            
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="{% url 'logout' %}" class="dropdown-item logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </header>

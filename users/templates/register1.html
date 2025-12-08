@@ -1,0 +1,602 @@
+<!-- templates/register.html -->
+{% extends 'main.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .register-hero {
+        background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--primary-dark) 100%);
+        padding: 4rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    body.light-mode .register-hero {
+        background: linear-gradient(135deg, var(--light-card) 0%, var(--light-bg) 100%);
+    }
+
+    .register-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="%23FFD70020" points="0,1000 1000,0 1000,1000"/></svg>') no-repeat;
+        background-size: cover;
+        opacity: 0.1;
+    }
+
+    .register-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+    }
+
+    @media (max-width: 968px) {
+        .register-container {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+    }
+
+    .register-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .register-badge {
+        background: linear-gradient(135deg, var(--primary-yellow), var(--accent-orange));
+        color: var(--primary-dark);
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .register-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, var(--text-light) 30%, var(--primary-yellow) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    body.light-mode .register-title {
+        background: linear-gradient(135deg, var(--light-text-dark) 30%, var(--primary-yellow) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .register-subtitle {
+        font-size: 1.3rem;
+        color: var(--text-gray);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    body.light-mode .register-subtitle {
+        color: var(--light-gray);
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        transition: var(--transition);
+    }
+
+    body.light-mode .feature-item {
+        background: rgba(0, 0, 0, 0.03);
+    }
+
+    .feature-item:hover {
+        transform: translateY(-3px);
+        background: rgba(255, 215, 0, 0.1);
+    }
+
+    .feature-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary-yellow), var(--accent-orange));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-dark);
+        font-size: 1.2rem;
+    }
+
+    .feature-text h4 {
+        color: var(--text-light);
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    body.light-mode .feature-text h4 {
+        color: var(--light-text-dark);
+    }
+
+    .feature-text p {
+        color: var(--text-gray);
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    body.light-mode .feature-text p {
+        color: var(--light-gray);
+    }
+
+    /* Enhanced Auth Card */
+    .premium-auth-card {
+        background: var(--card-bg);
+        border-radius: 25px;
+        padding: 3rem;
+        position: relative;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 215, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    body.light-mode .premium-auth-card {
+        background: var(--light-card);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--light-border);
+    }
+
+    .premium-auth-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-yellow), var(--accent-orange), var(--primary-yellow));
+        border-radius: 25px 25px 0 0;
+    }
+
+    .form-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .form-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-yellow), var(--accent-orange));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--primary-dark);
+        box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4);
+    }
+
+    .form-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--text-light);
+        margin-bottom: 0.5rem;
+    }
+
+    body.light-mode .form-title {
+        color: var(--light-text-dark);
+    }
+
+    .form-subtitle {
+        color: var(--text-gray);
+        font-size: 1.1rem;
+    }
+
+    body.light-mode .form-subtitle {
+        color: var(--light-gray);
+    }
+
+    /* Enhanced Form Styles */
+    .premium-form .form-group {
+        margin-bottom: 1.8rem;
+    }
+
+    .premium-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-light);
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    body.light-mode .premium-label {
+        color: var(--light-text-dark);
+    }
+
+    .premium-input {
+        width: 100%;
+        padding: 1.2rem 1.5rem;
+        border-radius: 15px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: var(--primary-dark);
+        color: var(--text-light);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    body.light-mode .premium-input {
+        background: var(--light-bg);
+        color: var(--light-text-dark);
+        border: 2px solid var(--light-border);
+    }
+
+    .premium-input:focus {
+        outline: none;
+        border-color: var(--primary-yellow);
+        background: var(--card-bg);
+        box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    body.light-mode .premium-input:focus {
+        background: var(--light-card);
+    }
+
+    .premium-input::placeholder {
+        color: var(--text-gray);
+        opacity: 0.7;
+    }
+
+    body.light-mode .premium-input::placeholder {
+        color: var(--light-gray);
+    }
+
+    /* Enhanced Button */
+    .premium-btn {
+        width: 100%;
+        padding: 1.3rem 2rem;
+        border: none;
+        border-radius: 15px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        font-family: inherit;
+        background: linear-gradient(135deg, var(--primary-yellow), var(--accent-orange));
+        color: var(--primary-dark);
+        box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+    }
+
+    .premium-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(255, 215, 0, 0.5);
+    }
+
+    .premium-btn:active {
+        transform: translateY(-1px);
+    }
+
+    /* Social Buttons */
+    .social-divider {
+        text-align: center;
+        margin: 2rem 0;
+        position: relative;
+        color: var(--text-gray);
+    }
+
+    .social-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    body.light-mode .social-divider::before {
+        background: var(--light-border);
+    }
+
+    .social-divider span {
+        background: var(--card-bg);
+        padding: 0 1.5rem;
+        position: relative;
+        font-weight: 600;
+    }
+
+    body.light-mode .social-divider span {
+        background: var(--light-card);
+    }
+
+    .social-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .social-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        background: var(--card-bg);
+        color: var(--text-light);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    body.light-mode .social-btn {
+        background: var(--light-card);
+        color: var(--light-text-dark);
+        border: 2px solid var(--light-border);
+    }
+
+    .social-btn:hover {
+        transform: translateY(-2px);
+        border-color: var(--primary-yellow);
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+    }
+
+    .social-btn.google:hover { background: rgba(66, 133, 244, 0.1); }
+    .social-btn.facebook:hover { background: rgba(24, 119, 242, 0.1); }
+    .social-btn.apple:hover { background: rgba(0, 0, 0, 0.1); }
+
+    /* Bottom Links */
+    .auth-links {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    body.light-mode .auth-links {
+        border-top: 1px solid var(--light-border);
+    }
+
+    .auth-link {
+        color: var(--primary-yellow);
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .auth-link:hover {
+        color: var(--hover-yellow);
+        transform: translateY(-1px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .register-hero {
+            padding: 2rem 0;
+        }
+        
+        .register-title {
+            font-size: 2.5rem;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .premium-auth-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .social-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="register-hero">
+    <div class="register-container">
+        <!-- Left Content -->
+        <div class="register-content">
+            <div class="register-badge">
+                <i class="fas fa-crown"></i> PREMIUM MEMBERSHIP
+            </div>
+            
+            <h1 class="register-title">
+                Join The<br>
+                <span style="background: linear-gradient(135deg, var(--primary-yellow), var(--accent-orange)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Homies Family</span>
+            </h1>
+            
+            <p class="register-subtitle">
+                Unlock exclusive deals, personalized recommendations, and faster checkout. 
+                Join thousands of smart shoppers who save big with Homies.
+            </p>
+
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h4>Lightning Fast</h4>
+                        <p>Quick checkout & delivery</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-gem"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h4>Exclusive Deals</h4>
+                        <p>Members-only discounts</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h4>Secure & Safe</h4>
+                        <p>Bank-level security</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h4>Priority Support</h4>
+                        <p>24/7 customer care</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form -->
+        <div class="premium-auth-card">
+            <div class="form-header">
+                <div class="form-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h2 class="form-title">Create Account</h2>
+                <p class="form-subtitle">Start your shopping journey</p>
+            </div>
+
+            <form method="POST" class="premium-form" id="registerForm">
+                {% csrf_token %}
+                
+                {% if messages %}
+                <div style="margin-bottom: 2rem;">
+                    {% for message in messages %}
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1rem; text-align: center;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: var(--success-green);">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="premium-label">
+                        <i class="fas fa-user"></i>
+                        <span>Username</span>
+                    </label>
+                    <input type="text" name="username" class="premium-input" placeholder="Choose your username" required>
+                </div>
+                 <div class="form-group">
+                    <label class="premium-label">
+                        <i class="fas fa-user"></i>
+                        <span>FIRST NAME</span>
+                    </label>
+                    <input type="text" name="first_name" class="premium-input" placeholder="Choose your first name" required>
+                </div>
+                 <div class="form-group">
+                    <label class="premium-label">
+                        <i class="fas fa-user"></i>
+                        <span>LAST NAME</span>
+                    </label>
+                    <input type="text" name="last_name" class="premium-input" placeholder="Choose your last name" required>
+                </div>
+
+
+                <div class="form-group">
+                    <label class="premium-label">
+                        <i class="fas fa-envelope"></i>
+                        <span>Email Address</span>
+                    </label>
+                    <input type="email" name="email" class="premium-input" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="premium-label">
+                        <i class="fas fa-lock"></i>
+                        <span>Password</span>
+                    </label>
+                    <input type="password" name="password1" class="premium-input" placeholder="Create secure password" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="premium-label">
+                        <i class="fas fa-lock"></i>
+                        <span>Confirm Password</span>
+                    </label>
+                    <input type="password" name="password2" class="premium-input" placeholder="Confirm your password" required>
+                </div>
+
+                <div class="form-group" style="margin: 2rem 0;">
+                    <label style="display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; color: var(--text-light);">
+                        <input type="checkbox" name="terms" required style="margin-top: 0.3rem;">
+                        <span>
+                            I agree to the <a href="#" style="color: var(--primary-yellow); text-decoration: none; font-weight: 600;">Terms of Service</a> 
+                            and <a href="#" style="color: var(--primary-yellow); text-decoration: none; font-weight: 600;">Privacy Policy</a>
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="premium-btn">
+                    <i class="fas fa-rocket"></i> CREATE MY ACCOUNT
+                </button>
+            </form>
+
+            <div class="social-divider">
+                <span>Or continue with</span>
+            </div>
+
+            <div class="social-buttons">
+                <button type="button" class="social-btn google">
+                    <i class="fab fa-google"></i> Google
+                </button>
+                <button type="button" class="social-btn facebook">
+                    <i class="fab fa-facebook-f"></i> Facebook
+                </button>
+                <button type="button" class="social-btn apple">
+                    <i class="fab fa-apple"></i> Apple
+                </button>
+            </div>
+
+            <div class="auth-links">
+                <a href="{% url 'login' %}" class="auth-link">
+                    <i class="fas fa-sign-in-alt"></i> Already have an account? Sign In
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

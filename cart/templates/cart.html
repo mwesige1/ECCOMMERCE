@@ -1,0 +1,129 @@
+  {% extends 'grok/base.html' %}
+{% load static %}
+
+{% block content %}
+ 
+
+{% if cart_products %}
+
+<!-- Cart Content -->
+<div class="cart-wrapper">
+
+    <div class="cart-items">
+        <div class="cart-header-title">
+            <i class="fas fa-shopping-bag"></i>
+            Your Cart Items <span>{{ cart_products|length }} items</span>
+        </div>
+
+        {% for product in cart_products %}
+        <!-- Cart Item -->
+        <div class="cart-item">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="item-img">
+            <div>
+                <div class="item-title">{{ product.name }}</div>
+                <div class="item-meta">{{ product.description }}</div>
+                <div class="item-meta">Add more description about the quantity</div>
+                <div class="rating">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    <span>(128)</span>
+                </div>
+                <div class="price">UGX {{ product.sale_price }}</div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1.2rem;">
+                <div class="quantity">
+                    <button class="qty-btn decrease">−</button>
+                    <input type="text" value="1" class="qty-input" readonly>
+                    <button class="qty-btn increase">+</button>
+                </div>
+                <button class="remove-btn delete-product" data-index="{{ product.id }}" type="button">
+                    <i class="fas fa-trash"></i>&nbsp;Remove</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Order Summary -->
+    <div class="summary">
+        <div class="summary-title">Order Summary</div>
+        <div class="summary-row"><span>Subtotal</span><strong>UGX: {{ totals }}</strong></div>
+        <div class="summary-row"><span>Shipping</span><strong style="color:var(--success);">$9.99</strong></div>
+        <div class="summary-row discount"><span>Discount</span><strong>-UGX 3,000.00</strong></div>
+        <div class="total-row"><span>Total</span><strong>UGX: {{ totals }}</strong></div>
+
+        <div class="promo-input">
+            <input type="text" placeholder="Enter promo code">
+            <button>Apply</button>
+        </div>
+        <a href="{% url 'payment:checkout' %}">
+        <button class="checkout-btn">Proceed to Checkout</button>
+        </a>
+        
+        <a href="{% url 'eccommence:home' %}" class="continue-shopping">Continue Shopping</a>
+    </div>
+
+</div>
+
+{% else %}
+<h1> Cart is empty.........</h1>
+{% endif %}
+
+    <script>
+       document.getElementById('themeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('#themeToggle i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+        });
+
+        document.querySelectorAll('.increase').forEach(btn => {
+            btn.onclick = () => btn.previousElementSibling.value = parseInt(btn.previousElementSibling.value) + 1;
+        });
+        document.querySelectorAll('.decrease').forEach(btn => {
+            btn.onclick = () => {
+                let input = btn.nextElementSibling;
+                if (parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
+            };
+        });
+
+        
+       
+        // AJAX TO HANDLE DELETE AND UPDATE
+    $(document).on("click", ".update-cart", function(e){
+    e.preventDefault();
+    var productid = $(this).data('index');
+
+    $.ajax({
+        type: "POST",
+        url: "{% url 'cart:cart_update' %}",
+        data: {
+            product_id: productid,
+            product_qty: $('#select' + productid + ' option:selected').val(),
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+            action: "post"
+        },
+        success: function(json) {
+            location.reload();
+        }
+    });
+});
+
+$(document).on("click", ".delete-product", function(e){
+    e.preventDefault();
+    var productid = $(this).data('index');
+
+    $.ajax({
+        type: "POST",
+        url: "{% url 'cart:cart_delete' %}",
+        data: {
+            product_id: productid,
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+            action: "post"
+        },
+        success: function(json) {
+            location.reload();
+        }
+    });
+});
+    </script>
+{% endblock %}

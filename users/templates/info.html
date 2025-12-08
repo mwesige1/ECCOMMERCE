@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - FactoryPrice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-yellow: #FFD700;
+            --primary-dark: #1a1a1a;
+            --secondary-dark: #2d2d2d;
+            --text-light: #ffffff;
+            --text-gray: #b0b0b0;
+            --text-muted: #808080;
+            --accent-orange: #ff8c00;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+            --card-bg: #252525;
+            --border-light: #3a3a3a;
+            --hover-yellow: #ffc700;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            --light-bg: #f8f9fa;
+            --light-card: #ffffff;
+            --light-text: #2d3748;
+            --light-text-dark: #1a202c;
+            --light-gray: #718096;
+            --light-border: #e2e8f0;
+            --light-shadow: rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--primary-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            transition: var(--transition);
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body.light-mode {
+            background: var(--light-bg);
+            color: var(--light-text-dark);
+        }
+
+        /* Header */
+        .header {
+            background: var(--secondary-dark);
+            padding: 1rem 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+
+        body.light-mode .header {
+            background: var(--light-card);
+            box-shadow: 0 1px 3px var(--light-shadow);
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-yellow);
+            text-decoration: none;
+            letter-spacing: -0.025em;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        body.light-mode .btn-icon {
+            color: var(--light-text-dark);
+        }
+
+        .btn-icon:hover {
+            color: var(--primary-yellow);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .btn-icon:focus-visible {
+            outline: 2px solid var(--primary-yellow);
+            outline-offset: 2px;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background: transparent;
+            padding: 1.25rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        body.light-mode .breadcrumb {
+            border-bottom-color: var(--light-border);
+        }
+
+        .breadcrumb-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .breadcrumb a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+        }
+
+        body.light-mode .breadcrumb a {
+            color: var(--light-text-dark);
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary-yellow);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .breadcrumb a:focus-visible {
+            outline: 2px solid var(--primary-yellow);
+            outline-offset: 2px;
+        }
+
+        /* Profile Container */
+        .profile-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 2.5rem;
+        }
+
+        /* Sidebar */
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .profile-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        body.light-mode .profile-card {
+            background: var(--light-card);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--light-border);
+        }
+
+        .profile-header {
+            text-align: center;
+            padding-bottom: 1.75rem;
+            border-bottom: 1px solid var(--border-light);
+            margin-bottom: 1.5rem;
+        }
+
+        body.light-mode .profile-header {
+            border-bottom-color: var(--light-border);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1.25rem;
+            position: relative;
+            border: 4px solid var(--primary-yellow);
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.2);
+            transition: var(--transition);
+        }
+
+        .profile-avatar:hover {
+            transform: scale(1.02);
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .avatar-edit {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: var(--primary-yellow);
+            color: var(--primary-dark);
+            border: 2px solid var(--card-bg);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        body.light-mode .avatar-edit {
+            border-color: var(--light-card);
+        }
+
+        .avatar-edit:hover {
+            background: var(--hover-yellow);
+            transform: scale(1.1);
+        }
+
+        .avatar-edit:focus-visible {
+            outline: 2px solid var(--primary-yellow);
+            outline-offset: 2px;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        body.light-mode .profile-name {
+            color: var(--light-text-dark);
+        }
+
+        .profile-email {
+            color: var(--text-gray);
+            font-size: 0.95rem;
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        body.light-mode .profile-email {
+            color: var(--light-gray);
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            padding-top: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--secondary-dark);
+            border-radius: 12px;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        body.light-mode .stat-item {
+            background: var(--light-bg);
+            border: 1px solid var(--light-border);
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.15);
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-yellow);
+            margin-bottom: 0.25rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        body.light-mode .stat-label {
+            color: var(--light-gray);
+        }
+
+        /* Navigation Menu */
+        .profile-nav {
+            list-style: none;
+        }
+
+        .profile-nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-nav a {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            color: var(--text-light);
+            text-decoration: none;
+            border-radius: 12px;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        body.light-mode .profile-nav a {
+            color: var(--light-text-dark);
+        }
+
+        .profile-nav a:hover {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--primary-yellow);
+            border-color: rgba(255, 215, 0, 0.2);
+        }
+
+        .profile-nav a.active {
+            background: var(--primary-yellow);
+            color: var(--primary-dark);
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .profile-nav a:focus-visible {
+            outline: 2px solid var(--primary-yellow);
+            outline-offset: 2px;
+        }
+
+        .profile-nav i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        /* Main Content */
+        .profile-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+
+        body.light-mode .content-card {
+            background: var(--light-card);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--light-border);
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        body.light-mode .content-header {
+            border-bottom-color: var(--light-border);
+        }
+
+        .content-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            letter-spacing: -0.025em;
+        }
+
+        body.light-mode .content-title {
+            color: var(--light-text-dark);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-yellow) 0%, var(--accent-orange) 100%);
+            color: var(--primary-dark);
+            border: none;
+            padding: 0.875rem 1.75rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            letter-spacing: 0.025em;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-primary:focus-visible {
+            outline: 2px solid var(--primary-yellow);
+            outline-offset: 2px;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-dark);
+            color: var(--text-light);
+            border: 1px solid var(--border-light);
+            padding: 0.875rem 1.75rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        body.light-mode .btn-secondary {
+            background: var(--light-bg);
+            color: var(--light-text-dark);
+            border-color: var(--light-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        body.light-mode .btn-secondary:hover {
+            background: var(--light-border);
+        }
+
+        /* Information Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.75rem;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .info-label {
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        body.light-mode .info-label {
+            color: var(--light-gray);
+        }
+
+        .info-value {
+            color: var(--text-light);
+            font-size: 1.05rem;
+            padding: 1rem 1.25rem;
+            background: var(--secondary-dark);
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            font-weight: 500;
+            transition: var(--transition);
+            word-break: break-word;
+        }
+
+        body.light-mode .info-value {
+            color: var(--light-text-dark);
+            background: var(--light-bg);
+            border-color: var(--light-border);
+        }
+
+        .info-value:hover {
+            border-color: var(--primary-yellow);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.1);
+        }
+
+        /* Input Fields */
+        .info-value input,
+        .info-value textarea,
+        .info-value select {
+            width: 100%;
+            background: var(--secondary-dark);
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            color: var(--text-light);
+            font-size: 1.05rem;
+            font-weight: 500;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        body.light-mode .info-value input,
+        body.light-mode .info-value textarea,
+        body.light-mode .info-value select {
+            background: var(--light-bg);
+            border-color: var(--light-border);
+            color: var(--light-text-dark);
+        }
+
+        .info-value input:focus,
+        .info-value textarea:focus,
+        .info-value select:focus {
+            outline: none;
+            border-color: var(--primary-yellow);
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+        }
+
+        .info-value input:disabled,
+        .info-value textarea:disabled,
+        .info-value select:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Address Section */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-light);
+            letter-spacing: -0.025em;
+        }
+
+        body.light-mode .section-title {
+            color: var(--light-text-dark);
+        }
+
+        .address-card {
+            background: var(--secondary-dark);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2rem;
+            position: relative;
+            transition: var(--transition);
+            overflow: hidden;
+        }
+
+        body.light-mode .address-card {
+            background: var(--light-bg);
+            border-color: var(--light-border);
+        }
+
+        .address-card:hover {
+            border-color: var(--primary-yellow);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .address-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-yellow) 0%, var(--accent-orange) 100%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .address-card:hover::before {
+            opacity: 1;
+        }
+
+        .address-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        body.light-mode .address-header {
+            border-bottom-color: var(--light-border);
+        }
+
+        .address-type {
+            background: var(--primary-yellow);
+            color: var(--primary-dark);
+            padding: 0.375rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .address-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon-small {
+            background: transparent;
+            border: 1px solid var(--border-light);
+            color: var(--text-gray);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        body.light-mode .btn-icon-small {
+            border-color: var(--light-border);
+            color: var(--light-gray);
+        }
+
+        .btn-icon-small:hover {
+            color: var(--primary-yellow);
+            border-color: var(--primary-yellow);
+            background: rgba(255, 215, 0, 0.1);
+            transform: scale(1.05);
+        }
+
+        .btn-icon-small:focus-visible {
+            outline: 2px solid var(--primary-yellow);
+            outline-offset: 2px;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        body.light-mode .form-actions {
+            border-top-color: var(--light-border);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .profile-container {
+                grid-template-columns: 300px 1fr;
+                gap: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-wrapper {
+                padding: 2rem 1rem;
+            }
+
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .content-card {
+                padding: 2rem;
+            }
+
+            .profile-nav {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+
+            .profile-nav li {
+                margin-bottom: 0;
+            }
+
+            .profile-nav a {
+                justify-content: center;
+                padding: 1rem 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            .profile-nav i {
+                font-size: 1.1rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-container {
+                padding: 0 1rem;
+            }
+
+            .breadcrumb-content {
+                padding: 0 1rem;
+            }
+
+            .profile-card {
+                padding: 1.5rem;
+            }
+
+            .content-card {
+                padding: 1.5rem;
+            }
+
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+            }
+
+            .profile-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .content-title {
+                font-size: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 2rem;
+            background: var(--success-green);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: slideInRight 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification.error {
+            background: var(--error-red);
+        }
+
+        .notification.info {
+            background: #3b82f6;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* Loading State */
+        .btn-primary.loading,
+        .btn-secondary.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .btn-primary.loading::after,
+        .btn-secondary.loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            color: var(--primary-dark);
+        }
+
+        body.light-mode .btn-secondary.loading::after {
+            color: var(--light-text-dark);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Focus Visible */
+        *:focus-visible {
+            outline: 2px solid var(--primary-yellow);
+            outline-offset: 2px;
+        }
+
+        /* Screen Reader Only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Print Styles */
+        @media print {
+            .header,
+            .breadcrumb,
+            .profile-nav,
+            .btn-primary,
+            .btn-secondary,
+            .btn-icon-small,
+            .avatar-edit,
+            .header-actions,
+            .form-actions {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-card,
+            .content-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="#" class="logo">
+                <i class="fas fa-box-open"></i>
+                FactoryPrice
+            </a>
+            <div class="header-actions">
+                <button class="btn-icon" id="themeToggle" title="Toggle Theme" aria-label="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-icon" title="Notifications" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <div class="breadcrumb-content">
+            <a href="#"><i class="fas fa-home"></i> Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>My Profile</span>
+        </div>
+    </nav>
+
+    <!-- Profile Content -->
+    <div class="profile-wrapper">
+        <div class="profile-container">
+            <!-- Sidebar -->
+            <aside class="profile-sidebar">
+                <!-- Profile Card -->
+                <div class="profile-card">
+                    <div class="profile-header">
+                       <div class="profile-avatar" style="position: relative; text-align:center;">
+
+    <!-- Hidden File Input -->
+    <form method="POST" enctype="multipart/form-data" action="{% url 'change_profile_picture' %}" id="profilePicForm">
+        {% csrf_token %}
+        <input type="file" name="profile_picture" id="profilePictureInput"
+               accept="image/*" style="display:none;" onchange="document.getElementById('profilePicForm').submit();">
+    </form>
+
+    <!-- Clickable Profile Image -->
+    <img src="{{ user.profile.profile_picture.url }}" 
+         alt="Profile Picture" width="150"
+         style="cursor:pointer; border-radius: 50%;"
+         id="profilePictureDisplay">
+
+    <button class="avatar-edit">
+        <i class="fas fa-camera"></i>
+    </button>
+</div>
+
+                        <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
+                        <p class="profile-email">{{ user.email }}</p>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">24</span>
+                            <span class="stat-label">Orders</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">12</span>
+                        <span class="stat-label">Wishlist</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">8</span>
+                        <span class="stat-label">Reviews</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">1</span>
+                        <span class="stat-label">Address</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="profile-card" aria-label="Profile Navigation">
+                <ul class="profile-nav">
+                    <li><a href="#" class="active"><i class="fas fa-user"></i> Personal Info</a></li>
+                    <li><a href="#"><i class="fas fa-shopping-bag"></i> Orders</a></li>
+                    <li><a href="#"><i class="fas fa-heart"></i> Wishlist</a></li>
+                    <li><a href="#"><i class="fas fa-map-marker-alt"></i> Address</a></li>
+                    <li><a href="#"><i class="fas fa-star"></i> Reviews</a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="profile-content">
+            <form method="post" action="{% url 'user_info' %}" id="profileForm">
+                {% csrf_token %}
+                
+                <!-- Personal Information -->
+                <div class="content-card">
+                    <div class="content-header">
+                        <h1 class="content-title">Personal Information</h1>
+                        <button type="button" class="btn-primary" id="editProfileBtn">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </button>
+                    </div>
+
+                    <div class="info-grid">
+                        <div class="info-group">
+                            <label class="info-label" for="username">Username</label>
+                            <div class="info-value">
+                                <span id="username-display">{{ user.username }}</span>
+                                <input type="text" id="username" name="username" value="{{ user.username }}" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <label class="info-label" for="email">Email Address</label>
+                            <div class="info-value">
+                                <span id="email-display">{{ user.email }}</span>
+                                <input type="email" id="email" name="email" value="{{ user.email }}" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <label class="info-label" for="first_name">First Name</label>
+                            <div class="info-value">
+                                <span id="first_name-display">{{ user.first_name }}</span>
+                                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <label class="info-label" for="last_name">Last Name</label>
+                            <div class="info-value">
+                                <span id="last_name-display">{{ user.last_name }}</span>
+                                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <label class="info-label" for="phone">Phone Number</label>
+                            <div class="info-value">
+                                {{ form.phone }}
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <label class="info-label" for="city">City</label>
+                            <div class="info-value">
+                                {{ shipping_form.shipping_city }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address -->
+                <div class="content-card">
+                    <div class="section-header">
+                        <h2 class="section-title">Shipping Address</h2>
+                        <button type="button" class="btn-primary" id="editAddressBtn">
+                            <i class="fas fa-edit"></i> Edit Address
+                        </button>
+                    </div>
+
+                    <div class="address-card">
+                        <div class="address-header">
+                            <span class="address-type">Primary Address</span>
+                            <div class="address-actions">
+                                <button type="button" class="btn-icon-small" title="Edit Address" aria-label="Edit Address">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-group">
+                                <label class="info-label" for="shipping_address1">Address Line 1</label>
+                                <div class="info-value">
+                                    {{ shipping_form.shipping_address1 }}
+                                </div>
+                            </div>
+
+                            <div class="info-group">
+                                <label class="info-label" for="shipping_city_address">City</label>
+                                <div class="info-value">
+                                    {{ shipping_form.shipping_city }}
+                                </div>
+                            </div>
+
+                            <div class="info-group">
+                                <label class="info-label" for="shipping_state">State</label>
+                                <div class="info-value">
+                                    {{ shipping_form.shipping_state }}
+                                </div>
+                            </div>
+
+                            <div class="info-group">
+                                <label class="info-label" for="shipping_country">Country</label>
+                                <div class="info-value">
+                                    {{ shipping_form.shipping_country }}
+                                </div>
+                            </div>
+
+                            <div class="info-group">
+                                <label class="info-label" for="shipping_zipcode">Zip Code</label>
+                                <div class="info-value">
+                                    {{ shipping_form.shipping_zipcode }}
+                                </div>
+                            </div>
+
+                            <div class="info-group">
+                                <label class="info-label" for="phone_address">Phone Number</label>
+                                <div class="info-value">
+                                    {{ form.phone }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions" style="display: none;" id="formActions">
+                    <button type="button" class="btn-secondary" id="cancelBtn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn-primary" id="saveBtn">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+
+<script>
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    let isDarkMode = true;
+
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        isDarkMode = false;
+        document.body.classList.add('light-mode');
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+
+    themeToggle.addEventListener('click', () => {
+        isDarkMode = !isDarkMode;
+        document.body.classList.toggle('light-mode');
+        themeToggle.innerHTML = isDarkMode 
+            ? '<i class="fas fa-moon"></i>' 
+            : '<i class="fas fa-sun"></i>';
+        
+        // Save theme preference
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    });
+
+    // Notification System
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        const icon = type === 'error' ? 'fa-exclamation-circle' 
+                   : type === 'success' ? 'fa-check-circle' 
+                   : 'fa-info-circle';
+        
+        notification.innerHTML = `
+            <i class="fas ${icon}"></i>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    // Profile Navigation
+    document.querySelectorAll('.profile-nav a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (link.getAttribute('href') === '#') {
+                e.preventDefault();
+                document.querySelectorAll('.profile-nav a').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                const section = link.textContent.trim();
+                showNotification(`Navigating to ${section}...`, 'info');
+            }
+        });
+    });
+
+    // Edit Profile Button
+    const editProfileBtn = document.getElementById('editProfileBtn');
+    const editAddressBtn = document.getElementById('editAddressBtn');
+    const formActions = document.getElementById('formActions');
+    const cancelBtn = document.getElementById('cancelBtn');
+    let isEditing = false;
+
+    function toggleEditMode() {
+        isEditing = !isEditing;
+        
+        // Toggle visibility of display spans and input fields
+        const fields = ['username', 'email', 'first_name', 'last_name'];
+        fields.forEach(field => {
+            const display = document.getElementById(`${field}-display`);
+            const input = document.getElementById(field);
+            if (display && input) {
+                display.style.display = isEditing ? 'none' : 'block';
+                input.style.display = isEditing ? 'block' : 'none';
+            }
+        });
+
+        // Show/hide form actions
+        formActions.style.display = isEditing ? 'flex' : 'none';
+        
+        // Update button text
+        editProfileBtn.innerHTML = isEditing 
+            ? '<i class="fas fa-times"></i> Cancel Edit' 
+            : '<i class="fas fa-edit"></i> Edit Profile';
+        
+        if (isEditing) {
+            showNotification('Edit mode enabled', 'info');
+        }
+    }
+
+    editProfileBtn.addEventListener('click', toggleEditMode);
+    editAddressBtn.addEventListener('click', toggleEditMode);
+
+    cancelBtn.addEventListener('click', () => {
+        toggleEditMode();
+        document.getElementById('profileForm').reset();
+        showNotification('Changes cancelled', 'info');
+    });
+
+    // Form submission
+    document.getElementById('profileForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.classList.add('loading');
+        saveBtn.disabled = true;
+        
+        // Simulate form submission
+        setTimeout(() => {
+            saveBtn.classList.remove('loading');
+            saveBtn.disabled = false;
+            showNotification('Profile updated successfully!', 'success');
+            toggleEditMode();
+            
+            // In real implementation, submit the form here
+            // e.target.submit();
+        }, 1500);
+    });
+
+    document.getElementById("profilePictureDisplay").addEventListener("click", function () {
+        document.getElementById("profilePictureInput").click();
+    });
+
+    document.querySelector(".avatar-edit").addEventListener("click", function () {
+        document.getElementById("profilePictureInput").click();
+    });
+
+    // Address Edit Button
+    document.querySelectorAll('.btn-icon-small').forEach(btn => {
+        btn.addEventListener('click', () => {
+            toggleEditMode();
+        });
+    });
+
+    // Smooth hover effects
+    document.querySelectorAll('.stat-item, .address-card, .profile-nav a').forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('active')) {
+                this.style.transform = 'translateY(-2px)';
+            }
+        });
+        
+        element.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Notification bell animation
+    const bellIcon = document.querySelector('.header-actions .btn-icon:nth-child(2)');
+    if (bellIcon) {
+        bellIcon.addEventListener('click', () => {
+            showNotification('You have no new notifications', 'info');
+        });
+    }
+</script>

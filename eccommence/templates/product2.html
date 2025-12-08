@@ -1,0 +1,155 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- Product Detail Page -->
+<div class="product-popup active">
+    <div class="popup-content">
+
+        <!-- Back Button -->
+        <button class="popup-close" onclick="window.history.back()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+
+        <div class="popup-body">
+
+            <!-- Product Image -->
+            <div class="popup-image">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" id="popupImage">
+            </div>
+
+            <!-- Product Info -->
+            <div class="popup-details">
+
+                <!-- NAME -->
+                <h2 class="popup-title">{{ product.name }}</h2>
+
+                <!-- RATING -->
+                <div class="popup-rating">
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <span class="rating-text">4.7 (89 reviews)</span>
+                </div>
+
+                <!-- PRICE LOGIC -->
+                <div class="popup-price">
+                    {% if product.is_onsale %}
+                        <span class="popup-current-price">UGX {{ product.sale_price }}</span>
+                        <span class="popup-old-price">UGX {{ product.price }}</span>
+                        <span class="popup-discount">29% OFF</span>
+                    {% else %}
+                        <span class="popup-current-price">UGX {{ product.sale_price }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- DESCRIPTION -->
+                <p class="popup-description">
+                    {{ product.description }}
+                </p>
+
+                <!-- SPECIFICATIONS -->
+                <div class="specifications">
+                    <h3>Product Details</h3>
+                    <table class="specs-table">
+                        <tr>
+                            <td class="spec-name">Category:</td>
+                            <td class="spec-value">{{ product.category.name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="spec-name">In Stock:</td>
+                            <td class="spec-value">{{ product.in_stock|yesno:"Yes,No" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="spec-name">Brand:</td>
+                            <td class="spec-value">{{ product.brand|default:"HOMIES" }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- QUANTITY SELECTOR -->
+                <div class="quantity-selector">
+                    <span class="quantity-label">Quantity:</span>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" id="decreaseQty">-</button>
+                        <input type="number" class="quantity-input" id="quantityInput" value="1" min="1" max="20">
+                        <button class="quantity-btn" id="increaseQty">+</button>
+                    </div>
+                </div>
+
+                <!-- ADD TO CART BUTTON -->
+                <div class="popup-actions">
+                    <button type="button" 
+                            class="popup-btn-cart" 
+                            id="add-cart" 
+                            value="{{ product.id }}">
+                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                    </button>
+                </div>
+
+                <!-- CONTACT SECTION -->
+                <div class="contact-info">
+                    <h3>Need Help?</h3>
+                    <div class="contact-buttons">
+                        <button class="btn-whatsapp">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button class="btn-call">
+                            <i class="fas fa-phone"></i> Call 0775506426
+                        </button>
+                    </div>
+                </div>
+
+            </div> <!-- end popup-details -->
+        </div> <!-- end popup-body -->
+    </div>
+</div>
+
+<script src="{% static 'js/scripts.js' %}"></script>
+
+<script>
+/* QUANTITY BUTTONS */
+const decreaseQty = document.getElementById('decreaseQty');
+const increaseQty = document.getElementById('increaseQty');
+const quantityInput = document.getElementById('quantityInput');
+
+decreaseQty.addEventListener('click', () => {
+    let value = parseInt(quantityInput.value);
+    if (value > 1) quantityInput.value = value - 1;
+});
+
+increaseQty.addEventListener('click', () => {
+    let value = parseInt(quantityInput.value);
+    if (value < 30) quantityInput.value = value + 1;
+});
+
+/* ADD TO CART AJAX */
+$(document).on("click", "#add-cart", function (e){
+    e.preventDefault();
+
+    $.ajax({
+        type: "POST",
+        url: "{% url 'cart:cart_add' %}",
+        data: {
+            product_id: $("#add-cart").val(),
+            product_qty: $("#quantityInput").val(),   // NEW QUANTITY INPUT
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+            action: "post",
+        },
+        success: function (json) {
+            document.getElementById("cart_quantity").textContent = json.qty;
+            location.reload();
+        },
+        error: function (xhr, errmsg, err) {
+            console.log(xhr.responseText);
+        },
+    });
+});
+</script>
+
+{% endblock %}

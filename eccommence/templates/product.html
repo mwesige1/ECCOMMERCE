@@ -1,0 +1,114 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<div class="card mb-3">
+  <div class="row g-0">
+    <div class="col-md-4">
+      <img
+        src="{{ product.image.url }}"
+        class="img-fluid rounded-start"
+        alt="..."
+      />
+    </div>
+    <div class="col-md-8">
+      <center>
+        <div class="card-body">
+          <!-- Product details -->
+          <div class="card-body p-4 text-start">
+            <div class="text-center">
+              <!-- Product name -->
+              <h5 class="fw-bolder text-center fw-bold text-primary p-3">
+                {{ product.name }}
+              </h5>
+              <p class="card-text">{{ product.description }}</p>
+
+              <!-- Sale stars -->
+              <div
+                class="d-flex justify-content-center small text-warning mb-2"
+              >
+                <div class="bi-star-fill"></div>
+                <div class="bi-star-fill"></div>
+                <div class="bi-star-fill"></div>
+
+                &nbsp;&nbsp; Sale !! &nbsp;&nbsp;
+
+                <div class="bi-star-fill"></div>
+                <div class="bi-star-fill"></div>
+                <div class="bi-star-fill"></div>
+              </div>
+
+              <!-- Product price -->
+              <strike>UGX {{ product.price }}</strike>
+              <span class="fw-bolder">
+                &nbsp; &nbsp;&nbsp;UGX {{ product.price }}
+              </span>
+              <br><br>
+
+
+<div class="row justify-content-center">
+  <div class="col-md-2">Quantity</div>
+  <div class="col-md-2">
+<select class="form-select" id="qty_cart">
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5">5</option>
+</select>
+</div>
+</div>
+
+
+
+
+
+            
+            </div>
+          </div>
+        </div>
+        
+        <a class="btn btn-success" href="{% url 'eccommence:home' %}">HOME</a>
+        <!-- create a button to add cart and give a value as an id from the database
+        and and give the button an actual id to use in the jquery below for the functionality -->
+
+        <button
+          type="button"
+          value="{{ product.id }}"
+          class="btn btn-success"
+          id="add-cart"
+        >
+          Add To Cart
+        </button>
+      </center>
+    </div>
+  </div>
+</div>
+<br /><br /><br /><br />
+
+<!--the javascript to handle that when add to cart is clicked the item is added to cart automaticall
+   -->
+
+<script>
+  /* '#dd-cart' is ad id on the add cart button above*/
+  $(document).on("click", "#add-cart", function (e){
+    e.preventDefault();
+    $.ajax({
+      type: "POST",
+      url: "{% url 'cart:cart_add' %}" /* this url is in the urls under cart app.urls*/,
+      data: {
+        product_id: $("#add-cart").val() /* here again we've used the id */,
+        product_qty : $('#qty_cart option:selected').text(),
+        csrfmiddlewaretoken: "{{ csrf_token }}",
+        action: "post",
+      },
+      success: function (json) {
+        //console.log(json);
+        document.getElementById("cart_quantity").textContent = json.qty;
+        
+        location.reload();
+      
+      },
+      error: function (xhr, errmsg, err) {},
+    });
+  });
+</script>
+{% endblock %}
