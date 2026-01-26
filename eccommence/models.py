@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.text import slugify
+from django.utils.timezone import now
 # Create your models here.
 
 #produc categories
@@ -36,6 +37,11 @@ class Customer(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+    
+
+    
+from ecom.storage import TenantMediaStorage
+
 
 #All the products
 class Product(models.Model):
@@ -43,7 +49,9 @@ class Product(models.Model):
     price= models.DecimalField(default=0,decimal_places=2,max_digits=10)
     category = models.ForeignKey(Category,on_delete=models.CASCADE,default=1)
     description =models.CharField(max_length=300,default='',blank=True,null=True)
-    image = models.ImageField(upload_to='uploads/product/')
+    image = models.ImageField(
+        upload_to='uploads/product/',
+        storage=TenantMediaStorage())
     is_onsale = models.BooleanField(default=False)
     sale_price = models.DecimalField(default=0,decimal_places=2,max_digits=10)
 
@@ -57,7 +65,7 @@ class Order(models.Model):
     quantity = models.IntegerField(default=1)
     address= models.CharField(max_length= 100,default='',blank=True)
     phone = models.CharField(max_length=20,default='',blank=True)
-    date = models.DateField(default=datetime.datetime.today())
+    date = models.DateField(default=now)
     status = models.BooleanField(default=False)
 
     def __str__(self):
@@ -65,30 +73,3 @@ class Order(models.Model):
 
 
 
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    date_modified = models.DateTimeField(auto_now=True)
-    phone = models.CharField(max_length=20, blank=True)
-    address1 = models.CharField(max_length=200, blank=True)
-    address2 = models.CharField(max_length=200, blank=True)
-    city = models.CharField(max_length=200, blank=True)
-    state = models.CharField(max_length=200, blank=True)
-    zipcode = models.CharField(max_length=200, blank=True)
-    country = models.CharField(max_length=200, blank=True)
-    district = models.CharField(max_length=200, blank=True)
-    cart_info = models.CharField(max_length=200, blank=True,null=True)
-
-    profile_picture = models.ImageField(
-        upload_to='profile_pics/',    # Folder where uploaded images will go
-        default='default_profile.png', # Default picture
-        blank=True,
-        null=True
-    )
-
-    def __str__(self):
-        return self.user.username
-
-@receiver(post_save, sender=User)
-def create_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)

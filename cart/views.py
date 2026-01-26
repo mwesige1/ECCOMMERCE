@@ -14,13 +14,13 @@ def cart_summary(request):
     cart = Cart(request)
 
     #paa through the products to the html from the cart where the funcction is created
-    cart_products = cart.show_products
+    cart_products = cart.show_products()
 
     # pass through the products to the html from the cart,py function
-    quantities = cart.show_cart_items
+    quantities = cart.show_cart_items()
 
     # get all the total from the cart.p in the function
-    totals = cart.cart_total
+    totals = cart.cart_total()
 
     return render  (request,'cart.html',{'cart_products':cart_products,'quantities':quantities,'totals':totals})
 
@@ -101,3 +101,80 @@ def cart_delete(request):
         response = JsonResponse({'product': product_id})
         return response
 
+
+
+def cart_increase(request):
+    """Increase product quantity by 1 - called from frontend + button"""
+    # Get the current cart from session
+    cart = Cart(request)
+    
+    # Check if this is an AJAX POST request
+    if request.POST.get('action') == 'post':
+        try:
+            # Get product_id from POST data and convert to integer
+            product_id = int(request.POST.get('product_id'))
+        except (ValueError, TypeError):
+            # Return error if product_id is invalid
+            return JsonResponse({'error': 'Invalid product ID'}, status=400)
+        
+        # Call increase_qty method from Cart class (adds 1 to quantity)
+        new_quantity = cart.increase_qty(product_id)
+        
+        # Get updated cart information
+        cart_quantity = cart.__len__()  # Total number of items in cart
+        cart_total = cart.cart_total()  # Total price of all items
+        
+        # Show success message to user
+        messages.success(request, 'Quantity increased')
+        
+        # Return JSON response for AJAX call
+        return JsonResponse({
+            'success': True,
+            'new_qty': new_quantity,  # New quantity for this specific product
+            'cart_qty': cart_quantity,  # Total items in cart
+            'cart_total': cart_total  # New cart total price
+        })
+    
+    # If not a valid POST request, return error
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+
+
+
+
+def cart_decrease(request):
+    """Decrease product quantity by 1 - called from frontend - button"""
+    # Get the current cart from session
+    cart = Cart(request)
+    
+    # Check if this is an AJAX POST request
+    if request.POST.get('action') == 'post':
+        try:
+            # Get product_id from POST data and convert to integer
+            product_id = int(request.POST.get('product_id'))
+        except (ValueError, TypeError):
+            # Return error if product_id is invalid
+            return JsonResponse({'error': 'Invalid product ID'}, status=400)
+        
+        # Call decrease_qty method from Cart class (subtracts 1 from quantity)
+        new_quantity = cart.decrease_qty(product_id)
+        
+        # Get updated cart information
+        cart_quantity = cart.__len__()  # Total number of items in cart
+        cart_total = cart.cart_total()  # Total price of all items
+        
+        # Show success message to user
+        messages.success(request, 'Quantity decreased')
+        
+        # Return JSON response for AJAX call
+        return JsonResponse({
+            'success': True,
+            'new_qty': new_quantity,  # New quantity (0 if removed)
+            'cart_qty': cart_quantity,  # Total items in cart
+            'cart_total': cart_total,  # New cart total price
+            'removed': new_quantity == 0  # True if product was completely removed
+        })
+    
+    # If not a valid POST request, return error
+    return JsonResponse({'error': 'Invalid request'}, status=400)

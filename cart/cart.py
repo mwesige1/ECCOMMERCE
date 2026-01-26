@@ -1,4 +1,5 @@
-from eccommence.models import Product,Profile
+from eccommence.models import Product
+from users.models import Profile
 
 
 class Cart():
@@ -164,3 +165,75 @@ class Cart():
             # save the Jcart to the database under profile with name cart_info
             current_user.update(cart_info=str(Jscart))
 
+    def increase_qty(self, product_id):
+        """Increase product quantity by 1"""
+        # Convert product_id to string (cart uses strings as keys)
+        product_id = str(product_id)
+    
+        # Check if product is already in the cart
+        if product_id in self.cart:
+            # If product exists, increase its quantity by 1
+            self.cart[product_id] += 1
+        else:
+            # If product not in cart, add it with quantity 1
+            self.cart[product_id] = 1
+    
+        # Mark session as modified to save changes
+        self.session.modified = True
+    
+        # Update database for logged-in users (same logic as your other methods)
+        if self.request.user.is_authenticated:
+            # Get the user's profile
+            current_user = Profile.objects.filter(user__id=self.request.user.id)
+            # Convert cart dictionary to string for storage
+            Jscart = str(self.cart)
+            # Replace single quotes with double quotes for valid JSON
+            Jscart = Jscart.replace("\'", "\"")
+            # Update cart_info field in the database
+            current_user.update(cart_info=str(Jscart))
+    
+        # Return the new quantity
+        return self.cart[product_id]
+    
+    def decrease_qty(self, product_id):
+        """Decrease product quantity by 1, remove if reaches 0"""
+        # Convert product_id to string
+        product_id = str(product_id)
+    
+        # Check if product is in the cart
+        if product_id in self.cart:
+        # Check if current quantity is greater than 1
+            if self.cart[product_id] > 1:
+            # Decrease quantity by 1
+                self.cart[product_id] -= 1
+            else:
+            # If quantity is 1, remove product from cart (0 = remove)
+                del self.cart[product_id]
+                # Mark session as modified
+                self.session.modified = True
+            
+                # Update database for logged-in users
+                if self.request.user.is_authenticated:
+                    current_user = Profile.objects.filter(user__id=self.request.user.id)
+                    Jscart = str(self.cart)
+                    Jscart = Jscart.replace("\'", "\"")
+                    current_user.update(cart_info=str(Jscart))
+            
+             # Return 0 to indicate product was removed
+                return 0
+        else:
+        # Product not found in cart
+            return 0
+    
+        # Mark session as modified (for the case where quantity > 1)
+        self.session.modified = True
+    
+     # Update database for logged-in users
+        if self.request.user.is_authenticated:
+            current_user = Profile.objects.filter(user__id=self.request.user.id)
+            Jscart = str(self.cart)
+            Jscart = Jscart.replace("\'", "\"")
+            current_user.update(cart_info=str(Jscart))
+    
+        # Return the new quantity (after decreasing)
+        return self.cart[product_id]

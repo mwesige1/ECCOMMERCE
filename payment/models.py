@@ -29,10 +29,10 @@ class ShippingAddress(models.Model):
         return f'Shipping Address - {str(self.id)}'
 
     # create the shipping address automatically once a new user is created
-    @receiver(post_save, sender=User)
+""" @receiver(post_save, sender=User)
     def create_shppingAddress(sender, instance, created, **kwargs):
         if created:
-            ShippingAddress.objects.create(user=instance)
+            ShippingAddress.objects.create(user=instance)"""
         
 # model to get all the orders in the cart for payment
 class Order(models .Model):

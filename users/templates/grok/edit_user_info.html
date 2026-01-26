@@ -1,9 +1,7 @@
-
 {% extends 'grok/base.html' %}
 {% load static %}
 
 {% block content %}
-  
 
 <!-- Breadcrumb -->
 <div class="breadcrumb">
@@ -21,27 +19,27 @@
     <aside class="profile-sidebar">
         <div class="profile-header">
             <!-- Hidden File Input -->
-        <form method="POST" enctype="multipart/form-data" action="{% url 'change_profile_picture' %}" id="profilePicForm">
-            {% csrf_token %}
-            <input type="file" name="profile_picture" id="profilePictureInput"
-                   accept="image/*" style="display:none;" 
-                   onchange="document.getElementById('profilePicForm').submit();">
-        </form>
+            <form method="POST" enctype="multipart/form-data" action="{% url 'change_profile_picture' %}" id="profilePicForm">
+                {% csrf_token %}
+                <input type="file" name="profile_picture" id="profilePictureInput"
+                       accept="image/*" style="display:none;" 
+                       onchange="document.getElementById('profilePicForm').submit();">
+            </form>
 
-        <!-- Clickable Profile Image -->
-        <img src="{{ user.profile.profile_picture.url }}"
-             alt="{{ request.user.first_name }} {{ request.user.last_name }}"
-             class="profile-avatar"
-             id="profilePictureDisplay"
-             style="cursor:pointer;">
+            <!-- Clickable Profile Image -->
+            <img src="{{ user.profile.profile_picture.url }}"
+                 alt="{{ request.user.first_name }} {{ request.user.last_name }}"
+                 class="profile-avatar"
+                 id="profilePictureDisplay"
+                 style="cursor:pointer;">
 
-        <!-- Camera Button -->
-        <button class="avatar-edit" id="profilePictureButton">
-            <i class="fas fa-camera"></i> edit
-        </button>
+            <!-- Camera Button -->
+            <button class="avatar-edit" id="profilePictureButton">
+                <i class="fas fa-camera"></i> edit
+            </button>
 
-        <h2 class="profile-name">{{ request.user.first_name }} {{ request.user.last_name }}</h2>
-        <p class="profile-email">{{ request.user.email }}</p>
+            <h2 class="profile-name">{{ request.user.first_name }} {{ request.user.last_name }}</h2>
+            <p class="profile-email">{{ request.user.email }}</p>
         </div>
 
         <ul class="profile-menu">
@@ -86,6 +84,7 @@
 
     <!-- Profile Content -->
     <section class="profile-content">
+        
         <form id="profileForm" method="post" action="{% url 'update_user' %}">
             {% csrf_token %}
 
@@ -98,86 +97,118 @@
                 {% endfor %}
             {% endif %}
 
+            <!-- Personal Information (User Form) -->
             <div class="profile-section">
                 <h2 class="section-title">Personal Information</h2>
                 <div class="form-grid">
 
+                    <!-- First Name Field -->
                     <div class="input-group">
                         <label class="input-label">First Name</label>
-                        <input type="text" class="input-field" name="first_name"
-                               value="{{ request.user.first_name }}" required>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="error-text">{{ form.first_name.errors }}</div>
+                        {% endif %}
                     </div>
 
+                    <!-- Last Name Field -->
                     <div class="input-group">
                         <label class="input-label">Last Name</label>
-                        <input type="text" class="input-field" name="last_name"
-                               value="{{ request.user.last_name }}" required>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="error-text">{{ form.last_name.errors }}</div>
+                        {% endif %}
                     </div>
 
+                    <!-- Username Field -->
                     <div class="input-group">
                         <label class="input-label">Username</label>
-                        <input type="text" class="input-field" name="username"
-                               value="{{ request.user.username }}" required>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="error-text">{{ form.username.errors }}</div>
+                        {% endif %}
                     </div>
 
+                    <!-- Email Field -->
                     <div class="input-group">
                         <label class="input-label">Email Address</label>
-                        <input type="email" class="input-field" name="email"
-                               value="{{ request.user.email }}" required>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="error-text">{{ form.email.errors }}</div>
+                        {% endif %}
                     </div>
 
+                    <!-- Phone Field (from Profile) -->
                     <div class="input-group">
                         <label class="input-label">Phone Number</label>
-                        <input type="tel" class="input-field" name="phone"
-                               value="{{ request.user.profile.phone }}" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label class="input-label">Date of Birth</label>
-                        <input type="date" class="input-field" name="dob"
-                               value="{{ request.user.profile.dob|date:'Y-m-d' }}">
+                        {{ profile_form.phone }}
+                        {% if profile_form.phone.errors %}
+                            <div class="error-text">{{ profile_form.phone.errors }}</div>
+                        {% endif %}
                     </div>
 
                 </div>
             </div>
 
+            <!-- Address Information (Profile Form) -->
             <div class="profile-section">
                 <h2 class="section-title">Address Information</h2>
                 <div class="form-grid">
 
                     <div class="input-group">
-                        <label class="input-label">Street Address1</label>
-                        <input type="text" class="input-field" name="street"
-                               value="{{ request.user.profile.address1  }}" required>
+                        <label class="input-label">Street Address 1</label>
+                        {{ profile_form.address1 }}
+                        {% if profile_form.address1.errors %}
+                            <div class="error-text">{{ profile_form.address1.errors }}</div>
+                        {% endif %}
                     </div>
+                    
                     <div class="input-group">
-                        <label class="input-label">Street Address2</label>
-                        <input type="text" class="input-field" name="street"
-                               value="{{ request.user.profile.address2  }}" required>
+                        <label class="input-label">Street Address 2</label>
+                        {{ profile_form.address2 }}
+                        {% if profile_form.address2.errors %}
+                            <div class="error-text">{{ profile_form.address2.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="input-group">
                         <label class="input-label">City / Town</label>
-                        <input type="text" class="input-field" name="city"
-                               value="{{ request.user.profile.city }}" required>
+                        {{ profile_form.city }}
+                        {% if profile_form.city.errors %}
+                            <div class="error-text">{{ profile_form.city.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="input-group">
                         <label class="input-label">State / Region</label>
-                        <input type="text" class="input-field" name="state"
-                               value="{{ request.user.profile.state }}" required>
+                        {{ profile_form.state }}
+                        {% if profile_form.state.errors %}
+                            <div class="error-text">{{ profile_form.state.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">District</label>
+                        {{ profile_form.district }}
+                        {% if profile_form.district.errors %}
+                            <div class="error-text">{{ profile_form.district.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="input-group">
                         <label class="input-label">Postal Code</label>
-                        <input type="text" class="input-field" name="postalCode"
-                               value="{{ request.user.profile.zipcode }}">
+                        {{ profile_form.zipcode }}
+                        {% if profile_form.zipcode.errors %}
+                            <div class="error-text">{{ profile_form.zipcode.errors }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="input-group">
                         <label class="input-label">Country</label>
-                        <input type="text" class="input-field" name="country"
-                               value="{{ request.user.profile.country }}" required>
+                        {{ profile_form.country }}
+                        {% if profile_form.country.errors %}
+                            <div class="error-text">{{ profile_form.country.errors }}</div>
+                        {% endif %}
                     </div>
 
                 </div>
@@ -192,11 +223,7 @@
     </section>
 </main>
 
-
-   
-
-    <script>
-        
+<script>
     document.getElementById("profilePictureDisplay").onclick = function () {
         document.getElementById("profilePictureInput").click();
     };
@@ -204,36 +231,33 @@
     document.getElementById("profilePictureButton").onclick = function () {
         document.getElementById("profilePictureInput").click();
     };
-        // Dark Mode Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        let isDarkMode = false;
 
-        themeToggle.addEventListener('click', () => {
-            isDarkMode = !isDarkMode;
-            document.body.classList.toggle('dark-mode');
-            
-            if (isDarkMode) {
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                themeToggle.title = 'Toggle light mode';
-            } else {
-                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                themeToggle.title = 'Toggle dark mode';
-            }
-        });
+    // Dark Mode Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    let isDarkMode = false;
 
-        // Profile menu functionality
-        document.querySelectorAll('.profile-menu-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelectorAll('.profile-menu-link').forEach(item => {
-                    item.classList.remove('active');
-                });
-                this.classList.add('active');
+    themeToggle.addEventListener('click', () => {
+        isDarkMode = !isDarkMode;
+        document.body.classList.toggle('dark-mode');
+        
+        if (isDarkMode) {
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            themeToggle.title = 'Toggle light mode';
+        } else {
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            themeToggle.title = 'Toggle dark mode';
+        }
+    });
+
+    // Profile menu functionality
+    document.querySelectorAll('.profile-menu-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.profile-menu-link').forEach(item => {
+                item.classList.remove('active');
             });
+            this.classList.add('active');
         });
-
-       
-    </script>
-    {% endblock %}
-
- 
+    });
+</script>
+{% endblock %}

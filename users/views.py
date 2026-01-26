@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from.forms import RegisterForm,UpdateUserForm,ChangePasswordForm,UserProfileInfo,ProfilePictureForm
 from django.contrib.auth.decorators import login_required
-from eccommence.models import Profile
+from users.models import Profile
 import json
 from cart.cart import Cart
 from payment.models import ShippingAddress
@@ -104,25 +104,35 @@ def register(request):
 
 
 def update_user(request):
-    # First, check if the user is authenticated
     if request.user.is_authenticated:
-        # Get the currently logged-in user
         current_user = User.objects.get(id=request.user.id)
-
-        # Pre-fill the form with the current user's data
-        update_form = UpdateUserForm(request.POST or None, instance=current_user)
-
-        # Check if the form submission is valid
-        if update_form.is_valid():
-            update_form.save()
-
-            # Keep the user logged in after saving
-            login(request, current_user)
-            messages.success(request, f'{current_user}, your information has been updated.')
-            return redirect('eccommence:home')
-
-        # Render the form (GET request or invalid form)
-        return render(request, 'grok/edit_user_info.html', {'form': update_form})
+        
+        # Get or create the user's profile
+        try:
+            user_profile = Profile.objects.get(user=current_user)
+        except Profile.DoesNotExist:
+            user_profile = Profile.objects.create(user=current_user)
+        
+        # Initialize both forms
+        user_form = UpdateUserForm(request.POST or None, instance=current_user)
+        profile_form = UserProfileInfo(request.POST or None, instance=user_profile)
+        
+        if request.method == 'POST':
+            if user_form.is_valid() and profile_form.is_valid():
+                user_form.save()
+                profile_form.save()
+                
+                login(request, current_user)
+                messages.success(request, f'{current_user}, your information has been updated.')
+                return redirect('eccommence:home')
+            else:
+                messages.error(request, 'Please correct the errors below.')
+        
+        # IMPORTANT: Pass 'form' (not 'user_form') for template compatibility
+        return render(request, 'grok/edit_user_info.html', {
+            'form': user_form,          # Template expects 'form' for user fields
+            'profile_form': profile_form  # Template expects 'profile_form' for address fields
+        })
     
     else:
         messages.warning(request, 'You must be logged in to access this page.')

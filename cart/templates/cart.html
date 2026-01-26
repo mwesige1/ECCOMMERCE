@@ -1,6 +1,7 @@
   {% extends 'grok/base.html' %}
 {% load static %}
 
+
 {% block content %}
  
 
@@ -29,19 +30,28 @@
                 </div>
                 <div class="price">UGX {{ product.sale_price }}</div>
             </div>
-
             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1.2rem;">
-                <div class="quantity">
-                    <button class="qty-btn decrease">−</button>
-                    <input type="text" value="1" class="qty-input" readonly>
-                    <button class="qty-btn increase">+</button>
-                </div>
+               <div class="quantity">
+    <!-- Decrease button with data attribute -->
+    <button class="qty-btn decrease" data-product-id="{{ product.id }}">−</button>
+    
+    <!-- Use the template filter to get quantity -->
+    <input type="text" 
+       value="{% for key, qty in quantities.items %}{% if key == product.id|stringformat:'s' %}{{ qty }}{% endif %}{% endfor %}" 
+       class="qty-input" 
+       id="qty-input-{{ product.id }}"
+       readonly>
+    
+    <!-- Increase button with data attribute -->
+    <button class="qty-btn increase" data-product-id="{{ product.id }}">+</button>
+</div>
                 <button class="remove-btn delete-product" data-index="{{ product.id }}" type="button">
                     <i class="fas fa-trash"></i>&nbsp;Remove</button>
             </div>
         </div>
         {% endfor %}
     </div>
+
 
     <!-- Order Summary -->
     <div class="summary">
@@ -124,6 +134,66 @@ $(document).on("click", ".delete-product", function(e){
             location.reload();
         }
     });
+});
+// INCREMENT quantity (+ button)
+document.querySelectorAll('.increase').forEach(btn => {
+    btn.onclick = function() {
+        const productId = this.getAttribute('data-product-id');
+        const input = this.previousElementSibling;
+        
+        // Call backend to increase quantity
+        $.ajax({
+            type: "POST",
+            url: "{% url 'cart:cart_increase' %}",
+            data: {
+                product_id: productId,
+                csrfmiddlewaretoken: "{{ csrf_token }}",
+                action: "post"
+            },
+            success: function(json) {
+                if (json.success) {
+                    // Update input display
+                    input.value = json.new_qty;
+                    // Update cart totals if needed
+                    console.log('New quantity:', json.new_qty);
+                    // Optional: Reload page or update totals dynamically
+                    location.reload(); // Simple solution for now
+                }
+            }
+        });
+    };
+});
+
+// DECREMENT quantity (- button)
+document.querySelectorAll('.decrease').forEach(btn => {
+    btn.onclick = function() {
+        const productId = this.getAttribute('data-product-id');
+        const input = this.nextElementSibling;
+        
+        // Call backend to decrease quantity
+        $.ajax({
+            type: "POST",
+            url: "{% url 'cart:cart_decrease' %}",
+            data: {
+                product_id: productId,
+                csrfmiddlewaretoken: "{{ csrf_token }}",
+                action: "post"
+            },
+            success: function(json) {
+                if (json.success) {
+                    if (json.removed) {
+                        // Product was removed, reload page
+                        location.reload();
+                    } else {
+                        // Update quantity display
+                        input.value = json.new_qty;
+                        // Optional: Reload to update totals
+                        location.reload();
+                    }
+                }
+            }
+        });
+    };
 });
     </script>
 {% endblock %}
