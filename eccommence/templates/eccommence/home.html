@@ -1,0 +1,607 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if query %}Search: {{ query }}{% elif selected_category %}{{ selected_category.name }}{% else %}Home{% endif %} - {{ request.tenant.name }}
+{% endblock %}
+
+{% block content %}
+
+<!-- Search Results Header (if search active) -->
+{% if query or selected_category %}
+<div style="background: #f8fafc; padding: 1.5rem 0; margin-bottom: 2rem; border-bottom: 1px solid #e2e8f0;">
+    <div style="max-width: 1500px; margin: 0 auto; padding: 0 2rem;">
+        {% if query %}
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #1e293b;">Search Results for "{{ query }}"</h2>
+            <p style="color: #64748b;">{{ total_products }} product{{ total_products|pluralize }} found</p>
+        {% elif selected_category %}
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #1e293b;">{{ selected_category.name }}</h2>
+            <p style="color: #64748b;">{{ total_products }} product{{ total_products|pluralize }}</p>
+        {% endif %}
+        
+        {% if query or min_price or max_price or in_stock_only or on_sale_only %}
+        <a href="{% url 'eccommence:home' %}" 
+           style="display: inline-block; margin-top: 0.5rem; color: #2563eb; text-decoration: none; font-size: 0.9rem;">
+            <i class="fas fa-times-circle"></i> Clear all filters
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Main Product Layout -->
+<main class="product-main">
+    <!-- Filters Sidebar -->
+    <aside class="filters-sidebar">
+        <!-- Categories Section -->
+        <div class="filter-section">
+            <label class="sort-label">
+                <i class="fas fa-th-large"></i> Categories
+            </label>
+            <select class="sort-select" id="categorySelect">
+                <option value="{% url 'eccommence:home' %}" {% if not selected_category %}selected{% endif %}>All Categories</option>
+                {% for category in all_categories %}
+                    {% if category.slug %}
+                    <option value="{% url 'eccommence:category_view' category.slug %}" 
+                            {% if selected_category and selected_category.slug == category.slug %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+       <!-- Brands Dropdown -->
+<div class="filter-section">
+    <label class="sort-label">
+        <i class="fas fa-copyright"></i> Brands
+    </label>
+    <select class="sort-select" id="brandSelect">
+        <option value="">All Brands</option>
+        {% for vendor in vendors %}
+        <option value="{{ vendor.slug }}" 
+                {% if vendor.slug in selected_vendors %}selected{% endif %}>
+            {{ vendor.store_name }} ({{ vendor.product_count|default:0 }})
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+        <!-- Price Range with Editable Inputs and Slider -->
+        <div class="filter-section">
+            <label class="sort-label">
+                <i class="fas fa-dollar-sign"></i> Price Range
+            </label>
+            <div class="price-range-container">
+                <!-- Editable Price Inputs -->
+                <div class="price-inputs">
+                    <div class="price-input-group">
+                        <label class="price-label">Min Price</label>
+                        <input type="number" 
+                               class="price-input" 
+                               id="minPrice" 
+                               value="{{ min_price|default:0 }}" 
+                               placeholder="0"
+                               min="0"
+                               step="1000">
+                    </div>
+                    <div class="price-input-group">
+                        <label class="price-label">Max Price</label>
+                        <input type="number" 
+                               class="price-input" 
+                               id="maxPrice" 
+                               value="{{ max_price|default:5000000 }}" 
+                               placeholder="5,000,000"
+                               min="0"
+                               step="1000">
+                    </div>
+                </div>
+
+                <!-- Price Slider -->
+                <div class="price-slider-wrapper">
+                    <div class="price-slider-track" id="priceTrack"></div>
+                    <input type="range" 
+                           class="price-slider" 
+                           id="minPriceSlider" 
+                           min="0" 
+                           max="5000000" 
+                           step="10000"
+                           value="{{ min_price|default:0 }}">
+                    <input type="range" 
+                           class="price-slider" 
+                           id="maxPriceSlider" 
+                           min="0" 
+                           max="5000000" 
+                           step="10000"
+                           value="{{ max_price|default:5000000 }}">
+                </div>
+
+                <button class="go-button" onclick="applyFilters()">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Sort Section -->
+        <div class="filter-section">
+            <label class="sort-label">
+                <i class="fas fa-sort"></i> Sort By
+            </label>
+            <select class="sort-select" id="sortSelect">
+                <option value="featured" {% if sort_by == 'featured' %}selected{% endif %}>Featured</option>
+                <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Top Rated</option>
+                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Popular</option>
+            </select>
+        </div>
+
+        <!-- Availability Filter -->
+        <div class="filter-section">
+            <label class="sort-label">
+                <i class="fas fa-box"></i> Availability
+            </label>
+            <ul class="filter-options">
+                <li class="filter-option">
+                    <input type="checkbox" id="in_stock" name="in_stock" {% if in_stock_only %}checked{% endif %}>
+                    <label for="in_stock">In Stock Only</label>
+                </li>
+                <li class="filter-option">
+                    <input type="checkbox" id="on_sale" name="on_sale" {% if on_sale_only %}checked{% endif %}>
+                    <label for="on_sale">On Sale</label>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Customer Reviews -->
+        <div class="filter-section">
+            <label class="sort-label">
+                <i class="fas fa-star"></i> Customer Rating
+            </label>
+            {% for rating in "54321" %}
+            <div class="rating-option" onclick="filterByRating({{ rating }})" 
+                 style="cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
+                <div class="rating-stars">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= rating|add:"0" %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span class="rating-text">& Up</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Quick Links -->
+        <div class="filter-section" style="border-top: 2px solid #e2e8f0; padding-top: 1rem;">
+            <label class="sort-label">
+                <i class="fas fa-link"></i> Quick Links
+            </label>
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 0.5rem;">
+                    <a href="{% url 'eccommence:category_list' %}" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
+                        <i class="fas fa-th-large"></i> All Categories
+                    </a>
+                </li>
+                <li style="margin-bottom: 0.5rem;">
+                    <a href="{% url 'eccommence:home' %}?on_sale=1" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
+                        <i class="fas fa-tags"></i> Sale Items
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'eccommence:home' %}?sort=newest" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
+                        <i class="fas fa-sparkles"></i> New Arrivals
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- Products Grid Section -->
+    <section class="products-section">
+       
+
+        <!-- Products Grid -->
+        <div class="products-grid">
+            {% if products %}
+                {% for product in products %}
+                <div class="product-card">
+                    <!-- Sale Badge -->
+                    {% if product.is_on_sale %}
+                        <div class="product-badge">
+                            {% if product.discount_percentage %}
+                                -{{ product.discount_percentage }}%
+                            {% else %}
+                                Sale
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Product Image -->
+                    <a href="{% url 'eccommence:product_detail' product.slug %}">
+                        {% if product.images.exists %}
+                            <img src="{{ product.images.first.image.url }}" 
+                                 alt="{{ product.name }}" 
+                                 class="product-image"
+                                 loading="lazy">
+                        {% else %}
+                            <img src="{% static 'images/no-image.png' %}" 
+                                 alt="{{ product.name }}" 
+                                 class="product-image">
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Product Title -->
+                    <a href="{% url 'eccommence:product_detail' product.slug %}" class="product-title">
+                        {{ product.name|truncatewords:10 }}
+                    </a>
+                    
+                    <!-- Rating -->
+                    <div class="product-rating">
+                        <div class="rating-stars-small">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= product.rating|floatformat:0|add:"0" %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="rating-count">({{ product.total_reviews }})</span>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="product-price">
+                        {% if product.is_on_sale and product.sale_price %}
+                            <div class="price-main">UGX {{ product.sale_price|floatformat:0 }}</div>
+                            <div>
+                                <span class="price-old">UGX {{ product.price|floatformat:0 }}</span>
+                                {% if product.discount_percentage %}
+                                <span class="discount-badge">-{{ product.discount_percentage }}%</span>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="price-main">UGX {{ product.price|floatformat:0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="product-actions">
+                        {% if product.is_in_stock %}
+                            <button type="button" class="btn-add-cart add-cart-home" data-product-id="{{ product.id }}">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn-add-cart" disabled style="background: #999; cursor: not-allowed;">
+                                <i class="fas fa-ban"></i> Out of Stock
+                            </button>
+                        {% endif %}
+                        <button class="btn-wishlist" data-product-id="{{ product.id }}" title="Add to Wishlist">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Empty State -->
+                <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: #f8fafc; border-radius: 12px;">
+                    <i class="fas fa-search" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #475569; margin-bottom: 0.5rem; font-size: 1.5rem;">No Products Found</h3>
+                    <p style="color: #94a3b8; margin-bottom: 2rem;">
+                        {% if query %}
+                            No results for "{{ query }}". Try different keywords or adjust your filters.
+                        {% else %}
+                            Try adjusting your filters or browse our categories.
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'eccommence:home' %}" 
+                       style="display: inline-block; padding: 0.75rem 2rem; background: #2563eb; color: white; 
+                              text-decoration: none; border-radius: 8px; font-weight: 600;">
+                        <i class="fas fa-redo"></i> Clear Filters
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <div class="pagination-bottom">
+            <div class="pagination-pages">
+                {% if products.has_previous %}
+                    <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="page-btn-arrow" title="Previous Page">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                {% endif %}
+                
+                {% for num in products.paginator.page_range %}
+                    {% if products.number == num %}
+                        <button class="page-btn active">{{ num }}</button>
+                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="page-btn">{{ num }}</a>
+                    {% elif num == 1 or num == products.paginator.num_pages %}
+                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="page-btn">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if products.has_next %}
+                    <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="page-btn-arrow" title="Next Page">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+            
+            <!-- Page Info -->
+            <div style="text-align: center; margin-top: 1rem; color: #64748b; font-size: 0.875rem;">
+                Page {{ products.number }} of {{ products.paginator.num_pages }}
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+<script>
+// Price Range - Sync Slider with Input
+const minPriceSlider = document.getElementById('minPriceSlider');
+const maxPriceSlider = document.getElementById('maxPriceSlider');
+const minPriceInput = document.getElementById('minPrice');
+const maxPriceInput = document.getElementById('maxPrice');
+const priceTrack = document.getElementById('priceTrack');
+
+function updatePriceSlider() {
+    let minVal = parseInt(minPriceInput.value) || 0;
+    let maxVal = parseInt(maxPriceInput.value) || 5000000;
+    
+    // Ensure min doesn't exceed max
+    if (minVal > maxVal - 10000) {
+        minVal = maxVal - 10000;
+        minPriceInput.value = minVal;
+    }
+    
+    minPriceSlider.value = minVal;
+    maxPriceSlider.value = maxVal;
+    
+    updateSliderTrack();
+}
+
+function updatePriceInputs() {
+    let minVal = parseInt(minPriceSlider.value);
+    let maxVal = parseInt(maxPriceSlider.value);
+    
+    // Ensure sliders don't cross
+    if (minVal > maxVal - 10000) {
+        minVal = maxVal - 10000;
+        minPriceSlider.value = minVal;
+    }
+    
+    minPriceInput.value = minVal;
+    maxPriceInput.value = maxVal;
+    
+    updateSliderTrack();
+}
+
+function updateSliderTrack() {
+    const minVal = parseInt(minPriceSlider.value);
+    const maxVal = parseInt(maxPriceSlider.value);
+    const percent1 = (minVal / 5000000) * 100;
+    const percent2 = (maxVal / 5000000) * 100;
+    
+    priceTrack.style.left = percent1 + '%';
+    priceTrack.style.width = (percent2 - percent1) + '%';
+}
+
+// Event listeners for inputs
+if (minPriceInput && maxPriceInput) {
+    minPriceInput.addEventListener('input', updatePriceSlider);
+    maxPriceInput.addEventListener('input', updatePriceSlider);
+    minPriceSlider.addEventListener('input', updatePriceInputs);
+    maxPriceSlider.addEventListener('input', updatePriceInputs);
+    
+    // Initial update
+    updateSliderTrack();
+}
+
+// Category Select Navigation
+document.getElementById('categorySelect')?.addEventListener('change', function() {
+    if (this.value) {
+        window.location.href = this.value;
+    }
+});
+
+// Sort Functionality
+document.getElementById('sortSelect')?.addEventListener('change', function() {
+    const url = new URL(window.location);
+    if (this.value && this.value !== 'featured') {
+        url.searchParams.set('sort', this.value);
+    } else {
+        url.searchParams.delete('sort');
+    }
+    window.location.href = url.toString();
+});
+
+// Filter by Rating
+function filterByRating(rating) {
+    const url = new URL(window.location);
+    url.searchParams.set('min_rating', rating);
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+
+// Apply All Filters
+function applyFilters() {
+    const url = new URL(window.location);
+    
+    // Price filters
+    const minPrice = document.getElementById('minPrice')?.value;
+    const maxPrice = document.getElementById('maxPrice')?.value;
+    
+    if (minPrice && minPrice != '0') url.searchParams.set('min_price', minPrice);
+    else url.searchParams.delete('min_price');
+    
+    if (maxPrice && maxPrice != '5000000') url.searchParams.set('max_price', maxPrice);
+    else url.searchParams.delete('max_price');
+            
+        // Brand filter (single select dropdown)
+        const brandSelect = document.getElementById('brandSelect');
+        const selectedBrand = brandSelect?.value;
+
+        if (selectedBrand && selectedBrand !== '') {
+            url.searchParams.set('vendors', selectedBrand);
+        } else {
+            url.searchParams.delete('vendors');
+        }
+        // Brand Select Navigation
+document.getElementById('brandSelect')?.addEventListener('change', function() {
+    applyFilters();
+});
+    // Availability filters
+    if (document.getElementById('in_stock')?.checked) {
+        url.searchParams.set('in_stock', '1');
+    } else {
+        url.searchParams.delete('in_stock');
+    }
+    
+    if (document.getElementById('on_sale')?.checked) {
+        url.searchParams.set('on_sale', '1');
+    } else {
+        url.searchParams.delete('on_sale');
+    }
+    
+    // Reset to page 1
+    url.searchParams.delete('page');
+    
+    window.location.href = url.toString();
+}
+
+// ADD TO CART AJAX 
+$(document).on("click", ".add-cart-home", function(e) {
+    e.preventDefault();
+    const productId = $(this).data('product-id');
+    const button = $(this);
+    
+    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+    
+    $.ajax({
+        type: "POST",
+        url: "{% url 'cart:cart_add' %}",
+        data: {
+            product_id: productId,
+            product_qty: 1,
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+            action: "post",
+        },
+        success: function(json) {
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) cartCount.textContent = json.qty;
+            
+            button.prop('disabled', false).html('<i class="fas fa-cart-plus"></i> Add to Cart');
+            showNotification('Product added to cart!', 'success');
+        },
+        error: function(xhr, errmsg, err) {
+            button.prop('disabled', false).html('<i class="fas fa-cart-plus"></i> Add to Cart');
+            showNotification('Error adding to cart', 'error');
+            console.error(xhr.responseText);
+        }
+    });
+});
+
+// Wishlist Functionality
+$(document).on('click', '.btn-wishlist', function(e) {
+    e.preventDefault();
+    const button = $(this);
+    const productId = button.data('product-id');
+    
+    fetch("{% url 'cart:wishlist_toggle' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': "{{ csrf_token }}"
+        },
+        body: JSON.stringify({ product_id: productId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const heartIcon = button.find('i');
+            if (data.in_wishlist) {
+                heartIcon.removeClass('far').addClass('fas');
+                showNotification('Added to wishlist', 'success');
+            } else {
+                heartIcon.removeClass('fas').addClass('far');
+                showNotification('Removed from wishlist', 'info');
+            }
+            
+            // Update navbar count
+            const navWishlistCount = document.querySelector('.wishlist-count');
+            if (navWishlistCount) {
+                navWishlistCount.textContent = data.wishlist_count;
+                if (data.wishlist_count > 0) {
+                    navWishlistCount.style.display = 'flex';
+                } else {
+                    navWishlistCount.style.display = 'none';
+                }
+            }
+        }
+    })
+    .catch(error => {
+        showNotification('Please login to use wishlist', 'error');
+    });
+});
+
+// Notification Helper
+function showNotification(message, type = 'info') {
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6'
+    };
+    
+    const notification = document.createElement('div');
+    notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${message}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: white;
+        color: ${colors[type]};
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid ${colors[type]};
+        font-size: 0.9rem;
+        max-width: 320px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+{% endblock %}

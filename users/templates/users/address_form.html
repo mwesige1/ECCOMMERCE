@@ -1,0 +1,1416 @@
+{% load static %}
+
+{% block title %}{{ action }} Address | {{ request.tenant.name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+    /* ═══════════════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════════════ */
+    :root {
+        --primary:         #1a56db;
+        --primary-dark:    #1e40af;
+        --primary-light:   #eff6ff;
+        --primary-glow:    rgba(26, 86, 219, 0.14);
+        --primary-border:  #93c5fd;
+
+        --accent:          #f59e0b;
+        --success:         #059669;
+        --success-light:   #ecfdf5;
+        --success-border:  #6ee7b7;
+        --error:           #dc2626;
+        --error-light:     #fef2f2;
+        --error-border:    #fca5a5;
+
+        --white:           #ffffff;
+        --canvas:          #f0f4f8;
+        --surface:         #f8fafc;
+        --surface-2:       #f1f5f9;
+        --border:          #e2e8f0;
+        --border-strong:   #cbd5e1;
+
+        --text-primary:    #0f172a;
+        --text-secondary:  #334155;
+        --text-muted:      #64748b;
+        --text-placeholder:#94a3b8;
+
+        --radius-xs:  4px;
+        --radius-sm:  8px;
+        --radius-md:  12px;
+        --radius-lg:  16px;
+        --radius-xl:  20px;
+        --radius-2xl: 28px;
+
+        --shadow-xs:  0 1px 2px rgba(0,0,0,.04);
+        --shadow-sm:  0 1px 4px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md:  0 4px 12px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.04);
+        --shadow-lg:  0 12px 24px rgba(0,0,0,.08), 0 4px 8px rgba(0,0,0,.04);
+        --shadow-xl:  0 24px 40px rgba(0,0,0,.10), 0 8px 16px rgba(0,0,0,.04);
+        --shadow-focus: 0 0 0 4px var(--primary-glow);
+        --shadow-error: 0 0 0 4px rgba(220,38,38,.10);
+
+        --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);
+        --ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);
+        --t-fast:     0.12s;
+        --t-base:     0.20s;
+        --t-slow:     0.35s;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ═══════════════════════════════════════════════════
+       BREADCRUMB
+    ═══════════════════════════════════════════════════ */
+    .bc-bar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0 32px;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(12px);
+        background: rgba(255,255,255,0.92);
+    }
+    .bc-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        color: var(--text-muted);
+        width: 100%;
+    }
+    .bc-inner a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color var(--t-fast);
+        padding: 2px 4px;
+        border-radius: var(--radius-xs);
+    }
+    .bc-inner a:hover { color: var(--primary); }
+    .bc-sep { color: var(--border-strong); font-size: 10px; }
+    .bc-current {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       PAGE LAYOUT
+    ═══════════════════════════════════════════════════ */
+    .af-page {
+        background: var(--canvas);
+        min-height: calc(100vh - 46px);
+        padding: 40px 24px 80px;
+    }
+    .af-inner {
+        max-width: 820px;
+        margin: 0 auto;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BACK LINK
+    ═══════════════════════════════════════════════════ */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 24px;
+        padding: 6px 12px 6px 8px;
+        border-radius: var(--radius-sm);
+        border: 1px solid transparent;
+        transition: all var(--t-base) var(--ease-out);
+    }
+    .back-link i {
+        font-size: 11px;
+        transition: transform var(--t-base) var(--ease-out);
+    }
+    .back-link:hover {
+        color: var(--primary);
+        background: var(--white);
+        border-color: var(--border);
+        box-shadow: var(--shadow-sm);
+    }
+    .back-link:hover i {
+        transform: translateX(-3px);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       PAGE HEADER
+    ═══════════════════════════════════════════════════ */
+    .page-header {
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .page-header-left h1 {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        line-height: 1.2;
+    }
+    .page-header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 18px;
+        box-shadow: 0 4px 12px rgba(26,86,219,0.35);
+        flex-shrink: 0;
+    }
+    .page-header-left p {
+        font-size: 13.5px;
+        color: var(--text-muted);
+        margin-top: 5px;
+        margin-left: 54px;
+    }
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-2xl);
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        box-shadow: var(--shadow-xs);
+    }
+    .step-badge .dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--primary);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       TRUST BAR
+    ═══════════════════════════════════════════════════ */
+    .trust-bar {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 14px 20px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        box-shadow: var(--shadow-xs);
+    }
+    .trust-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    .trust-item i {
+        color: var(--success);
+        font-size: 14px;
+    }
+    .trust-sep {
+        width: 1px;
+        height: 20px;
+        background: var(--border);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       FORM CARD
+    ═══════════════════════════════════════════════════ */
+    .form-card {
+        background: var(--white);
+        border-radius: var(--radius-2xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    /* ─── Section Header ─── */
+    .section-header {
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: linear-gradient(to bottom, var(--white), var(--surface));
+    }
+    .section-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 19px;
+        border: 1px solid #bfdbfe;
+        flex-shrink: 0;
+    }
+    .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.2px;
+    }
+    .section-sub {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+    .required-note {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    .required-note .req { color: var(--error); font-size: 14px; }
+
+    /* ─── Form Body ─── */
+    .card-body {
+        padding: 32px;
+    }
+
+    /* ─── Inline Alert ─── */
+    .alert {
+        padding: 14px 18px;
+        border-radius: var(--radius-md);
+        margin-bottom: 28px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 13px;
+        border: 1px solid transparent;
+        line-height: 1.5;
+    }
+    .alert i { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
+    .alert-error { background: var(--error-light); color: #991b1b; border-color: var(--error-border); }
+    .alert strong { font-weight: 700; display: block; margin-bottom: 2px; }
+
+    /* ═══════════════════════════════════════════════════
+       FORM SECTIONS
+    ═══════════════════════════════════════════════════ */
+    .form-section {
+        margin-bottom: 32px;
+    }
+    .form-section:last-child { margin-bottom: 0; }
+    .form-section-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .form-section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
+    .form-section-label i {
+        color: var(--primary);
+        font-size: 12px;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       GRID
+    ═══════════════════════════════════════════════════ */
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .form-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+    }
+    .col-span-2 { grid-column: span 2; }
+    .col-span-3 { grid-column: span 3; }
+
+    /* ═══════════════════════════════════════════════════
+       FIELD COMPONENTS
+    ═══════════════════════════════════════════════════ */
+    .field {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .field-label {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        letter-spacing: 0.1px;
+    }
+    .req { color: var(--error); }
+    .optional-tag {
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--text-placeholder);
+        background: var(--surface-2);
+        padding: 1px 6px;
+        border-radius: var(--radius-xs);
+        margin-left: 4px;
+    }
+
+    /* Input Wrapper */
+    .field-wrap {
+        position: relative;
+    }
+    .field-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-placeholder);
+        font-size: 13.5px;
+        pointer-events: none;
+        transition: color var(--t-base);
+        z-index: 1;
+    }
+    .field-wrap.has-icon .form-input,
+    .field-wrap.has-icon .form-select {
+        padding-left: 42px;
+    }
+    .field-wrap:focus-within .field-icon {
+        color: var(--primary);
+    }
+
+    /* Inputs */
+    .form-input,
+    .form-select,
+    .form-textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 14.5px;
+        color: var(--text-primary);
+        background: var(--white);
+        transition: all var(--t-base) var(--ease-out);
+        line-height: 1.5;
+        -webkit-appearance: none;
+        appearance: none;
+        font-family: inherit;
+    }
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+        color: var(--text-placeholder);
+        font-weight: 400;
+    }
+    .form-input:hover,
+    .form-select:hover,
+    .form-textarea:hover {
+        border-color: var(--border-strong);
+    }
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: var(--shadow-focus);
+        background: #fafcff;
+    }
+    .form-input.has-error,
+    .form-select.has-error,
+    .form-textarea.has-error {
+        border-color: var(--error);
+        background: var(--error-light);
+    }
+    .form-input.has-error:focus {
+        box-shadow: var(--shadow-error);
+    }
+    .form-input.valid {
+        border-color: var(--success);
+    }
+
+    /* Select custom arrow */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+        content: '\f078';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 10px;
+        pointer-events: none;
+        z-index: 1;
+    }
+    .select-wrap.has-icon::after {
+        right: 14px;
+    }
+    .form-select { padding-right: 38px; cursor: pointer; }
+
+    /* Textarea */
+    .form-textarea {
+        resize: vertical;
+        min-height: 96px;
+        padding-top: 12px;
+    }
+
+    /* Field Hint & Error */
+    .field-hint,
+    .field-error {
+        font-size: 12px;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        line-height: 1.4;
+    }
+    .field-hint {
+        color: var(--text-placeholder);
+    }
+    .field-hint i { font-size: 11px; }
+    .field-error {
+        color: var(--error);
+        font-weight: 500;
+        animation: shake 0.35s var(--ease-out);
+    }
+    .field-error i { font-size: 11px; }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-4px); }
+        75% { transform: translateX(4px); }
+    }
+
+    /* Valid checkmark */
+    .valid-mark {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--success);
+        font-size: 13px;
+        opacity: 0;
+        transition: opacity var(--t-base);
+        pointer-events: none;
+    }
+    .form-input.valid ~ .valid-mark { opacity: 1; }
+
+    /* ═══════════════════════════════════════════════════
+       ADDRESS TYPE SELECTOR (Radio Cards)
+    ═══════════════════════════════════════════════════ */
+    .type-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 0;
+    }
+    .type-card-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 16px 12px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all var(--t-base) var(--ease-out);
+        background: var(--white);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .type-card-label:hover {
+        border-color: var(--primary-border);
+        background: var(--primary-light);
+    }
+    .type-card-label input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0; height: 0;
+    }
+    .type-card-label input[type="radio"]:checked + .type-card-body {
+        color: var(--primary);
+    }
+    .type-card-label:has(input:checked) {
+        border-color: var(--primary);
+        background: var(--primary-light);
+        box-shadow: var(--shadow-focus);
+    }
+    .type-card-label:has(input:checked)::after {
+        content: '\f00c';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        top: 8px; right: 10px;
+        font-size: 10px;
+        color: var(--primary);
+    }
+    .type-card-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    .type-card-body i {
+        font-size: 22px;
+        color: var(--text-placeholder);
+        transition: color var(--t-base);
+    }
+    .type-card-label:has(input:checked) .type-card-body i {
+        color: var(--primary);
+    }
+    .type-card-body span {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+    .type-card-label:has(input:checked) .type-card-body span {
+        color: var(--primary-dark);
+    }
+    .type-card-body small {
+        font-size: 11px;
+        color: var(--text-placeholder);
+    }
+
+    /* Hide the original Django-rendered select for address_type */
+    .hidden-select { display: none; }
+
+    /* ═══════════════════════════════════════════════════
+       CHECKBOX (is_default)
+    ═══════════════════════════════════════════════════ */
+    .toggle-field {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 20px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all var(--t-base) var(--ease-out);
+        background: var(--surface);
+        user-select: none;
+    }
+    .toggle-field:hover {
+        border-color: var(--primary-border);
+        background: var(--primary-light);
+    }
+    .toggle-wrap {
+        flex-shrink: 0;
+    }
+    .toggle-wrap input[type="checkbox"] {
+        display: none;
+    }
+    .toggle-switch {
+        width: 44px;
+        height: 24px;
+        background: var(--border-strong);
+        border-radius: var(--radius-2xl);
+        position: relative;
+        transition: background var(--t-base) var(--ease-out);
+        cursor: pointer;
+    }
+    .toggle-switch::after {
+        content: '';
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--white);
+        top: 3px;
+        left: 3px;
+        transition: transform var(--t-base) var(--ease-spring);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-wrap input:checked + .toggle-switch {
+        background: var(--primary);
+    }
+    .toggle-wrap input:checked + .toggle-switch::after {
+        transform: translateX(20px);
+    }
+    .toggle-content {
+        flex: 1;
+    }
+    .toggle-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    .toggle-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+    .toggle-star {
+        color: var(--accent);
+        font-size: 18px;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       FORM ACTIONS
+    ═══════════════════════════════════════════════════ */
+    .form-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 32px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        gap: 12px;
+    }
+    .form-actions-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--text-muted);
+    }
+    .form-actions-meta i { color: var(--success); font-size: 13px; }
+    .form-actions-btns {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all var(--t-base) var(--ease-out);
+        white-space: nowrap;
+        font-family: inherit;
+        letter-spacing: 0.1px;
+        position: relative;
+        overflow: hidden;
+    }
+    .btn::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.08), transparent);
+        border-radius: inherit;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+        color: var(--white);
+        box-shadow: 0 2px 6px rgba(26,86,219,0.40), 0 1px 2px rgba(0,0,0,0.12);
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        box-shadow: 0 6px 16px rgba(26,86,219,0.45), 0 2px 4px rgba(0,0,0,0.15);
+        transform: translateY(-1px);
+    }
+    .btn-primary:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(26,86,219,0.30);
+    }
+    .btn-primary:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .btn-ghost {
+        background: var(--white);
+        color: var(--text-secondary);
+        border: 1.5px solid var(--border);
+        box-shadow: var(--shadow-xs);
+    }
+    .btn-ghost:hover {
+        background: var(--surface-2);
+        border-color: var(--border-strong);
+        color: var(--text-primary);
+    }
+
+    /* Spinner */
+    .btn-spinner {
+        display: none;
+        width: 15px; height: 15px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        flex-shrink: 0;
+    }
+    .btn.loading .btn-spinner { display: block; }
+    .btn.loading .btn-icon { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════════════
+       TOAST NOTIFICATIONS
+    ═══════════════════════════════════════════════════ */
+    .toast-stack {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+    .toast {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        padding: 16px 18px;
+        min-width: 300px;
+        max-width: 380px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        pointer-events: all;
+        animation: toastIn 0.4s var(--ease-spring) forwards;
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+    }
+    .toast::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px;
+        border-radius: var(--radius-xs) 0 0 var(--radius-xs);
+    }
+    .toast.success::before { background: var(--success); }
+    .toast.error::before   { background: var(--error); }
+    .toast.warning::before { background: var(--accent); }
+    .toast.info::before    { background: var(--primary); }
+    .toast.exiting {
+        animation: toastOut 0.25s var(--ease-out) forwards;
+    }
+    @keyframes toastIn {
+        from { transform: translateX(110%) scale(0.85); opacity: 0; }
+        to   { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes toastOut {
+        to { transform: translateX(110%) scale(0.9); opacity: 0; }
+    }
+    .toast-icon-wrap {
+        width: 36px; height: 36px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    .toast.success .toast-icon-wrap { background: var(--success-light); color: var(--success); }
+    .toast.error   .toast-icon-wrap { background: var(--error-light);   color: var(--error);   }
+    .toast.info    .toast-icon-wrap { background: var(--primary-light); color: var(--primary); }
+    .toast-body { flex: 1; min-width: 0; }
+    .toast-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .toast-msg   { font-size: 13px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+    .toast-close {
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 4px;
+        transition: color var(--t-fast);
+        flex-shrink: 0;
+        margin-top: -2px;
+    }
+    .toast-close:hover { color: var(--text-primary); }
+    .toast-progress {
+        position: absolute;
+        bottom: 0; left: 0;
+        height: 2px;
+        background: rgba(0,0,0,0.07);
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        animation: progressBar 5s linear forwards;
+    }
+    @keyframes progressBar {
+        from { width: 100%; }
+        to   { width: 0%; }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+        .af-page { padding: 24px 16px 60px; }
+        .bc-bar  { padding: 0 16px; }
+        .card-body { padding: 20px; }
+        .section-header { padding: 18px 20px; }
+        .form-actions { padding: 16px 20px; flex-direction: column; align-items: stretch; }
+        .form-actions-btns { flex-direction: column; }
+        .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+        .col-span-2, .col-span-3 { grid-column: span 1; }
+        .type-cards { grid-template-columns: 1fr; }
+        .required-note { display: none; }
+        .trust-sep { display: none; }
+        .trust-bar { gap: 14px; }
+        .toast-stack { bottom: 16px; right: 12px; left: 12px; }
+        .toast { min-width: auto; max-width: 100%; }
+    }
+    @media (max-width: 480px) {
+        .page-header-left h1 { font-size: 22px; }
+        .page-header-icon { width: 38px; height: 38px; font-size: 15px; }
+        .step-badge { display: none; }
+    }
+</style>
+
+<!-- ──────────────────────────────────────────────────────
+     BREADCRUMB (Sticky)
+──────────────────────────────────────────────────────── -->
+<div class="bc-bar">
+    <nav class="bc-inner" aria-label="Breadcrumb">
+        <a href="{% url 'eccommence:home' %}"><i class="fas fa-home" style="font-size:10px;"></i> Home</a>
+        <span class="bc-sep"><i class="fas fa-chevron-right" style="font-size:9px;"></i></span>
+        <a href="{% url 'users:profile_view' %}">My Account</a>
+        <span class="bc-sep"><i class="fas fa-chevron-right" style="font-size:9px;"></i></span>
+        <a href="{% url 'users:address_list' %}">Address Book</a>
+        <span class="bc-sep"><i class="fas fa-chevron-right" style="font-size:9px;"></i></span>
+        <span class="bc-current">{{ action }} Address</span>
+    </nav>
+</div>
+
+<!-- Toast Stack -->
+<div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+<!-- ──────────────────────────────────────────────────────
+     MAIN PAGE
+──────────────────────────────────────────────────────── -->
+<div class="af-page">
+    <div class="af-inner">
+
+        <!-- Back Link -->
+        <a href="{% url 'users:address_list' %}" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            Back to Address Book
+        </a>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1>
+                    <div class="page-header-icon">
+                        <i class="fas fa-map-location-dot"></i>
+                    </div>
+                    {{ action }} Address
+                </h1>
+                <p>Manage your delivery and billing locations for faster checkout</p>
+            </div>
+            <div class="step-badge">
+                <span class="dot"></span>
+                Address Details
+            </div>
+        </div>
+
+        <!-- Trust Bar -->
+        <div class="trust-bar" role="list">
+            <div class="trust-item" role="listitem">
+                <i class="fas fa-shield-halved"></i>
+                SSL Encrypted &amp; Secure
+            </div>
+            <div class="trust-sep" aria-hidden="true"></div>
+            <div class="trust-item" role="listitem">
+                <i class="fas fa-lock"></i>
+                Private &amp; Protected
+            </div>
+            <div class="trust-sep" aria-hidden="true"></div>
+            <div class="trust-item" role="listitem">
+                <i class="fas fa-circle-check"></i>
+                Saved for Fast Checkout
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="form-card">
+
+            <!-- Card Header -->
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-location-dot"></i>
+                </div>
+                <div>
+                    <div class="section-title">Address Information</div>
+                    <div class="section-sub">Complete all required fields to save your address</div>
+                </div>
+                <div class="required-note">
+                    <span class="req">*</span> Required fields
+                </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="card-body">
+
+                <!-- Non-field errors -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-error" role="alert">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <div>
+                        <strong>Please fix the following:</strong>
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <form method="post" 
+                      action="{% if action == 'Add' %}{% url 'users:address_add' %}{% else %}{% url 'users:address_edit' address.id %}{% endif %}"
+                      id="addressForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- ── SECTION 1: Address Type ── -->
+                    <div class="form-section">
+                        <div class="form-section-label">
+                            <i class="fas fa-tag"></i>
+                            Address Type
+                        </div>
+
+                        <!-- Hide Django's select; we render radio cards instead -->
+                        <div style="display:none;">{{ form.address_type }}</div>
+
+                        <div class="type-cards" role="group" aria-label="Select address type">
+                            <label class="type-card-label">
+                                <input type="radio" name="address_type_ui" value="shipping"
+                                    {% if form.address_type.value == 'shipping' or not form.address_type.value %}checked{% endif %}>
+                                <div class="type-card-body">
+                                    <i class="fas fa-truck"></i>
+                                    <span>Shipping</span>
+                                    <small>Delivery address</small>
+                                </div>
+                            </label>
+                            <label class="type-card-label">
+                                <input type="radio" name="address_type_ui" value="billing"
+                                    {% if form.address_type.value == 'billing' %}checked{% endif %}>
+                                <div class="type-card-body">
+                                    <i class="fas fa-credit-card"></i>
+                                    <span>Billing</span>
+                                    <small>Payment address</small>
+                                </div>
+                            </label>
+                            <label class="type-card-label">
+                                <input type="radio" name="address_type_ui" value="both"
+                                    {% if form.address_type.value == 'both' %}checked{% endif %}>
+                                <div class="type-card-body">
+                                    <i class="fas fa-copy"></i>
+                                    <span>Both</span>
+                                    <small>Shipping &amp; billing</small>
+                                </div>
+                            </label>
+                        </div>
+
+                        {% if form.address_type.errors %}
+                        <div class="field-error" style="margin-top:10px;">
+                            <i class="fas fa-circle-exclamation"></i>
+                            {{ form.address_type.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- ── SECTION 2: Contact Info ── -->
+                    <div class="form-section">
+                        <div class="form-section-label">
+                            <i class="fas fa-user"></i>
+                            Contact Information
+                        </div>
+                        <div class="form-grid-2">
+
+                            <!-- Full Name -->
+                            <div class="field col-span-2">
+                                <label class="field-label" for="{{ form.full_name.id_for_label }}">
+                                    Full Name <span class="req">*</span>
+                                </label>
+                                <div class="field-wrap has-icon">
+                                    <i class="fas fa-user field-icon"></i>
+                                    {{ form.full_name }}
+                                    <span class="valid-mark"><i class="fas fa-circle-check"></i></span>
+                                </div>
+                                {% if form.full_name.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.full_name.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="field">
+                                <label class="field-label" for="{{ form.phone.id_for_label }}">
+                                    Phone Number <span class="req">*</span>
+                                </label>
+                                <div class="field-wrap has-icon">
+                                    <i class="fas fa-phone field-icon"></i>
+                                    {{ form.phone }}
+                                </div>
+                                {% if form.phone.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.phone.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <div class="field-hint">
+                                    <i class="fas fa-circle-info"></i>
+                                    For delivery updates and contact
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="field">
+                                <label class="field-label" for="{{ form.email.id_for_label }}">
+                                    Email Address
+                                    <span class="optional-tag">Optional</span>
+                                </label>
+                                <div class="field-wrap has-icon">
+                                    <i class="fas fa-envelope field-icon"></i>
+                                    {{ form.email }}
+                                </div>
+                                {% if form.email.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.email.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <div class="field-hint">
+                                    <i class="fas fa-circle-info"></i>
+                                    Receive delivery notifications
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── SECTION 3: Address ── -->
+                    <div class="form-section">
+                        <div class="form-section-label">
+                            <i class="fas fa-location-dot"></i>
+                            Delivery Address
+                        </div>
+                        <div class="form-grid-2">
+
+                            <!-- Address Line 1 -->
+                            <div class="field col-span-2">
+                                <label class="field-label" for="{{ form.address_line1.id_for_label }}">
+                                    Street Address <span class="req">*</span>
+                                </label>
+                                <div class="field-wrap has-icon">
+                                    <i class="fas fa-house field-icon"></i>
+                                    {{ form.address_line1 }}
+                                </div>
+                                {% if form.address_line1.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.address_line1.errors.0 }}
+                                </div>
+                                {% endif %}
+                                <div class="field-hint">
+                                    <i class="fas fa-circle-info"></i>
+                                    House number, street name
+                                </div>
+                            </div>
+
+                            <!-- Address Line 2 -->
+                            <div class="field col-span-2">
+                                <label class="field-label" for="{{ form.address_line2.id_for_label }}">
+                                    Apartment / Suite / Floor
+                                    <span class="optional-tag">Optional</span>
+                                </label>
+                                <div class="field-wrap has-icon">
+                                    <i class="fas fa-building field-icon"></i>
+                                    {{ form.address_line2 }}
+                                </div>
+                                {% if form.address_line2.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.address_line2.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- City -->
+                            <div class="field">
+                                <label class="field-label" for="{{ form.city.id_for_label }}">
+                                    City / Town <span class="req">*</span>
+                                </label>
+                                <div class="field-wrap has-icon">
+                                    <i class="fas fa-city field-icon"></i>
+                                    {{ form.city }}
+                                </div>
+                                {% if form.city.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.city.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- State -->
+                            <div class="field">
+                                <label class="field-label" for="{{ form.state.id_for_label }}">
+                                    State / Province / Region
+                                    <span class="optional-tag">Optional</span>
+                                </label>
+                                <div class="field-wrap has-icon">
+                                    <i class="fas fa-map-pin field-icon"></i>
+                                    {{ form.state }}
+                                </div>
+                                {% if form.state.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.state.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Postal Code -->
+                            <div class="field">
+                                <label class="field-label" for="{{ form.postal_code.id_for_label }}">
+                                    Postal / ZIP Code
+                                    <span class="optional-tag">Optional</span>
+                                </label>
+                                <div class="field-wrap has-icon">
+                                    <i class="fas fa-hashtag field-icon"></i>
+                                    {{ form.postal_code }}
+                                </div>
+                                {% if form.postal_code.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.postal_code.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Country -->
+                            <div class="field">
+                                <label class="field-label" for="{{ form.country.id_for_label }}">
+                                    Country <span class="req">*</span>
+                                </label>
+                                <div class="field-wrap has-icon select-wrap">
+                                    <i class="fas fa-globe field-icon"></i>
+                                    {{ form.country }}
+                                </div>
+                                {% if form.country.errors %}
+                                <div class="field-error">
+                                    <i class="fas fa-circle-exclamation"></i>{{ form.country.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── SECTION 4: Extras ── -->
+                    <div class="form-section">
+                        <div class="form-section-label">
+                            <i class="fas fa-sliders"></i>
+                            Additional Options
+                        </div>
+
+                        <!-- Delivery Instructions -->
+                        <div class="field" style="margin-bottom: 16px;">
+                            <label class="field-label" for="{{ form.delivery_instructions.id_for_label }}">
+                                Delivery Instructions
+                                <span class="optional-tag">Optional</span>
+                            </label>
+                            <div class="field-wrap has-icon">
+                                <i class="fas fa-note-sticky field-icon" style="top:16px; transform:none;"></i>
+                                {{ form.delivery_instructions }}
+                            </div>
+                            {% if form.delivery_instructions.errors %}
+                            <div class="field-error">
+                                <i class="fas fa-circle-exclamation"></i>{{ form.delivery_instructions.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <div class="field-hint">
+                                <i class="fas fa-circle-info"></i>
+                                Gate code, landmarks, leave with security, etc.
+                            </div>
+                        </div>
+
+                        <!-- Default Toggle -->
+                        <label class="toggle-field" for="{{ form.is_default.id_for_label }}">
+                            <div class="toggle-wrap">
+                                {{ form.is_default }}
+                                <div class="toggle-switch" aria-hidden="true"></div>
+                            </div>
+                            <div class="toggle-content">
+                                <div class="toggle-title">Set as my default address</div>
+                                <div class="toggle-desc">This address will be pre-selected automatically at checkout</div>
+                            </div>
+                            <div class="toggle-star" aria-hidden="true">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </label>
+                        {% if form.is_default.errors %}
+                        <div class="field-error" style="margin-top:8px;">
+                            <i class="fas fa-circle-exclamation"></i>{{ form.is_default.errors.0 }}
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <div class="form-actions-meta">
+                    <i class="fas fa-shield-halved"></i>
+                    Your data is encrypted and secure
+                </div>
+                <div class="form-actions-btns">
+                    <a href="{% url 'users:address_list' %}" class="btn btn-ghost">
+                        <i class="fas fa-xmark"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" form="addressForm" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-floppy-disk btn-icon"></i>
+                        <div class="btn-spinner"></div>
+                        Save Address
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /.form-card -->
+
+    </div><!-- /.af-inner -->
+</div><!-- /.af-page -->
+
+<script>
+(function () {
+    "use strict";
+
+    /* ──────────────────────────────────────────────
+       TOAST SYSTEM
+    ────────────────────────────────────────────── */
+    const toastStack  = document.getElementById('toastStack');
+    const toastIcons  = { success:'fa-circle-check', error:'fa-triangle-exclamation', info:'fa-circle-info', warning:'fa-triangle-exclamation' };
+
+    function toast(title, message, type = 'success') {
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.setAttribute('role', 'alert');
+        el.innerHTML = `
+            <div class="toast-icon-wrap">
+                <i class="fas ${toastIcons[type] || toastIcons.info}"></i>
+            </div>
+            <div class="toast-body">
+                <div class="toast-title">${title}</div>
+                ${message ? `<div class="toast-msg">${message}</div>` : ''}
+            </div>
+            <div class="toast-close" role="button" aria-label="Dismiss" tabindex="0">
+                <i class="fas fa-xmark"></i>
+            </div>
+            <div class="toast-progress"></div>`;
+
+        el.querySelector('.toast-close').addEventListener('click', () => dismissToast(el));
+        el.querySelector('.toast-close').addEventListener('keydown', e => { if (e.key === 'Enter') dismissToast(el); });
+        toastStack.appendChild(el);
+        const timer = setTimeout(() => dismissToast(el), 5000);
+        el.addEventListener('mouseenter', () => clearTimeout(timer));
+    }
+
+    window.dismissToast = function (el) {
+        el.classList.add('exiting');
+        setTimeout(() => el.remove(), 260);
+    };
+
+    /* ──────────────────────────────────────────────
+       APPLY DJANGO WIDGET CLASSES
+    ────────────────────────────────────────────── */
+    const form = document.getElementById('addressForm');
+
+    form.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]')
+        .forEach(el => el.classList.add('form-input'));
+    form.querySelectorAll('select')
+        .forEach(el => el.classList.add('form-select'));
+    form.querySelectorAll('textarea')
+        .forEach(el => el.classList.add('form-textarea'));
+
+    /* ──────────────────────────────────────────────
+       ADDRESS TYPE: SYNC UI RADIO → HIDDEN SELECT
+    ────────────────────────────────────────────── */
+    const hiddenSelect = document.getElementById('{{ form.address_type.id_for_label }}');
+    const typeRadios   = document.querySelectorAll('input[name="address_type_ui"]');
+
+    function syncTypeToSelect() {
+        const checked = document.querySelector('input[name="address_type_ui"]:checked');
+        if (hiddenSelect && checked) hiddenSelect.value = checked.value;
+    }
+    typeRadios.forEach(r => r.addEventListener('change', syncTypeToSelect));
+    syncTypeToSelect();
+
+    /* ──────────────────────────────────────────────
+       TOGGLE SWITCH VISUAL
+    ────────────────────────────────────────────── */
+    const defaultCb = document.getElementById('{{ form.is_default.id_for_label }}');
+    if (defaultCb) {
+        defaultCb.style.display = 'none';
+    }
+
+    /* ──────────────────────────────────────────────
+       LIVE FIELD VALIDATION (inline feedback)
+    ────────────────────────────────────────────── */
+    const requiredFields = form.querySelectorAll('.form-input, .form-select');
+    requiredFields.forEach(field => {
+        field.addEventListener('blur', function () {
+            if (this.hasAttribute('required') || this.closest('.field')?.querySelector('.req')) {
+                if (this.value.trim()) {
+                    this.classList.add('valid');
+                    this.classList.remove('has-error');
+                }
+            }
+        });
+        field.addEventListener('input', function () {
+            if (this.classList.contains('has-error') && this.value.trim()) {
+                this.classList.remove('has-error');
+            }
+        });
+    });
+
+    /* ──────────────────────────────────────────────
+       FORM SUBMIT — LOADING STATE
+    ────────────────────────────────────────────── */
+    form.addEventListener('submit', function () {
+        syncTypeToSelect();
+        const btn = document.getElementById('submitBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+    });
+
+    /* ──────────────────────────────────────────────
+       DJANGO MESSAGES → TOASTS
+    ────────────────────────────────────────────── */
+    {% if messages %}
+        {% for message in messages %}
+        toast(
+            "{{ message.tags|capfirst|default:'Notice' }}",
+            "{{ message|escapejs }}",
+            "{{ message.tags|default:'info' }}"
+        );
+        {% endfor %}
+    {% endif %}
+
+})();
+</script>
+
+{% endblock %}

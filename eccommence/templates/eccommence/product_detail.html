@@ -1,0 +1,534 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - {{ request.tenant.name }}{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div class="breadcrumb-container">
+    <nav class="breadcrumb">
+        <a href="{% url 'eccommence:home' %}"><i class="fas fa-home"></i> Home</a>
+        <span class="breadcrumb-separator">/</span>
+        {% if product.category %}
+        <a href="{% url 'eccommence:category_view' product.category.slug %}">{{ product.category.name }}</a>
+        <span class="breadcrumb-separator">/</span>
+        {% endif %}
+        <span>{{ product.name|truncatewords:5 }}</span>
+    </nav>
+</div>
+
+<!-- Product Detail -->
+<div class="product-wrapper">
+    <!-- Gallery -->
+    <div class="gallery">
+        <div class="thumbnails">
+            {% for image in product.images.all %}
+            <img src="{{ image.image.url }}" alt="{{ product.name }}"
+                class="thumb {% if forloop.first %}active{% endif %}" data-full="{{ image.image.url }}">
+            {% endfor %}
+
+            {% if not product.images.exists %}
+            <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" class="thumb active">
+            {% endif %}
+        </div>
+        <div class="main-img-container">
+            {% if product.images.exists %}
+            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="main-img" id="mainImage">
+            {% else %}
+            <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" class="main-img" id="mainImage">
+            {% endif %}
+            
+            <!-- Zoom Icon -->
+            <button class="zoom-btn" id="zoomBtn">
+                <i class="fas fa-search-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="info">
+        <div class="brand">
+            <i class="fas fa-store"></i> {{ product.vendor.store_name }}
+        </div>
+        <h1 class="title">{{ product.name }}</h1>
+
+        <div class="rating-row">
+            <div class="stars">
+                {% for i in "12345" %}
+                {% if forloop.counter <= product.rating|floatformat:0|add:"0" %}
+                    <i class="fas fa-star"></i>
+                {% else %}
+                    <i class="far fa-star"></i>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <a href="#reviews" class="reviews-link">{{ product.total_reviews }} Reviews</a>
+            <span>•</span>
+            <span class="stock {% if not product.is_in_stock %}out-of-stock{% endif %}">
+                {% if product.is_in_stock %}
+                    <i class="fas fa-check-circle"></i> In Stock
+                {% else %}
+                    <i class="fas fa-times-circle"></i> Out of Stock
+                {% endif %}
+                {% if product.total_sales %} • {{ product.total_sales }}+ sold{% endif %}
+            </span>
+        </div>
+
+        <p class="short-description">
+            {{ product.description|truncatewords:50 }}
+        </p>
+
+        <div class="price-section">
+            <div class="price-row">
+                {% if product.is_on_sale and product.sale_price %}
+                <span class="current-price">UGX {{ product.sale_price|floatformat:0 }}</span>
+                <span class="old-price">UGX {{ product.price|floatformat:0 }}</span>
+                <span class="discount">-{{ product.discount_percentage }}%</span>
+                {% else %}
+                <span class="current-price">UGX {{ product.price|floatformat:0 }}</span>
+                {% endif %}
+            </div>
+            <div class="delivery-info">
+                <i class="fas fa-shipping-fast"></i>
+                <span>Free Delivery • Arrives in 1-3 days</span>
+            </div>
+            <div class="trust-badges">
+                <div class="badge-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure Payment</span>
+                </div>
+                <div class="badge-item">
+                    <i class="fas fa-undo"></i>
+                    <span>7-Day Returns</span>
+                </div>
+                <div class="badge-item">
+                    <i class="fas fa-certificate"></i>
+                    <span>Authentic</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Variants/Options (if exists) -->
+        {% if product.variants.exists %}
+        <div class="variants-section">
+            <label class="variant-label">Select Variant:</label>
+            <div class="variant-options">
+                {% for variant in product.variants.all %}
+                <button class="variant-btn {% if forloop.first %}active{% endif %}" 
+                        data-variant-id="{{ variant.id }}"
+                        data-price="{{ variant.price_adjustment }}">
+                    {{ variant.name }}: {{ variant.value }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="actions">
+            {% if product.is_in_stock %}
+            <button class="add-to-cart-btn" id="addToCartBtn" data-product-id="{{ product.id }}">
+                <i class="fas fa-cart-plus"></i> Add to Cart
+            </button>
+            {% else %}
+            <button class="add-to-cart-btn disabled" disabled>
+                <i class="fas fa-ban"></i> Out of Stock
+            </button>
+            {% endif %}
+
+            <button class="wishlist-btn" data-product-id="{{ product.id }}">
+                <i class="{% if in_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
+                <span class="wishlist-text">{% if in_wishlist %}Wishlist{% else %}Wishlist{% endif %}</span>
+            </button>
+
+            <button class="share-btn" id="shareBtn">
+                <i class="fas fa-share-alt"></i>
+                <span>Share</span>
+            </button>
+        </div>
+
+        <!-- Product Highlights -->
+        <div class="highlights">
+            <h3><i class="fas fa-bolt"></i> Key Highlights</h3>
+            <ul>
+                <li><i class="fas fa-check"></i> Verified by {{ request.tenant.name }}</li>
+                {% if product.is_on_sale %}
+                <li><i class="fas fa-tag"></i> Special offer - Save {{ product.discount_percentage }}%</li>
+                {% endif %}
+                {% if product.track_inventory and product.stock_quantity < 10 %}
+                <li><i class="fas fa-exclamation-triangle"></i> Only {{ product.stock_quantity }} left in stock</li>
+                {% endif %}
+                <li><i class="fas fa-truck"></i> Free shipping on orders over UGX 50,000</li>
+            </ul>
+        </div>
+
+        <!-- Product Tabs -->
+        <div class="product-tabs">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="description">Description</button>
+                <button class="tab-btn" data-tab="specifications">Specifications</button>
+                <button class="tab-btn" data-tab="reviews">Reviews ({{ product.total_reviews }})</button>
+            </div>
+
+            <div class="tab-content active" id="description">
+                <h3>Product Description</h3>
+                <div class="description-text">{{ product.description }}</div>
+            </div>
+
+            <div class="tab-content" id="specifications">
+                <h3>Specifications</h3>
+                <div class="specs-grid">
+                    <div class="spec-item">
+                        <span class="spec-label">Brand:</span>
+                        <span class="spec-value">{{ product.vendor.store_name }}</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Category:</span>
+                        <span class="spec-value">{{ product.category.name|default:"N/A" }}</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">SKU:</span>
+                        <span class="spec-value">{{ product.sku|default:"N/A" }}</span>
+                    </div>
+                    {% if product.weight %}
+                    <div class="spec-item">
+                        <span class="spec-label">Weight:</span>
+                        <span class="spec-value">{{ product.weight }} kg</span>
+                    </div>
+                    {% endif %}
+                    <div class="spec-item">
+                        <span class="spec-label">Availability:</span>
+                        <span class="spec-value">
+                            {% if product.is_in_stock %}In Stock{% else %}Out of Stock{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="reviews">
+                <div class="reviews-header">
+                    <h3>Customer Reviews</h3>
+                    <div class="rating-summary">
+                        <div class="average-rating">
+                            <span class="rating-number">{{ product.rating|floatformat:1 }}</span>
+                            <div class="stars">
+                                {% for i in "12345" %}
+                                {% if forloop.counter <= product.rating|floatformat:0|add:"0" %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="total-reviews">{{ product.total_reviews }} reviews</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reviews-list">
+                    {% if reviews %}
+                    {% for review in reviews %}
+                    <div class="review-item">
+                        <div class="review-header">
+                            <div class="reviewer-info">
+                                <div class="reviewer-avatar">
+                                    {{ review.customer.user.first_name|first|upper }}{{ review.customer.user.last_name|first|upper }}
+                                </div>
+                                <div>
+                                    <strong>{{ review.customer.user.get_full_name|default:review.customer.user.email }}</strong>
+                                    <div class="review-date">{{ review.created_at|date:"M d, Y" }}</div>
+                                </div>
+                            </div>
+                            <div class="stars">
+                                {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="review-text">{{ review.comment }}</p>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="no-reviews">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>No reviews yet. Be the first to review this product!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products -->
+<section class="related-section">
+    <h2 class="related-title">You Might Also Like</h2>
+    <div class="related-grid">
+        {% for related in related_products %}
+        <div class="related-card">
+            <a href="{% url 'eccommence:product_detail' related.slug %}">
+                {% if related.images.exists %}
+                <img src="{{ related.images.first.image.url }}" alt="{{ related.name }}" class="related-img" loading="lazy">
+                {% else %}
+                <img src="{% static 'images/no-image.png' %}" alt="{{ related.name }}" class="related-img">
+                {% endif %}
+            </a>
+            <div class="related-info">
+                <a href="{% url 'eccommence:product_detail' related.slug %}" class="related-name">
+                    {{ related.name|truncatewords:8 }}
+                </a>
+                <div class="related-stars">
+                    {% for i in "12345" %}
+                    {% if forloop.counter <= related.rating|floatformat:0|add:"0" %}
+                        <i class="fas fa-star"></i>
+                    {% else %}
+                        <i class="far fa-star"></i>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="related-price-row">
+                    {% if related.is_on_sale and related.sale_price %}
+                    <span class="related-price">UGX {{ related.sale_price|floatformat:0 }}</span>
+                    <span class="related-old-price">UGX {{ related.price|floatformat:0 }}</span>
+                    {% else %}
+                    <span class="related-price">UGX {{ related.price|floatformat:0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No related products found.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Image Zoom Modal -->
+<div id="imageZoomModal" class="zoom-modal">
+    <span class="close-zoom">&times;</span>
+    <img class="zoom-modal-content" id="zoomedImage">
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+// Thumbnail switching
+document.querySelectorAll('.thumb').forEach(thumb => {
+    thumb.addEventListener('click', function () {
+        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('mainImage').src = this.getAttribute('data-full');
+    });
+});
+
+// Image Zoom
+const zoomModal = document.getElementById('imageZoomModal');
+const zoomBtn = document.getElementById('zoomBtn');
+const zoomedImage = document.getElementById('zoomedImage');
+const closeZoom = document.querySelector('.close-zoom');
+
+if (zoomBtn) {
+    zoomBtn.addEventListener('click', () => {
+        zoomModal.style.display = 'block';
+        zoomedImage.src = document.getElementById('mainImage').src;
+    });
+}
+
+if (closeZoom) {
+    closeZoom.addEventListener('click', () => {
+        zoomModal.style.display = 'none';
+    });
+}
+
+window.addEventListener('click', (e) => {
+    if (e.target === zoomModal) {
+        zoomModal.style.display = 'none';
+    }
+});
+
+// Tab functionality
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const tabId = this.getAttribute('data-tab');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+            if (content.id === tabId) content.classList.add('active');
+        });
+    });
+});
+
+// Variant Selection
+document.querySelectorAll('.variant-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// Add to cart
+document.getElementById('addToCartBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    const button = this;
+    const productId = button.dataset.productId;
+    
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    
+    $.ajax({
+        type: "POST",
+        url: "{% url 'cart:cart_add' %}",
+        data: {
+            product_id: productId,
+            product_qty: 1,
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+        },
+        success: function (json) {
+            button.innerHTML = '<i class="fas fa-check"></i> Added to Cart';
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Cart';
+                button.disabled = false;
+            }, 2000);
+            
+            // Update cart count
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) cartCount.textContent = json.qty;
+            
+            showNotification('Product added to cart!', 'success');
+        },
+        error: function () {
+            button.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Cart';
+            button.disabled = false;
+            showNotification('Error adding to cart', 'error');
+        },
+    });
+});
+
+// Wishlist toggle
+document.querySelector('.wishlist-btn')?.addEventListener('click', function () {
+    const productId = this.getAttribute('data-product-id');
+    const button = this;
+    
+    {% if not user.is_authenticated %}
+        showNotification('Please login to add to wishlist', 'error');
+        setTimeout(() => {
+            window.location.href = "{% url 'users:login' %}";
+        }, 1500);
+        return;
+    {% endif %}
+    
+    button.disabled = true;
+    
+    fetch("{% url 'cart:wishlist_toggle' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': "{{ csrf_token }}"
+        },
+        body: JSON.stringify({ product_id: productId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const icon = button.querySelector('i');
+            if (data.in_wishlist) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+            }
+            
+            // Update navbar count
+            const navWishlistCount = document.querySelector('.wishlist-count');
+            if (navWishlistCount) {
+                navWishlistCount.textContent = data.wishlist_count;
+                if (data.wishlist_count > 0) {
+                    navWishlistCount.style.display = 'flex';
+                } else {
+                    navWishlistCount.style.display = 'none';
+                }
+            }
+            
+            showNotification(data.message, 'success');
+        }
+    })
+    .catch(() => showNotification('Error updating wishlist', 'error'))
+    .finally(() => {
+        button.disabled = false;
+    });
+});
+
+// Share button
+document.getElementById('shareBtn')?.addEventListener('click', () => {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ product.name }}',
+            text: 'Check out this product!',
+            url: window.location.href
+        }).catch(() => {});
+    } else {
+        // Fallback: copy link
+        navigator.clipboard.writeText(window.location.href);
+        showNotification('Link copied to clipboard!', 'success');
+    }
+});
+
+// Notification system
+function showNotification(message, type = 'info') {
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6'
+    };
+    
+    const notification = document.createElement('div');
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        ${message}
+    `;
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: white;
+        color: ${colors[type]};
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid ${colors[type]};
+        font-size: 0.9rem;
+        max-width: 320px;
+        animation: slideIn 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

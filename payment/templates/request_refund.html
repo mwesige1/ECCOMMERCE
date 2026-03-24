@@ -1,0 +1,967 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Request Refund - Order #{{ order.order_number }} - {{ request.tenant.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/variables.css' %}">
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<style>
+    /* ============================================
+       REFUND REQUEST PAGE - WORLD-CLASS DESIGN
+    ============================================ */
+    :root {
+        --primary:        #2563eb;
+        --primary-dark:   #1d4ed8;
+        --primary-light:  #eff6ff;
+        --primary-ring:   rgba(37, 99, 235, 0.15);
+        --accent:         #f59e0b;
+        --success:        #10b981;
+        --success-light:  #ecfdf5;
+        --error:          #ef4444;
+        --error-light:    #fef2f2;
+        --warning:        #f59e0b;
+        --warning-light:  #fffbeb;
+
+        --white:          #ffffff;
+        --surface:        #f8fafc;
+        --surface-2:      #f1f5f9;
+        --border:         #e2e8f0;
+        --border-focus:   #93c5fd;
+
+        --text-primary:   #0f172a;
+        --text-secondary: #475569;
+        --text-muted:     #94a3b8;
+        --text-placeholder: #cbd5e1;
+
+        --radius-sm:  6px;
+        --radius-md:  10px;
+        --radius-lg:  16px;
+        --radius-xl:  20px;
+        --radius-full: 9999px;
+
+        --shadow-xs:  0 1px 2px rgba(0,0,0,.05);
+        --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md:  0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+        --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.03);
+        --shadow-xl:  0 20px 25px -5px rgba(0,0,0,.08), 0 10px 10px -5px rgba(0,0,0,.02);
+
+        --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* ─── Breadcrumb ──────────────────────────────────── */
+    .bc-bar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    .bc-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+        width: 100%;
+    }
+    .bc-inner a { color: var(--primary); text-decoration: none; font-weight: 500; }
+    .bc-inner a:hover { text-decoration: underline; }
+    .bc-sep { color: var(--text-placeholder); }
+    .bc-inner span { color: var(--text-secondary); font-weight: 600; }
+
+    /* ─── Page Wrapper ────────────────────────────────── */
+    .rr-page {
+        background: var(--surface);
+        min-height: calc(100vh - 44px);
+        padding: 32px 24px 60px;
+    }
+    .rr-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+    }
+
+    /* ─── Back Link ───────────────────────────────────── */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        transition: var(--transition);
+    }
+    .back-link:hover {
+        color: var(--primary);
+        gap: 12px;
+        background: var(--white);
+        box-shadow: var(--shadow-sm);
+    }
+    .back-link i { font-size: 12px; }
+
+    /* ─── Page Header ─────────────────────────────────── */
+    .page-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .page-header h1 i {
+        color: var(--primary);
+    }
+
+    .order-info {
+        font-size: 14px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .order-info strong {
+        color: var(--text-primary);
+    }
+
+    /* ─── Grid Layout ─────────────────────────────────── */
+    .refund-grid {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* ─── Form Card ───────────────────────────────────── */
+    .form-card {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 20px 24px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .card-header h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+    }
+
+    .card-header p {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .card-body {
+        padding: 28px;
+    }
+
+    /* ─── Alert Messages ──────────────────────────────── */
+    .alert {
+        padding: 14px 18px;
+        border-radius: var(--radius-lg);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 13px;
+        border: 1px solid transparent;
+    }
+    .alert i { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+    .alert-error {
+        background: var(--error-light);
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+
+    /* ─── Form Elements ───────────────────────────────── */
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .required {
+        color: var(--error);
+        margin-left: 2px;
+    }
+
+    .form-select, .form-textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        color: var(--text-primary);
+        background: var(--white);
+        transition: var(--transition);
+    }
+
+    .form-select {
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+        padding-right: 40px;
+    }
+
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .form-select:hover, .form-textarea:hover {
+        border-color: #94a3b8;
+    }
+
+    .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px var(--primary-ring);
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .error-text {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--error);
+    }
+
+    /* ─── Upload Grid ─────────────────────────────────── */
+    .upload-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 12px;
+    }
+
+    .upload-item {
+        position: relative;
+    }
+
+    .upload-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 12px;
+        border: 2px dashed var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .upload-label:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    .upload-label i {
+        font-size: 28px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .upload-label span {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+
+    .upload-item input[type="file"] {
+        display: none;
+    }
+
+    .image-preview {
+        margin-top: 8px;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        display: none;
+    }
+
+    .image-preview img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    /* ─── Refund Notice ───────────────────────────────── */
+    .refund-notice {
+        background: var(--warning-light);
+        border: 1px solid #fde68a;
+        border-radius: var(--radius-lg);
+        padding: 18px 20px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 14px;
+    }
+
+    .refund-notice i {
+        font-size: 20px;
+        color: var(--warning);
+        flex-shrink: 0;
+    }
+
+    .refund-notice strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+    }
+
+    .refund-notice p {
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    /* ─── Submit Button ───────────────────────────────── */
+    .btn-submit {
+        width: 100%;
+        padding: 14px 24px;
+        background: var(--primary);
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: var(--transition);
+        box-shadow: 0 1px 3px rgba(37,99,235,.35);
+    }
+
+    .btn-submit:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37,99,235,.4);
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* ─── Sidebar Cards ───────────────────────────────── */
+    .sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .sidebar-card {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .sidebar-header {
+        padding: 16px 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-header h3 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .sidebar-header h3 i {
+        color: var(--primary);
+        font-size: 13px;
+    }
+
+    .sidebar-content {
+        padding: 16px;
+    }
+
+    /* Order Items */
+    .order-items {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .order-item {
+        display: flex;
+        gap: 12px;
+    }
+
+    .item-image {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-md);
+        object-fit: cover;
+        border: 1px solid var(--border);
+    }
+
+    .item-placeholder {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-md);
+        background: var(--surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 20px;
+        border: 1px solid var(--border);
+    }
+
+    .item-info {
+        flex: 1;
+    }
+
+    .item-info h4 {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+    }
+
+    .item-info p {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .item-price {
+        font-weight: 700 !important;
+        color: var(--primary) !important;
+    }
+
+    /* Order Total */
+    .order-total {
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 13px;
+    }
+
+    .total-row:last-child {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .refund-amount {
+        color: var(--success) !important;
+    }
+
+    /* Reasons List */
+    .reasons-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .reasons-list li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        font-size: 12px;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .reasons-list li:last-child {
+        border-bottom: none;
+    }
+
+    .reasons-list i {
+        color: var(--success);
+        font-size: 10px;
+    }
+
+    /* Help Card */
+    .help-content {
+        text-align: center;
+    }
+
+    .help-content p {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 16px;
+    }
+
+    .contact-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 10px 16px;
+        background: var(--primary-light);
+        color: var(--primary);
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: var(--transition);
+        border: 1px solid #bfdbfe;
+    }
+
+    .contact-btn:hover {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    /* ─── Toast Notifications ─────────────────────────── */
+    .toast-stack {
+        position: fixed;
+        bottom: 80px; right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+    .toast {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        padding: 14px 18px;
+        min-width: 280px;
+        max-width: 360px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        pointer-events: all;
+        animation: toastIn .3s cubic-bezier(0.34,1.56,0.64,1);
+        border: 1px solid var(--border);
+    }
+    .toast.exiting { animation: toastOut .25s ease forwards; }
+    @keyframes toastIn {
+        from { transform: translateX(120%) scale(.8); opacity: 0; }
+        to   { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes toastOut {
+        to   { transform: translateX(120%) scale(.9); opacity: 0; }
+    }
+    .toast-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        margin-top: 3px;
+        flex-shrink: 0;
+    }
+    .toast.success .toast-dot { background: var(--success); }
+    .toast.error   .toast-dot { background: var(--error); }
+    .toast.warning .toast-dot { background: var(--warning); }
+    .toast.info    .toast-dot { background: var(--primary); }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .toast-msg   { font-size: 13px; color: var(--text-secondary); margin-top: 1px; line-height: 1.4; }
+    .toast-close {
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 2px;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .toast-close:hover { color: var(--text-primary); }
+
+    /* ─── Responsive ──────────────────────────────────── */
+    @media (max-width: 1024px) {
+        .refund-grid {
+            grid-template-columns: 1fr;
+        }
+        .upload-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .bc-bar { padding: 0 16px; }
+        .rr-page { padding: 24px 16px 40px; }
+
+        .card-body { padding: 20px; }
+
+        .page-header h1 {
+            font-size: 24px;
+            flex-direction: column;
+        }
+
+        .toast-stack {
+            bottom: 70px;
+            right: 12px;
+            left: 12px;
+        }
+        .toast {
+            min-width: auto;
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="bc-bar">
+    <nav class="bc-inner" aria-label="Breadcrumb">
+        <a href="{% url 'eccommence:home' %}"><i class="fas fa-home" style="font-size:11px;"></i> Home</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'payment:order_history' %}">My Orders</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'payment:order_detail' order.order_number %}">Order #{{ order.order_number|truncatechars:8 }}</a>
+        <span class="bc-sep">›</span>
+        <span>Request Refund</span>
+    </nav>
+</div>
+
+<!-- Toast Stack -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<div class="rr-page">
+    <div class="rr-inner">
+
+        <!-- Back Link -->
+        <a href="{% url 'payment:order_detail' order.order_number %}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Order Details
+        </a>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <i class="fas fa-undo"></i>
+                Request Refund
+            </h1>
+            <div class="order-info">
+                <span>Order <strong>#{{ order.order_number }}</strong></span>
+                <span>•</span>
+                <span>Placed on {{ order.created_at|date:"M d, Y" }}</span>
+            </div>
+        </div>
+
+        <div class="refund-grid">
+            <!-- Refund Form -->
+            <div class="form-card">
+                <div class="card-header">
+                    <h2>Tell us what went wrong</h2>
+                    <p>Please provide details about why you're requesting a refund</p>
+                </div>
+
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" id="refundForm">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            <label for="{{ form.reason.id_for_label }}">
+                                {{ form.reason.label }} <span class="required">*</span>
+                            </label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}
+                            <span class="error-text">{{ form.reason.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">
+                                {{ form.description.label }} <span class="required">*</span>
+                            </label>
+                            {{ form.description }}
+                            <small class="help-text">Please describe the issue in detail (minimum 20 characters)</small>
+                            {% if form.description.errors %}
+                            <span class="error-text">{{ form.description.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Upload Photos (Optional)</label>
+                            <p class="help-text">Help us understand the issue by uploading photos</p>
+                            
+                            <div class="upload-grid">
+                                <div class="upload-item">
+                                    <label for="{{ form.image1.id_for_label }}" class="upload-label">
+                                        <i class="fas fa-camera"></i>
+                                        <span>Photo 1</span>
+                                    </label>
+                                    {{ form.image1 }}
+                                    <div id="preview1" class="image-preview"></div>
+                                </div>
+
+                                <div class="upload-item">
+                                    <label for="{{ form.image2.id_for_label }}" class="upload-label">
+                                        <i class="fas fa-camera"></i>
+                                        <span>Photo 2</span>
+                                    </label>
+                                    {{ form.image2 }}
+                                    <div id="preview2" class="image-preview"></div>
+                                </div>
+
+                                <div class="upload-item">
+                                    <label for="{{ form.image3.id_for_label }}" class="upload-label">
+                                        <i class="fas fa-camera"></i>
+                                        <span>Photo 3</span>
+                                    </label>
+                                    {{ form.image3 }}
+                                    <div id="preview3" class="image-preview"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="refund-notice">
+                            <i class="fas fa-info-circle"></i>
+                            <div>
+                                <strong>Refund Policy</strong>
+                                <p>Refund requests are reviewed within 2-3 business days. Once approved, refunds are processed within 5-7 business days.</p>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-submit" id="submitBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            Submit Refund Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Order Summary Sidebar -->
+            <div class="sidebar-section">
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-box"></i> Order Summary</h3>
+                    </div>
+                    <div class="sidebar-content">
+                        <div class="order-items">
+                            {% for item in order.items.all|slice:":3" %}
+                            <div class="order-item">
+                                {% if item.product_image %}
+                                <img src="{{ item.product_image }}" alt="{{ item.product_name }}" class="item-image">
+                                {% else %}
+                                <div class="item-placeholder">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                {% endif %}
+                                <div class="item-info">
+                                    <h4>{{ item.product_name|truncatechars:25 }}</h4>
+                                    <p>Qty: {{ item.quantity }}</p>
+                                    <p class="item-price">UGX {{ item.total|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if order.items.count > 3 %}
+                            <div style="text-align: center; font-size: 11px; color: var(--text-muted);">
+                                + {{ order.items.count|add:"-3" }} more item(s)
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="order-total">
+                            <div class="total-row">
+                                <span>Order Total</span>
+                                <span>UGX {{ order.total|floatformat:0|intcomma }}</span>
+                            </div>
+                            <div class="total-row">
+                                <span>Refund Amount</span>
+                                <span class="refund-amount">UGX {{ order.total|floatformat:0|intcomma }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-question-circle"></i> Common Reasons</h3>
+                    </div>
+                    <div class="sidebar-content">
+                        <ul class="reasons-list">
+                            <li><i class="fas fa-check"></i> Product damaged during shipping</li>
+                            <li><i class="fas fa-check"></i> Received wrong item</li>
+                            <li><i class="fas fa-check"></i> Product doesn't match description</li>
+                            <li><i class="fas fa-check"></i> Quality issues</li>
+                            <li><i class="fas fa-check"></i> Late delivery</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="sidebar-card help-card">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-headset"></i> Need Help?</h3>
+                    </div>
+                    <div class="sidebar-content help-content">
+                        <p>Contact our support team before submitting a refund request</p>
+                        <a href="mailto:support@{{ request.tenant.domain }}" class="contact-btn">
+                            <i class="fas fa-envelope"></i> Email Support
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    "use strict";
+
+    // Toast notification system
+    const toastStack = document.getElementById('toastStack');
+
+    window.showToast = function(title, message, type = 'success') {
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `
+            <div class="toast-dot"></div>
+            <div class="toast-body">
+                <div class="toast-title">${title}</div>
+                ${message ? `<div class="toast-msg">${message}</div>` : ''}
+            </div>
+            <div class="toast-close" onclick="dismissToast(this.parentElement)">
+                <i class="fas fa-xmark"></i>
+            </div>`;
+        toastStack.appendChild(el);
+        setTimeout(() => dismissToast(el), 5000);
+    };
+
+    window.dismissToast = function(el) {
+        el.classList.add('exiting');
+        setTimeout(() => el.remove(), 260);
+    };
+
+    // Show Django messages as toasts
+    {% if messages %}
+        {% for message in messages %}
+            showToast(
+                "{{ message.tags|capfirst }}",
+                "{{ message }}",
+                "{{ message.tags }}"
+            );
+        {% endfor %}
+    {% endif %}
+
+    // Image preview
+    document.querySelectorAll('input[type="file"]').forEach((input, index) => {
+        input.addEventListener('change', function(e) {
+            const preview = document.getElementById(`preview${index + 1}`);
+            const file = e.target.files[0];
+            
+            if (file) {
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    showToast('Invalid File', 'Please select an image file', 'error');
+                    this.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('File Too Large', 'Maximum size is 5MB', 'error');
+                    this.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+    });
+
+    // Form submission
+    const form = document.getElementById('refundForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', function(e) {
+        // Basic validation
+        const reason = document.getElementById('{{ form.reason.id_for_label }}');
+        const description = document.getElementById('{{ form.description.id_for_label }}');
+        
+        if (!reason.value) {
+            e.preventDefault();
+            showToast('Missing Information', 'Please select a reason for refund', 'error');
+            reason.focus();
+            return;
+        }
+        
+        if (!description.value || description.value.length < 20) {
+            e.preventDefault();
+            showToast('Description Too Short', 'Please provide more details (minimum 20 characters)', 'error');
+            description.focus();
+            return;
+        }
+        
+        // Disable button to prevent double submission
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    });
+
+})();
+</script>
+{% endblock %}

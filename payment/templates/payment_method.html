@@ -1,0 +1,1172 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Select Payment Method - {{ request.tenant.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/variables.css' %}">
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<style>
+    /* ============================================
+       PAYMENT METHOD PAGE - WORLD-CLASS DESIGN
+    ============================================ */
+    :root {
+        --primary:        #2563eb;
+        --primary-dark:   #1d4ed8;
+        --primary-light:  #eff6ff;
+        --primary-ring:   rgba(37, 99, 235, 0.15);
+        --accent:         #f59e0b;
+        --success:        #10b981;
+        --success-light:  #ecfdf5;
+        --error:          #ef4444;
+        --error-light:    #fef2f2;
+        --warning:        #f59e0b;
+        --warning-light:  #fffbeb;
+
+        --white:          #ffffff;
+        --surface:        #f8fafc;
+        --surface-2:      #f1f5f9;
+        --border:         #e2e8f0;
+        --border-focus:   #93c5fd;
+
+        --text-primary:   #0f172a;
+        --text-secondary: #475569;
+        --text-muted:     #94a3b8;
+        --text-placeholder: #cbd5e1;
+
+        --radius-sm:  6px;
+        --radius-md:  10px;
+        --radius-lg:  16px;
+        --radius-xl:  20px;
+        --radius-full: 9999px;
+
+        --shadow-xs:  0 1px 2px rgba(0,0,0,.05);
+        --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md:  0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+        --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.03);
+        --shadow-xl:  0 20px 25px -5px rgba(0,0,0,.08), 0 10px 10px -5px rgba(0,0,0,.02);
+
+        --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* ─── Breadcrumb ──────────────────────────────────── */
+    .bc-bar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    .bc-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+        width: 100%;
+    }
+    .bc-inner a { color: var(--primary); text-decoration: none; font-weight: 500; }
+    .bc-inner a:hover { text-decoration: underline; }
+    .bc-sep { color: var(--text-placeholder); }
+    .bc-inner span { color: var(--text-secondary); font-weight: 600; }
+
+    /* ─── Page Wrapper ────────────────────────────────── */
+    .pm-page {
+        background: var(--surface);
+        min-height: calc(100vh - 44px);
+        padding: 32px 24px 60px;
+    }
+    .pm-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+    }
+
+    /* ─── Progress Steps ───────────────────────────────── */
+    .checkout-progress {
+        margin-bottom: 32px;
+    }
+
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 600px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    .progress-steps::before {
+        content: '';
+        position: absolute;
+        top: 24px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border);
+        z-index: 1;
+    }
+
+    .step {
+        position: relative;
+        z-index: 2;
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 0 8px;
+    }
+
+    .step-indicator {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        background: var(--white);
+        border: 2px solid var(--border);
+        color: var(--text-muted);
+        transition: var(--transition);
+    }
+
+    .step.completed .step-indicator {
+        background: var(--success);
+        border-color: var(--success);
+        color: var(--white);
+    }
+
+    .step.active .step-indicator {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: var(--white);
+        transform: scale(1.1);
+        box-shadow: 0 0 0 4px var(--primary-light);
+    }
+
+    .step-label {
+        text-align: center;
+    }
+
+    .step-name {
+        display: block;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 13px;
+    }
+
+    .step-desc {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    /* ─── Grid Layout ──────────────────────────────────── */
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* ─── Payment Main Section ─────────────────────────── */
+    .payment-main {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        padding: 28px;
+    }
+
+    .payment-header {
+        margin-bottom: 24px;
+    }
+
+    .payment-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 4px;
+        letter-spacing: -0.3px;
+    }
+
+    .payment-title i {
+        color: var(--primary);
+        font-size: 18px;
+    }
+
+    .payment-subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-left: 32px;
+    }
+
+    /* ─── Payment Categories ───────────────────────────── */
+    .payment-category {
+        margin-bottom: 28px;
+    }
+
+    .category-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .category-title i {
+        color: var(--primary);
+        font-size: 14px;
+    }
+
+    .payment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    /* ─── Payment Cards ────────────────────────────────── */
+    .payment-card {
+        cursor: pointer;
+        position: relative;
+    }
+
+    .payment-card input[type="radio"] {
+        display: none;
+    }
+
+    .card-content {
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        transition: var(--transition);
+        background: var(--white);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .payment-card:hover .card-content {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .payment-card input[type="radio"]:checked + .card-content {
+        border-color: var(--primary);
+        background: var(--primary-light);
+        box-shadow: 0 0 0 4px var(--primary-ring);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .provider-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .provider-icon.mtn {
+        background: #ffc107;
+        color: #000;
+    }
+
+    .provider-icon.airtel {
+        background: #e31b23;
+        color: var(--white);
+    }
+
+    .provider-icon.card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: var(--white);
+    }
+
+    .provider-icon.cod {
+        background: var(--success);
+        color: var(--white);
+    }
+
+    .provider-icon.bank {
+        background: var(--text-secondary);
+        color: var(--white);
+    }
+
+    .provider-badge {
+        padding: 4px 10px;
+        background: var(--primary-light);
+        color: var(--primary);
+        border-radius: var(--radius-full);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .card-body {
+        flex: 1;
+    }
+
+    .provider-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+    }
+
+    .provider-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+    }
+
+    .provider-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .feature {
+        font-size: 11px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .feature i {
+        color: var(--success);
+        font-size: 10px;
+    }
+
+    .card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+
+    .payment-limit, .payment-note {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+
+    .card-logos {
+        display: flex;
+        gap: 6px;
+        font-size: 16px;
+        color: var(--text-muted);
+    }
+
+    .check-icon {
+        color: var(--primary);
+        font-size: 20px;
+        opacity: 0;
+        transform: scale(0.8);
+        transition: var(--transition);
+    }
+
+    .payment-card input[type="radio"]:checked + .card-content .check-icon {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* ─── Payment Actions ──────────────────────────────── */
+    .payment-actions {
+        display: flex;
+        gap: 16px;
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 2px solid var(--border);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 2px solid var(--border);
+        padding: 12px 24px;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: var(--transition);
+        font-size: 13px;
+    }
+
+    .btn-outline:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        border: none;
+        padding: 12px 24px;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        color: var(--white);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: var(--transition);
+        cursor: pointer;
+        flex: 1;
+        justify-content: center;
+        font-size: 13px;
+        box-shadow: 0 1px 3px rgba(37,99,235,.35);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37,99,235,.4);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* ─── Summary Sidebar ──────────────────────────────── */
+    .summary-sidebar {
+        position: sticky;
+        top: 90px;
+    }
+
+    .summary-card {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        padding: 20px;
+    }
+
+    .summary-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .summary-title i {
+        color: var(--primary);
+        font-size: 14px;
+    }
+
+    /* Order Items Preview */
+    .order-items-preview {
+        max-height: 280px;
+        overflow-y: auto;
+        margin-bottom: 12px;
+        padding-right: 4px;
+    }
+
+    .preview-item {
+        display: flex;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .preview-item:last-child { border-bottom: none; }
+
+    .item-image {
+        position: relative;
+        width: 52px;
+        height: 52px;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        background: var(--surface-2);
+        flex-shrink: 0;
+    }
+
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .no-image {
+        width: 100%;
+        height: 100%;
+        background: var(--surface-2);
+    }
+
+    .item-quantity {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: var(--primary);
+        color: var(--white);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        border: 2px solid var(--white);
+    }
+
+    .item-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .item-details h4 {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .item-price {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .summary-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 16px 0;
+    }
+
+    .summary-calculations {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .calc-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .calc-row.discount {
+        color: var(--success);
+    }
+
+    .free-badge {
+        background: var(--success-light);
+        color: var(--success);
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .summary-total {
+        display: flex;
+        justify-content: space-between;
+        padding: 16px 0;
+        border-top: 2px solid var(--border);
+        border-bottom: 2px solid var(--border);
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .total-amount {
+        color: var(--primary);
+    }
+
+    .security-badge {
+        margin-top: 16px;
+        padding: 12px;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .security-badge i {
+        font-size: 24px;
+        color: var(--success);
+    }
+
+    .security-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .security-text strong {
+        font-size: 12px;
+        color: var(--text-primary);
+    }
+
+    .security-text span {
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+
+    .payment-methods-accepted {
+        margin-top: 16px;
+        text-align: center;
+    }
+
+    .payment-methods-accepted p {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .accepted-icons {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        font-size: 20px;
+        color: var(--text-muted);
+    }
+
+    /* ─── Toast Notifications ─────────────────────────── */
+    .toast-stack {
+        position: fixed;
+        bottom: 80px; right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+    .toast {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        padding: 14px 18px;
+        min-width: 280px;
+        max-width: 360px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        pointer-events: all;
+        animation: toastIn .3s cubic-bezier(0.34,1.56,0.64,1);
+        border: 1px solid var(--border);
+    }
+    .toast.exiting { animation: toastOut .25s ease forwards; }
+    @keyframes toastIn {
+        from { transform: translateX(120%) scale(.8); opacity: 0; }
+        to   { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes toastOut {
+        to   { transform: translateX(120%) scale(.9); opacity: 0; }
+    }
+    .toast-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        margin-top: 3px;
+        flex-shrink: 0;
+    }
+    .toast.success .toast-dot { background: var(--success); }
+    .toast.error   .toast-dot { background: var(--error); }
+    .toast.warning .toast-dot { background: var(--warning); }
+    .toast.info    .toast-dot { background: var(--primary); }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .toast-msg   { font-size: 13px; color: var(--text-secondary); margin-top: 1px; line-height: 1.4; }
+    .toast-close {
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 2px;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .toast-close:hover { color: var(--text-primary); }
+
+    /* ─── Responsive ──────────────────────────────────── */
+    @media (max-width: 1024px) {
+        .checkout-grid {
+            grid-template-columns: 1fr;
+        }
+        .summary-sidebar {
+            position: static;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .bc-bar { padding: 0 16px; }
+        .pm-page { padding: 24px 16px 40px; }
+
+        .progress-steps {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .progress-steps::before { display: none; }
+
+        .step {
+            flex-direction: row;
+            width: 100%;
+        }
+        .step-indicator {
+            width: 36px;
+            height: 36px;
+        }
+        .step-label {
+            text-align: left;
+        }
+
+        .payment-actions {
+            flex-direction: column;
+        }
+        .btn-outline, .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .payment-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .toast-stack {
+            bottom: 70px;
+            right: 12px;
+            left: 12px;
+        }
+        .toast {
+            min-width: auto;
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="bc-bar">
+    <nav class="bc-inner" aria-label="Breadcrumb">
+        <a href="{% url 'eccommence:home' %}"><i class="fas fa-home" style="font-size:11px;"></i> Home</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'cart:cart_detail' %}">Cart</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'payment:checkout' %}">Shipping</a>
+        <span class="bc-sep">›</span>
+        <span>Payment</span>
+    </nav>
+</div>
+
+<!-- Toast Stack -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<div class="pm-page">
+    <div class="pm-inner">
+
+        <!-- Progress Steps -->
+        <div class="checkout-progress">
+            <div class="progress-steps">
+                <div class="step completed">
+                    <div class="step-indicator">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-label">
+                        <span class="step-name">Shipping</span>
+                        <span class="step-desc">Delivery Address</span>
+                    </div>
+                </div>
+                <div class="step active">
+                    <div class="step-indicator">2</div>
+                    <div class="step-label">
+                        <span class="step-name">Payment</span>
+                        <span class="step-desc">Choose Method</span>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-indicator">3</div>
+                    <div class="step-label">
+                        <span class="step-name">Complete</span>
+                        <span class="step-desc">Confirmation</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout-grid">
+            <!-- Payment Methods Section -->
+            <div class="payment-main">
+                <div class="payment-header">
+                    <h1 class="payment-title">
+                        <i class="fas fa-credit-card"></i>
+                        Select Payment Method
+                    </h1>
+                    <p class="payment-subtitle">Choose how you'd like to pay for your order</p>
+                </div>
+
+                <form method="POST" action="{% url 'payment:process_payment' %}" id="paymentForm" class="payment-form">
+                    {% csrf_token %}
+                    
+                    <!-- Mobile Money Options -->
+                    <div class="payment-category">
+                        <h2 class="category-title">
+                            <i class="fas fa-mobile-alt"></i>
+                            Mobile Money
+                        </h2>
+                        <div class="payment-grid">
+                            <!-- MTN Mobile Money -->
+                            <label class="payment-card">
+                                <input type="radio" name="payment_method" value="mtn_mobile_money" required>
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <div class="provider-icon mtn">
+                                            <i class="fas fa-mobile-alt"></i>
+                                        </div>
+                                        <div class="provider-badge">Most Popular</div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="provider-name">MTN Mobile Money</h3>
+                                        <p class="provider-desc">Pay instantly using MTN MoMo</p>
+                                        <div class="provider-features">
+                                            <span class="feature"><i class="fas fa-check"></i> Instant payment</span>
+                                            <span class="feature"><i class="fas fa-check"></i> No extra fees</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <span class="payment-limit">Limit: UGX 10,000,000</span>
+                                        <div class="check-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <!-- Airtel Money -->
+                            <label class="payment-card">
+                                <input type="radio" name="payment_method" value="airtel_money">
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <div class="provider-icon airtel">
+                                            <i class="fas fa-mobile-alt"></i>
+                                        </div>
+                                        <div class="provider-badge">Fast & Secure</div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="provider-name">Airtel Money</h3>
+                                        <p class="provider-desc">Pay with Airtel Money</p>
+                                        <div class="provider-features">
+                                            <span class="feature"><i class="fas fa-check"></i> Instant payment</span>
+                                            <span class="feature"><i class="fas fa-check"></i> No extra fees</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <span class="payment-limit">Limit: UGX 5,000,000</span>
+                                        <div class="check-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Card Payments -->
+                    <div class="payment-category">
+                        <h2 class="category-title">
+                            <i class="fas fa-credit-card"></i>
+                            Card Payments
+                        </h2>
+                        <div class="payment-grid">
+                            <!-- Visa/Mastercard -->
+                            <label class="payment-card">
+                                <input type="radio" name="payment_method" value="card">
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <div class="provider-icon card">
+                                            <i class="fas fa-credit-card"></i>
+                                        </div>
+                                        <div class="provider-badge">Secure</div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="provider-name">Credit/Debit Card</h3>
+                                        <p class="provider-desc">Visa, Mastercard, American Express</p>
+                                        <div class="provider-features">
+                                            <span class="feature"><i class="fas fa-check"></i> 3D Secure</span>
+                                            <span class="feature"><i class="fas fa-check"></i> Instant payment</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <div class="card-logos">
+                                            <i class="fab fa-cc-visa"></i>
+                                            <i class="fab fa-cc-mastercard"></i>
+                                            <i class="fab fa-cc-amex"></i>
+                                        </div>
+                                        <div class="check-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <!-- Cash on Delivery -->
+                            <label class="payment-card">
+                                <input type="radio" name="payment_method" value="cash_on_delivery">
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <div class="provider-icon cod">
+                                            <i class="fas fa-truck"></i>
+                                        </div>
+                                        <div class="provider-badge">No Card Needed</div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="provider-name">Cash on Delivery</h3>
+                                        <p class="provider-desc">Pay when you receive your order</p>
+                                        <div class="provider-features">
+                                            <span class="feature"><i class="fas fa-check"></i> Pay in cash</span>
+                                            <span class="feature"><i class="fas fa-check"></i> Inspect before payment</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <span class="payment-note">Extra UGX 2,000 service fee applies</span>
+                                        <div class="check-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Bank Transfer -->
+                    <div class="payment-category">
+                        <h2 class="category-title">
+                            <i class="fas fa-university"></i>
+                            Bank Transfer
+                        </h2>
+                        <div class="payment-grid">
+                            <label class="payment-card">
+                                <input type="radio" name="payment_method" value="bank_transfer">
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <div class="provider-icon bank">
+                                            <i class="fas fa-university"></i>
+                                        </div>
+                                        <div class="provider-badge">Large Orders</div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="provider-name">Bank Transfer</h3>
+                                        <p class="provider-desc">Direct bank transfer</p>
+                                        <div class="provider-features">
+                                            <span class="feature"><i class="fas fa-check"></i> No limits</span>
+                                            <span class="feature"><i class="fas fa-check"></i> All banks supported</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <span class="payment-note">Takes 1-2 hours to verify</span>
+                                        <div class="check-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="payment-actions">
+                        <a href="{% url 'payment:checkout' %}" class="btn-outline">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Shipping
+                        </a>
+                        <button type="submit" class="btn-primary" id="continueBtn" disabled>
+                            <span class="btn-text">Continue to Payment</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Order Summary Sidebar -->
+            <div class="summary-sidebar">
+                <div class="summary-card">
+                    <h3 class="summary-title">
+                        <i class="fas fa-file-invoice"></i>
+                        Order Summary
+                    </h3>
+
+                    <div class="order-items-preview">
+                        {% for item in cart_items %}
+                        <div class="preview-item">
+                            <div class="item-image">
+                                {% if item.product.images.first %}
+                                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}">
+                                {% else %}
+                                    <div class="no-image"></div>
+                                {% endif %}
+                                <span class="item-quantity">{{ item.quantity }}</span>
+                            </div>
+                            <div class="item-details">
+                                <h4>{{ item.product.name|truncatechars:30 }}</h4>
+                                <span class="item-price">UGX {{ item.price|floatformat:0|intcomma }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-calculations">
+                        <div class="calc-row">
+                            <span>Subtotal</span>
+                            <span>UGX {{ subtotal|floatformat:0|intcomma }}</span>
+                        </div>
+                        <div class="calc-row">
+                            <span>Shipping</span>
+                            <span>
+                                {% if shipping_cost == 0 %}
+                                    <span class="free-badge">FREE</span>
+                                {% else %}
+                                    UGX {{ shipping_cost|floatformat:0|intcomma }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if tax > 0 %}
+                        <div class="calc-row">
+                            <span>Tax (18% VAT)</span>
+                            <span>UGX {{ tax|floatformat:0|intcomma }}</span>
+                        </div>
+                        {% endif %}
+                        {% if discount > 0 %}
+                        <div class="calc-row discount">
+                            <span>Discount</span>
+                            <span>-UGX {{ discount|floatformat:0|intcomma }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span class="total-amount">UGX {{ total|floatformat:0|intcomma }}</span>
+                    </div>
+
+                    <div class="security-badge">
+                        <i class="fas fa-shield-alt"></i>
+                        <div class="security-text">
+                            <strong>Secure Checkout</strong>
+                            <span>Your payment info is encrypted</span>
+                        </div>
+                    </div>
+
+                    <div class="payment-methods-accepted">
+                        <p>We Accept:</p>
+                        <div class="accepted-icons">
+                            <i class="fab fa-cc-visa" title="Visa"></i>
+                            <i class="fab fa-cc-mastercard" title="Mastercard"></i>
+                            <i class="fas fa-mobile-alt" title="Mobile Money"></i>
+                            <i class="fas fa-truck" title="Cash on Delivery"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    "use strict";
+
+    const paymentForm = document.getElementById('paymentForm');
+    const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+    const continueBtn = document.getElementById('continueBtn');
+    const toastStack = document.getElementById('toastStack');
+
+    // Toast notification system
+    function showToast(title, message, type = 'success') {
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `
+            <div class="toast-dot"></div>
+            <div class="toast-body">
+                <div class="toast-title">${title}</div>
+                ${message ? `<div class="toast-msg">${message}</div>` : ''}
+            </div>
+            <div class="toast-close" onclick="dismissToast(this.parentElement)">
+                <i class="fas fa-xmark"></i>
+            </div>`;
+        toastStack.appendChild(el);
+        setTimeout(() => dismissToast(el), 5000);
+    }
+
+    window.dismissToast = function(el) {
+        el.classList.add('exiting');
+        setTimeout(() => el.remove(), 260);
+    };
+
+    // Show Django messages as toasts
+    {% if messages %}
+        {% for message in messages %}
+            showToast(
+                "{{ message.tags|capfirst }}",
+                "{{ message }}",
+                "{{ message.tags }}"
+            );
+        {% endfor %}
+    {% endif %}
+
+    // Enable continue button when a payment method is selected
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            continueBtn.disabled = false;
+            
+            // Remove selected class from all cards
+            document.querySelectorAll('.payment-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected class to parent card
+            this.closest('.payment-card').classList.add('selected');
+        });
+    });
+
+    // Form submission
+    paymentForm.addEventListener('submit', function(e) {
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+        
+        if (!selectedMethod) {
+            e.preventDefault();
+            showToast('Payment Required', 'Please select a payment method to continue', 'error');
+            return;
+        }
+        
+        // Disable button to prevent double submission
+        continueBtn.disabled = true;
+        continueBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    });
+
+})();
+</script>
+{% endblock %}

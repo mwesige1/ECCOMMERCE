@@ -1,0 +1,797 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — {{ request.tenant.name|default:"Homies" }}</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary:        #2563eb;
+            --primary-dark:   #1d4ed8;
+            --primary-light:  #eff6ff;
+            --primary-ring:   rgba(37,99,235,.15);
+            --success:        #10b981;
+            --success-light:  #ecfdf5;
+            --error:          #ef4444;
+            --error-light:    #fef2f2;
+            --warning:        #f59e0b;
+            --warning-light:  #fffbeb;
+            --white:          #ffffff;
+            --surface:        #f8fafc;
+            --surface-2:      #f1f5f9;
+            --border:         #e2e8f0;
+            --text-primary:   #0f172a;
+            --text-secondary: #475569;
+            --text-muted:     #94a3b8;
+            --text-placeholder: #cbd5e1;
+            --radius-sm:   6px;
+            --radius-md:   10px;
+            --radius-lg:   16px;
+            --radius-xl:   20px;
+            --radius-full: 9999px;
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.04);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,.1);
+            --transition: all 0.18s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* ── Header ── */
+        .s-header {
+            background: #0f172a;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            flex-shrink: 0;
+        }
+        .s-header-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 0 24px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .s-logo {
+            display: flex; align-items: center; gap: 10px;
+            color: var(--white);
+        }
+        .s-logo-icon {
+            width: 36px; height: 36px;
+            background: #ffd814;
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            color: #0f172a; font-size: 16px;
+        }
+        .s-logo-name { font-size: 18px; font-weight: 800; letter-spacing: -.4px; }
+        .s-header-right { display: flex; align-items: center; gap: 16px; }
+        .s-help {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 13.5px; font-weight: 500;
+            color: rgba(255,255,255,.6);
+            transition: var(--transition);
+        }
+        .s-help:hover { color: #ffd814; }
+        .s-signin-btn {
+            padding: 7px 18px;
+            border: 1.5px solid rgba(255,255,255,.2);
+            border-radius: var(--radius-full);
+            font-size: 13.5px; font-weight: 600;
+            color: var(--white);
+            transition: var(--transition);
+        }
+        .s-signin-btn:hover {
+            background: rgba(255,255,255,.1);
+            border-color: rgba(255,255,255,.4);
+        }
+
+        /* ── Main ── */
+        .s-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px 56px;
+            position: relative;
+            overflow: hidden;
+        }
+        .s-main::before {
+            content: '';
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(37,99,235,.06) 0%, transparent 70%);
+            top: -200px; right: -200px;
+            pointer-events: none;
+        }
+        .s-main::after {
+            content: '';
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(245,158,11,.05) 0%, transparent 70%);
+            bottom: -100px; left: -100px;
+            pointer-events: none;
+        }
+
+        /* ── Card ── */
+        .s-card-wrap {
+            width: 100%;
+            max-width: 480px;
+            position: relative; z-index: 1;
+        }
+        .s-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+        }
+        .s-card-accent {
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, #60a5fa 50%, #ffd814 100%);
+        }
+        .s-card-body { padding: 36px 36px 28px; }
+        .s-card-foot {
+            padding: 18px 36px 24px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .s-card-foot p { font-size: 14px; color: var(--text-muted); }
+        .s-card-foot a { color: var(--primary); font-weight: 700; transition: var(--transition); }
+        .s-card-foot a:hover { text-decoration: underline; }
+
+        /* ── Card head ── */
+        .s-card-head { text-align: center; margin-bottom: 28px; }
+        .s-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--primary-light); color: var(--primary);
+            font-size: 12px; font-weight: 700;
+            padding: 5px 14px; border-radius: var(--radius-full);
+            margin-bottom: 14px; letter-spacing: .3px;
+        }
+        .s-title { font-size: 24px; font-weight: 800; color: var(--text-primary); letter-spacing: -.5px; margin-bottom: 5px; }
+        .s-sub   { font-size: 14px; color: var(--text-muted); }
+
+        /* ── Messages ── */
+        .s-messages { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .s-alert {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; border-radius: var(--radius-md);
+            font-size: 13.5px; line-height: 1.4;
+            animation: alertIn .25s ease;
+        }
+        @keyframes alertIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:none; } }
+        .s-alert i { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+        .s-alert.error   { background: var(--error-light);   color: #991b1b; border: 1px solid #fecaca; }
+        .s-alert.success { background: var(--success-light); color: #065f46; border: 1px solid #a7f3d0; }
+        .s-alert.info    { background: var(--primary-light);  color: var(--primary-dark); border: 1px solid #bfdbfe; }
+
+        /* ── Form grid ── */
+        .s-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        /* ── Field ── */
+        .s-field { margin-bottom: 16px; }
+        .s-field:last-of-type { margin-bottom: 0; }
+        .s-label {
+            display: block;
+            font-size: 12px; font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: .55px;
+            margin-bottom: 7px;
+        }
+        .s-label .opt {
+            font-size: 11px; font-weight: 500;
+            color: var(--text-placeholder);
+            text-transform: none; letter-spacing: 0; margin-left: 4px;
+        }
+        .s-input-wrap { position: relative; }
+        .s-input-icon {
+            position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+            color: var(--text-placeholder); font-size: 14px;
+            pointer-events: none; transition: var(--transition);
+        }
+        .s-input-wrap:focus-within .s-input-icon { color: var(--primary); }
+
+        .s-input {
+            width: 100%;
+            padding: 11px 14px 11px 40px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-primary);
+            background: var(--white);
+            transition: var(--transition);
+            font-family: inherit;
+            appearance: none;
+        }
+        .s-input::placeholder { color: var(--text-placeholder); }
+        .s-input:hover  { border-color: #94a3b8; }
+        .s-input:focus  { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-ring); }
+        .s-input.has-error { border-color: var(--error); background: var(--error-light); }
+        .s-input.valid     { border-color: var(--success); }
+
+        /* no-icon variant */
+        .s-input.no-icon { padding-left: 14px; }
+
+        /* phone prefix */
+        .s-phone-wrap {
+            display: flex;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .s-phone-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-ring); }
+        .s-phone-wrap:hover { border-color: #94a3b8; }
+        .s-phone-prefix {
+            padding: 11px 12px;
+            background: var(--surface-2);
+            font-size: 13px; font-weight: 600;
+            color: var(--text-secondary);
+            border-right: 1.5px solid var(--border);
+            display: flex; align-items: center; gap: 5px;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .s-phone-wrap .s-input {
+            border: none; border-radius: 0; box-shadow: none !important;
+            padding-left: 12px;
+        }
+
+        /* pw toggle */
+        .s-pw-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer;
+            color: var(--text-muted); font-size: 14px;
+            padding: 4px; border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+        .s-pw-toggle:hover { color: var(--primary); background: var(--primary-light); }
+        .s-input.has-toggle { padding-right: 42px; }
+
+        /* field error */
+        .s-field-error {
+            display: none; align-items: center; gap: 4px;
+            font-size: 12px; color: var(--error); font-weight: 500; margin-top: 5px;
+        }
+        .s-field-error.show { display: flex; }
+
+        /* ── Password strength ── */
+        .s-pw-strength { margin-top: 8px; }
+        .s-pw-bar-wrap  {
+            height: 4px; background: var(--border);
+            border-radius: var(--radius-full); overflow: hidden; margin-bottom: 5px;
+        }
+        .s-pw-bar-fill  {
+            height: 100%; width: 0%;
+            border-radius: var(--radius-full);
+            transition: width .35s ease, background .35s ease;
+        }
+        .s-pw-reqs {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+        }
+        .s-pw-req {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 11.5px; color: var(--text-muted); transition: var(--transition);
+        }
+        .s-pw-req i { font-size: 10px; }
+        .s-pw-req.met { color: var(--success); }
+
+        /* match indicator */
+        .s-match {
+            display: none; align-items: center; gap: 5px;
+            font-size: 12px; font-weight: 600; margin-top: 5px;
+        }
+        .s-match.show { display: flex; }
+        .s-match.ok   { color: var(--success); }
+        .s-match.fail { color: var(--error); }
+
+        /* ── Custom checkbox (terms) ── */
+        .s-terms {
+            display: flex; align-items: flex-start; gap: 10px;
+            margin: 18px 0 20px;
+        }
+        .s-terms input { display: none; }
+        .s-check-box {
+            width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
+            border: 1.5px solid var(--border); border-radius: 4px;
+            background: var(--white);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: var(--transition);
+        }
+        .s-terms input:checked ~ .s-check-box { background: var(--primary); border-color: var(--primary); }
+        .s-terms input:checked ~ .s-check-box::after {
+            content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            font-size: 10px; color: white;
+        }
+        .s-terms-label { font-size: 13px; color: var(--text-secondary); line-height: 1.55; cursor: pointer; }
+        .s-terms-label a { color: var(--primary); font-weight: 600; }
+        .s-terms-label a:hover { text-decoration: underline; }
+
+        /* ── Submit ── */
+        .s-btn-primary {
+            width: 100%;
+            background: var(--primary); color: var(--white);
+            border: none; padding: 13px;
+            border-radius: var(--radius-md);
+            font-size: 15px; font-weight: 700;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: var(--transition);
+            box-shadow: 0 1px 3px rgba(37,99,235,.35);
+            font-family: inherit;
+        }
+        .s-btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(37,99,235,.35);
+        }
+        .s-btn-primary:active  { transform: none; }
+        .s-btn-primary:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+        .s-spinner {
+            display: none; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+            border-radius: 50%; animation: spin .6s linear infinite;
+        }
+        .s-btn-primary.loading .s-spinner  { display: block; }
+        .s-btn-primary.loading .s-btn-ico  { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Divider ── */
+        .s-divider {
+            display: flex; align-items: center; gap: 14px;
+            margin: 22px 0; color: var(--text-muted); font-size: 12.5px;
+        }
+        .s-divider::before, .s-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* ── Social row ── */
+        .s-social-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .s-social-btn {
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border); border-radius: var(--radius-md);
+            background: var(--white); font-size: 13px; font-weight: 600;
+            color: var(--text-secondary); cursor: pointer;
+            transition: var(--transition); font-family: inherit;
+        }
+        .s-social-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .s-social-btn.google:hover   { border-color: #ea4335; color: #ea4335; background: #fef2f2; }
+        .s-social-btn.facebook:hover { border-color: #1877f2; color: #1877f2; background: #eff6ff; }
+        .s-social-btn.apple:hover    { border-color: #0f172a; color: #0f172a; background: var(--surface-2); }
+
+        /* ── Trust strip ── */
+        .s-trust {
+            display: flex; align-items: center; justify-content: center;
+            gap: 20px; margin-top: 20px; flex-wrap: wrap;
+        }
+        .s-trust-item {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--text-muted); font-weight: 500;
+        }
+        .s-trust-item i { color: var(--success); font-size: 13px; }
+
+        /* ── Footer ── */
+        .s-footer {
+            background: var(--white); border-top: 1px solid var(--border);
+            padding: 18px 24px; text-align: center;
+        }
+        .s-footer-links {
+            display: flex; justify-content: center; gap: 24px;
+            margin-bottom: 8px; flex-wrap: wrap;
+        }
+        .s-footer-links a {
+            font-size: 12.5px; color: var(--text-muted); font-weight: 500;
+            transition: var(--transition);
+        }
+        .s-footer-links a:hover { color: var(--primary); }
+        .s-footer-copy { font-size: 12px; color: var(--text-placeholder); }
+
+        /* ── Responsive ── */
+        @media (max-width: 520px) {
+            .s-card-body    { padding: 28px 20px 22px; }
+            .s-card-foot    { padding: 16px 20px 22px; }
+            .s-title        { font-size: 21px; }
+            .s-grid-2       { grid-template-columns: 1fr; }
+            .s-social-row   { grid-template-columns: 1fr; }
+            .s-pw-reqs      { grid-template-columns: 1fr; }
+            .s-main         { padding: 28px 14px 48px; }
+            .s-header-right .s-help { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <header class="s-header">
+        <div class="s-header-inner">
+            <a href="{% url 'eccommence:home' %}" class="s-logo">
+                <div class="s-logo-icon"><i class="fas fa-box-open"></i></div>
+                <span class="s-logo-name">{{ request.tenant.name|upper|default:"HOMIES" }}</span>
+            </a>
+            <div class="s-header-right">
+                <a href="#" class="s-help">
+                    <i class="fas fa-circle-question"></i> Need help?
+                </a>
+                <a href="{% url 'users:login' %}" class="s-signin-btn">Sign In</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main ── -->
+    <main class="s-main">
+        <div class="s-card-wrap">
+            <div class="s-card">
+                <div class="s-card-accent"></div>
+
+                <div class="s-card-body">
+
+                    <!-- Head -->
+                    <div class="s-card-head">
+                        <div class="s-badge">
+                            <i class="fas fa-user-plus"></i> New Account
+                        </div>
+                        <h1 class="s-title">Create your account</h1>
+                        <p class="s-sub">Free to join — takes less than a minute</p>
+                    </div>
+
+                    <!-- Messages -->
+                    {% if messages %}
+                    <div class="s-messages">
+                        {% for message in messages %}
+                        <div class="s-alert {{ message.tags }}">
+                            <i class="fas fa-{% if message.tags == 'error' %}circle-exclamation{% elif message.tags == 'success' %}circle-check{% else %}circle-info{% endif %}"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Form -->
+                    <form method="POST"
+                          action="{% url 'users:register' %}"
+                          id="registerForm" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Name row -->
+                        <div class="s-grid-2">
+                            <div class="s-field">
+                                <label class="s-label" for="first_name">First Name</label>
+                                <div class="s-input-wrap">
+                                    <i class="fas fa-user s-input-icon"></i>
+                                    <input type="text" name="first_name" id="first_name"
+                                           class="s-input" placeholder="John"
+                                           required autocomplete="given-name">
+                                </div>
+                                <div class="s-field-error" id="err-first">
+                                    <i class="fas fa-circle-exclamation"></i> Required
+                                </div>
+                            </div>
+                            <div class="s-field">
+                                <label class="s-label" for="last_name">Last Name</label>
+                                <div class="s-input-wrap">
+                                    <i class="fas fa-user s-input-icon"></i>
+                                    <input type="text" name="last_name" id="last_name"
+                                           class="s-input" placeholder="Doe"
+                                           required autocomplete="family-name">
+                                </div>
+                                <div class="s-field-error" id="err-last">
+                                    <i class="fas fa-circle-exclamation"></i> Required
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="s-field">
+                            <label class="s-label" for="email">Email Address</label>
+                            <div class="s-input-wrap">
+                                <i class="fas fa-envelope s-input-icon"></i>
+                                <input type="email" name="email" id="email"
+                                       class="s-input" placeholder="you@example.com"
+                                       required autocomplete="email">
+                            </div>
+                            <div class="s-field-error" id="err-email">
+                                <i class="fas fa-circle-exclamation"></i>
+                                <span id="err-email-txt">Please enter a valid email</span>
+                            </div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="s-field">
+                            <label class="s-label" for="phone">
+                                Phone Number <span class="opt">(optional)</span>
+                            </label>
+                            <div class="s-phone-wrap">
+                                <div class="s-phone-prefix">🇺🇬 +256</div>
+                                <input type="tel" name="phone" id="phone"
+                                       class="s-input" placeholder="700 000 000"
+                                       autocomplete="tel">
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="s-field">
+                            <label class="s-label" for="password1">Password</label>
+                            <div class="s-input-wrap">
+                                <i class="fas fa-lock s-input-icon"></i>
+                                <input type="password" name="password1" id="password1"
+                                       class="s-input has-toggle"
+                                       placeholder="Create a strong password"
+                                       required autocomplete="new-password">
+                                <button type="button" class="s-pw-toggle"
+                                        onclick="togglePw('password1','pwi1')"
+                                        aria-label="Show password">
+                                    <i class="fas fa-eye" id="pwi1"></i>
+                                </button>
+                            </div>
+                            <!-- Strength meter -->
+                            <div class="s-pw-strength" id="pwStrength" style="display:none;">
+                                <div class="s-pw-bar-wrap">
+                                    <div class="s-pw-bar-fill" id="pwBar"></div>
+                                </div>
+                                <div class="s-pw-reqs">
+                                    <div class="s-pw-req" id="req-len"><i class="fas fa-circle"></i> 8+ characters</div>
+                                    <div class="s-pw-req" id="req-up"> <i class="fas fa-circle"></i> Uppercase</div>
+                                    <div class="s-pw-req" id="req-lo"> <i class="fas fa-circle"></i> Lowercase</div>
+                                    <div class="s-pw-req" id="req-num"><i class="fas fa-circle"></i> Number</div>
+                                </div>
+                            </div>
+                            <div class="s-field-error" id="err-pw">
+                                <i class="fas fa-circle-exclamation"></i> Password is required
+                            </div>
+                        </div>
+
+                        <!-- Confirm password -->
+                        <div class="s-field">
+                            <label class="s-label" for="password2">Confirm Password</label>
+                            <div class="s-input-wrap">
+                                <i class="fas fa-shield-halved s-input-icon"></i>
+                                <input type="password" name="password2" id="password2"
+                                       class="s-input has-toggle"
+                                       placeholder="Repeat your password"
+                                       required autocomplete="new-password">
+                                <button type="button" class="s-pw-toggle"
+                                        onclick="togglePw('password2','pwi2')"
+                                        aria-label="Show password">
+                                    <i class="fas fa-eye" id="pwi2"></i>
+                                </button>
+                            </div>
+                            <div class="s-match" id="pwMatch">
+                                <i class="fas fa-circle-check"></i>
+                                <span id="matchText">Passwords match</span>
+                            </div>
+                        </div>
+
+                        <!-- Terms -->
+                        <label class="s-terms">
+                            <input type="checkbox" name="terms_accepted" id="terms" required>
+                            <span class="s-check-box"></span>
+                            <span class="s-terms-label">
+                                I agree to the
+                                <a href="#">Terms of Service</a> and
+                                <a href="#">Privacy Policy</a>
+                            </span>
+                        </label>
+
+                        <!-- Submit -->
+                        <button type="submit" class="s-btn-primary" id="regBtn">
+                            <i class="fas fa-arrow-right s-btn-ico"></i>
+                            <div class="s-spinner"></div>
+                            <span id="btnText">Create Account</span>
+                        </button>
+                    </form>
+
+                    <div class="s-divider">or sign up with</div>
+
+                    <!-- Social -->
+                    <div class="s-social-row">
+                        <button type="button" class="s-social-btn google"
+                                onclick="alert('Google coming soon!')">
+                            <svg width="16" height="16" viewBox="0 0 48 48">
+                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                            </svg>
+                            Google
+                        </button>
+                        <button type="button" class="s-social-btn facebook"
+                                onclick="alert('Facebook coming soon!')">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+                            </svg>
+                            Facebook
+                        </button>
+                        <button type="button" class="s-social-btn apple"
+                                onclick="alert('Apple coming soon!')">
+                            <i class="fab fa-apple" style="font-size:17px;"></i>
+                            Apple
+                        </button>
+                    </div>
+
+                </div><!-- /.s-card-body -->
+
+                <div class="s-card-foot">
+                    <p>Already have an account? <a href="{% url 'users:login' %}">Sign in</a></p>
+                </div>
+            </div><!-- /.s-card -->
+
+            <!-- Trust strip -->
+            <div class="s-trust">
+                <div class="s-trust-item">
+                    <i class="fas fa-shield-halved"></i> SSL Encrypted
+                </div>
+                <div class="s-trust-item">
+                    <i class="fas fa-lock"></i> Secure Sign Up
+                </div>
+                <div class="s-trust-item">
+                    <i class="fas fa-user-shield"></i> Privacy Protected
+                </div>
+            </div>
+
+        </div><!-- /.s-card-wrap -->
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer class="s-footer">
+        <div class="s-footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Help Centre</a>
+            <a href="#">Contact Us</a>
+        </div>
+        <p class="s-footer-copy">&copy; {% now "Y" %} {{ request.tenant.name|default:"Homies" }}. All rights reserved.</p>
+    </footer>
+
+    <script>
+    (function () {
+        "use strict";
+
+        /* ── Toggle password ── */
+        window.togglePw = function (inputId, iconId) {
+            const inp  = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            const show = inp.type === 'password';
+            inp.type       = show ? 'text' : 'password';
+            icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+        };
+
+        /* ── Password strength ── */
+        const pw1      = document.getElementById('password1');
+        const pw2      = document.getElementById('password2');
+        const pwBar    = document.getElementById('pwBar');
+        const strength = document.getElementById('pwStrength');
+        const REQS     = {
+            'req-len': v => v.length >= 8,
+            'req-up':  v => /[A-Z]/.test(v),
+            'req-lo':  v => /[a-z]/.test(v),
+            'req-num': v => /\d/.test(v),
+        };
+        const LEVELS = [
+            { color: '#ef4444' },
+            { color: '#f97316' },
+            { color: '#f59e0b' },
+            { color: '#10b981' },
+        ];
+
+        pw1.addEventListener('input', function () {
+            const v = this.value;
+            strength.style.display = v ? 'block' : 'none';
+            let met = 0;
+            Object.entries(REQS).forEach(([id, fn]) => {
+                const ok = fn(v);
+                const el = document.getElementById(id);
+                el.classList.toggle('met', ok);
+                el.querySelector('i').className = ok ? 'fas fa-circle-check' : 'fas fa-circle';
+                if (ok) met++;
+            });
+            const lv = LEVELS[met - 1] || LEVELS[0];
+            pwBar.style.width      = (met / 4 * 100) + '%';
+            pwBar.style.background = v ? lv.color : 'transparent';
+            checkMatch();
+        });
+
+        /* ── Match indicator ── */
+        const matchEl  = document.getElementById('pwMatch');
+        const matchTxt = document.getElementById('matchText');
+
+        function checkMatch() {
+            if (!pw2.value) { matchEl.className = 's-match'; return; }
+            const ok = pw1.value === pw2.value;
+            matchEl.className = `s-match show ${ok ? 'ok' : 'fail'}`;
+            matchTxt.textContent = ok ? 'Passwords match' : "Passwords don't match";
+            matchEl.querySelector('i').className = ok
+                ? 'fas fa-circle-check' : 'fas fa-circle-xmark';
+            pw2.classList.toggle('has-error', !ok);
+            pw2.classList.toggle('valid', ok);
+        }
+        pw2.addEventListener('input', checkMatch);
+
+        /* ── Inline validation helpers ── */
+        function showErr(id)  { document.getElementById(id).classList.add('show'); }
+        function hideErr(id)  { document.getElementById(id).classList.remove('show'); }
+        function markErr(el)  { el.classList.add('has-error'); el.classList.remove('valid'); }
+        function markOk(el)   { el.classList.remove('has-error'); el.classList.add('valid'); }
+
+        ['first_name','last_name','email','password1'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function () {
+                const errId = { first_name:'err-first', last_name:'err-last', email:'err-email', password1:'err-pw' }[id];
+                this.classList.remove('has-error');
+                hideErr(errId);
+            });
+        });
+
+        /* ── Form submit ── */
+        document.getElementById('registerForm').addEventListener('submit', function (e) {
+            let valid = true;
+
+            const first = document.getElementById('first_name');
+            const last  = document.getElementById('last_name');
+            const email = document.getElementById('email');
+            const terms = document.getElementById('terms');
+
+            if (!first.value.trim()) { markErr(first); showErr('err-first'); valid = false; }
+            else markOk(first);
+
+            if (!last.value.trim())  { markErr(last);  showErr('err-last');  valid = false; }
+            else markOk(last);
+
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
+            if (!emailOk) {
+                markErr(email);
+                document.getElementById('err-email-txt').textContent =
+                    email.value ? 'Please enter a valid email' : 'Email is required';
+                showErr('err-email'); valid = false;
+            } else markOk(email);
+
+            if (!pw1.value) { markErr(pw1); showErr('err-pw'); valid = false; }
+
+            if (pw1.value && pw2.value && pw1.value !== pw2.value) {
+                markErr(pw2); valid = false;
+            }
+
+            if (!terms.checked) {
+                alert('Please agree to the Terms of Service to continue.');
+                valid = false;
+            }
+
+            if (!valid) { e.preventDefault(); return; }
+
+            const btn = document.getElementById('regBtn');
+            const txt = document.getElementById('btnText');
+            btn.classList.add('loading');
+            btn.disabled = true;
+            txt.textContent = 'Creating account…';
+        });
+
+        /* ── Auto-dismiss messages ── */
+        setTimeout(() => {
+            document.querySelectorAll('.s-alert').forEach(el => {
+                el.style.transition = 'opacity .4s';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 400);
+            });
+        }, 5000);
+
+    })();
+    </script>
+
+</body>
+</html>

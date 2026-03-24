@@ -1,0 +1,637 @@
+<!-- templates/cart/cart_detail.html -->
+{% extends 'eccommence/base.html' %}
+{% load static %}
+
+{% block content %}
+<br><br>
+
+<!-- Page Header -->
+<section class="page-header">
+    <h1>Shopping Cart</h1>
+    <p>Review your items and proceed to checkout</p>
+</section>
+
+{% if cart_items %}
+
+<!-- Cart Container -->
+<div class="cart-wrapper" id="cartContainer">
+
+    <!-- Cart Items -->
+    <div class="cart-items">
+        <div class="cart-header-title">
+            <i class="fas fa-shopping-bag"></i>
+            Your Cart Items <span id="cartCount">{{ cart_total_items }} items</span>
+        </div>
+
+        {% for item in cart_items %}
+        <!-- Cart Item -->
+        <div class="cart-item" data-item-id="{{ item.id }}" data-product-id="{{ item.product.id }}" data-stock="{{ item.available_stock }}">
+            <a href="{% url 'eccommence:product_detail' slug=item.product.slug %}">
+                {% with primary_image=item.product.images.first %}
+                <img src="{% if primary_image %}{{ primary_image.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}" 
+                     alt="{{ item.product.name }}" 
+                     class="item-img">
+                {% endwith %}
+            </a>
+
+            <div>
+                <h3 class="item-title">
+                    <a href="{% url 'eccommence:product_detail' slug=item.product.slug %}">{{ item.product.name }}</a>
+                </h3>
+                
+                {% if item.variant %}
+                <div class="item-variant-badge">{{ item.variant.name }}: {{ item.variant.value }}</div>
+                {% endif %}
+                
+                <div class="item-meta">Sold by: {{ item.product.vendor.store_name }}</div>
+                
+                <!-- Stock Status -->
+                {% if item.product.track_inventory %}
+                    {% if item.available_stock < 5 and item.available_stock > 0 %}
+                    <div class="stock-status low-stock">
+                        <i class="fas fa-exclamation-triangle"></i> Only {{ item.available_stock }} left
+                    </div>
+                    {% elif item.available_stock == 0 %}
+                    <div class="stock-status out-of-stock">
+                        <i class="fas fa-times-circle"></i> Out of stock
+                    </div>
+                    {% else %}
+                    <div class="stock-status in-stock">
+                        <i class="fas fa-check-circle"></i> In stock
+                    </div>
+                    {% endif %}
+                {% endif %}
+
+                <div class="rating">
+                    <div class="stars">
+                        {% with rating=item.product.rating|default:0|floatformat:0 %}
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= rating|add:0 %}
+                            <i class="fas fa-star"></i>
+                            {% elif forloop.counter <= rating|add:0.5 %}
+                            <i class="fas fa-star-half-alt"></i>
+                            {% else %}
+                            <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <span class="rating-count">({{ item.product.total_reviews|default:0 }})</span>
+                </div>
+
+                <div class="price-section">
+                    <span class="current-price">UGX {{ item.price|floatformat:0 }}</span>
+                    {% if item.product.compare_at_price %}
+                    <span class="original-price">UGX {{ item.product.compare_at_price|floatformat:0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="item-actions-right">
+                <div class="quantity">
+                    <button class="qty-btn decrease" 
+                            data-item-id="{{ item.id }}"
+                            data-product-id="{{ item.product.id }}"
+                            {% if item.quantity <= 1 %}disabled{% endif %}>
+                        −
+                    </button>
+                    
+                    <input type="text" 
+                           class="qty-input" 
+                           id="qty-{{ item.id }}"
+                           value="{{ item.quantity }}"
+                           readonly>
+                    
+                    <button class="qty-btn increase" 
+                            data-item-id="{{ item.id }}"
+                            data-product-id="{{ item.product.id }}"
+                            {% if item.quantity >= item.available_stock %}disabled{% endif %}>
+                        +
+                    </button>
+                </div>
+
+                <div class="item-total" id="item-total-{{ item.id }}">
+                    UGX {{ item.total_price|floatformat:0 }}
+                </div>
+
+                <button class="save-for-later-btn" data-item-id="{{ item.id }}">
+                    <i class="far fa-bookmark"></i> Save for later
+                </button>
+
+                <button class="remove-btn delete-product" data-item-id="{{ item.id }}" data-product-id="{{ item.product.id }}">
+                    <i class="fas fa-trash"></i> Remove
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Cart Summary -->
+    <div class="summary">
+        <div class="summary-title">Order Summary</div>
+        
+        <div class="summary-row">
+            <span>Subtotal (<span id="summaryItemsCount">{{ cart_total_items }}</span> items)</span>
+            <strong id="summarySubtotal">UGX {{ subtotal|floatformat:0 }}</strong>
+        </div>
+        
+        <div class="summary-row">
+            <span>Shipping</span>
+            <strong id="summaryShipping">
+                {% if shipping > 0 %}
+                    UGX {{ shipping|floatformat:0 }}
+                {% else %}
+                    <span class="free-shipping">Free</span>
+                {% endif %}
+            </strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Tax (18% VAT)</span>
+            <strong id="summaryTax">UGX {{ tax|floatformat:0 }}</strong>
+        </div>
+        
+        {% if discount > 0 %}
+        <div class="summary-row discount">
+            <span>Discount</span>
+            <strong class="discount" id="summaryDiscount">-UGX {{ discount|floatformat:0 }}</strong>
+        </div>
+        {% endif %}
+        
+        <div class="total-row">
+            <span>Total</span>
+            <strong id="summaryTotal">UGX {{ total|floatformat:0 }}</strong>
+        </div>
+
+       
+
+        <a href="{% url 'payment:checkout' %}" class="checkout-btn {% if out_of_stock_items %}disabled{% endif %}" id="checkoutBtn">
+            <i class="fas fa-lock"></i> Proceed to Checkout
+        </a>
+        
+        <a href="{% url 'eccommence:home' %}" class="continue-shopping">
+            <i class="fas fa-arrow-left"></i> Continue Shopping
+        </a>
+    </div>
+</div>
+
+<!-- Remove Confirmation Modal -->
+<div id="removeModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirm Removal</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to remove <span id="removeItemName"></span> from your cart?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn cancel-btn">Cancel</button>
+            <button class="modal-btn confirm-btn" id="confirmRemove">Remove</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="spinner"></div>
+    <p>Updating cart...</p>
+</div>
+
+{% else %}
+<!-- Empty Cart State -->
+<div class="empty-cart">
+    <div class="empty-cart-icon">
+        <i class="fas fa-shopping-cart"></i>
+    </div>
+    <h2>Your cart is empty</h2>
+    <p>Looks like you haven't added anything to your cart yet</p>
+    
+    <div class="empty-cart-actions">
+        <a href="{% url 'eccommence:home' %}" class="btn-primary">
+            <i class="fas fa-home"></i> Continue Shopping
+        </a>
+        <a href="{% url 'eccommence:category_list' %}" class="btn-secondary">
+            <i class="fas fa-grid"></i> Browse Categories
+        </a>
+    </div>
+
+    <!-- Recently Viewed Section -->
+    <section class="recently-viewed">
+        <h2 class="section-title">Recently Viewed</h2>
+        <div class="recent-products">
+            {% for product in recommended_products %}
+            <div class="recent-product-card">
+                <a href="{% url 'eccommence:product_detail' slug=product.slug %}">
+                    {% with primary_image=product.images.first %}
+                    <img src="{% if primary_image %}{{ primary_image.image.url }}{% else %}https://images.unsplash.com/photo-1511385348-a52b4a160dc2?w=300&h=200&fit=crop{% endif %}" 
+                         alt="{{ product.name }}" 
+                         class="recent-product-image">
+                    {% endwith %}
+                    <h3 class="recent-product-title">{{ product.name|truncatechars:30 }}</h3>
+                    <div class="recent-product-price">UGX {{ product.current_price|floatformat:0 }}</div>
+                </a>
+                <button class="quick-add-btn" data-product-id="{{ product.id }}">
+                    <i class="fas fa-cart-plus"></i> Add to Cart
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endif %}
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Get CSRF token from cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    // Modal elements
+    const modal = document.getElementById('removeModal');
+    const closeModal = document.querySelector('.close-modal');
+    const cancelBtn = document.querySelector('.cancel-btn');
+    const confirmBtn = document.getElementById('confirmRemove');
+    const removeItemName = document.getElementById('removeItemName');
+    let itemToRemove = null;
+    
+    // Loading overlay
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    function showLoading() {
+        if (loadingOverlay) loadingOverlay.style.display = 'flex';
+    }
+    
+    function hideLoading() {
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+    }
+    
+    // Show message function
+    function showMessage(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 2rem;
+            background: ${type === 'success' ? '#10b981' : '#ef4444'};
+            color: white;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    // Animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Update cart totals
+    function updateCartTotals(data) {
+        // Cart count in cart page header
+        const cartCountEl = document.getElementById('cartCount');
+        if (cartCountEl) cartCountEl.textContent = data.cart_count + ' items';
+        
+        const summaryItemsCount = document.getElementById('summaryItemsCount');
+        if (summaryItemsCount) summaryItemsCount.textContent = data.cart_count;
+        
+        // ✅ FIX Bug 3 - navbar count is just a number, no "items" text
+        const globalCartCount = document.querySelector('.cart-count');
+        if (globalCartCount) globalCartCount.textContent = data.cart_count;
+        
+        // Update subtotal
+        const subtotalEl = document.getElementById('summarySubtotal');
+        if (subtotalEl) subtotalEl.textContent = 'UGX ' + Number(data.cart_subtotal).toLocaleString();
+        
+        // Update total
+        const totalEl = document.getElementById('summaryTotal');
+        if (totalEl) totalEl.textContent = 'UGX ' + Number(data.cart_total).toLocaleString();
+        
+        // Update shipping
+        const shippingEl = document.getElementById('summaryShipping');
+        if (shippingEl && data.shipping !== undefined) {
+            shippingEl.innerHTML = data.shipping === '0.00' ? 
+                '<span class="free-shipping">Free</span>' : 
+                'UGX ' + Number(data.shipping).toLocaleString();
+        }
+        
+        // Update discount
+        if (data.discount && data.discount !== '0.00') {
+            let discountEl = document.getElementById('summaryDiscount');
+            if (!discountEl) {
+                const taxRow = document.getElementById('summaryTax').parentElement;
+                taxRow.insertAdjacentHTML('beforebegin', `
+                    <div class="summary-row discount">
+                        <span>Discount</span>
+                        <strong class="discount" id="summaryDiscount">-UGX ${Number(data.discount).toLocaleString()}</strong>
+                    </div>
+                `);
+            } else {
+                discountEl.textContent = '-UGX ' + Number(data.discount).toLocaleString();
+            }
+        }
+    }
+    
+    // Update single item total
+    function updateItemTotal(itemId, total) {
+        const itemTotalEl = document.getElementById('item-total-' + itemId);
+        if (itemTotalEl) {
+            itemTotalEl.textContent = 'UGX ' + Number(total).toLocaleString();
+        }
+    }
+    
+    // ✅ FIX Bug 1 - Quantity INCREASE (cartItem defined correctly)
+    document.querySelectorAll('.increase').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const qtyInput = document.getElementById('qty-' + itemId);
+            const currentQty = parseInt(qtyInput.value);
+            const cartItem = this.closest('.cart-item');  // ✅ defined here
+            const maxQty = parseInt(cartItem.dataset.stock);
+            
+            if (currentQty >= maxQty) return;
+            
+            showLoading();
+            
+            fetch('{% url "cart:cart_update" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    quantity: currentQty + 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    qtyInput.value = currentQty + 1;
+                    if (data.item_total) updateItemTotal(itemId, data.item_total);
+                    updateCartTotals(data);
+                    if (currentQty + 1 >= maxQty) this.disabled = true;
+                    cartItem.querySelector('.decrease').disabled = false;
+                    showMessage('Quantity updated', 'success');
+                } else {
+                    showMessage(data.error || 'Error updating quantity', 'error');
+                }
+            })
+            .catch(() => showMessage('An error occurred', 'error'))
+            .finally(() => hideLoading());
+        });
+    });
+    
+    // ✅ FIX Bug 1 - Quantity DECREASE (cartItem now defined)
+    document.querySelectorAll('.decrease').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const qtyInput = document.getElementById('qty-' + itemId);
+            const currentQty = parseInt(qtyInput.value);
+            const cartItem = this.closest('.cart-item');  // ✅ NOW defined
+            
+            if (currentQty <= 1) return;
+            
+            showLoading();
+            
+            fetch('{% url "cart:cart_update" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    quantity: currentQty - 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    qtyInput.value = currentQty - 1;
+                    if (data.item_total) updateItemTotal(itemId, data.item_total);
+                    updateCartTotals(data);
+                    if (currentQty - 1 <= 1) this.disabled = true;
+                    cartItem.querySelector('.increase').disabled = false;  // ✅ now works
+                    showMessage('Quantity updated', 'success');
+                } else {
+                    showMessage(data.error || 'Error updating quantity', 'error');
+                }
+            })
+            .catch(() => showMessage('An error occurred', 'error'))
+            .finally(() => hideLoading());
+        });
+    });
+    
+    // Remove button - show modal
+    document.querySelectorAll('.delete-product').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const itemName = this.closest('.cart-item').querySelector('.item-title a').textContent;
+            itemToRemove = itemId;
+            removeItemName.textContent = itemName;
+            modal.style.display = 'block';
+        });
+    });
+    
+    // Close modal
+    if (closeModal) closeModal.addEventListener('click', () => { modal.style.display = 'none'; itemToRemove = null; });
+    if (cancelBtn) cancelBtn.addEventListener('click', () => { modal.style.display = 'none'; itemToRemove = null; });
+    
+    // Confirm remove
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            if (!itemToRemove) return;
+            
+            modal.style.display = 'none';
+            showLoading();
+            
+            fetch('{% url "cart:cart_remove" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ item_id: itemToRemove })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const cartItem = document.querySelector(`.cart-item[data-item-id="${itemToRemove}"]`);
+                    if (cartItem) cartItem.remove();
+                    updateCartTotals(data);
+                    showMessage('Item removed from cart', 'success');
+                    if (data.cart_count === 0) setTimeout(() => location.reload(), 500);
+                } else {
+                    showMessage(data.error || 'Error removing item', 'error');
+                }
+            })
+            .catch(() => showMessage('An error occurred', 'error'))
+            .finally(() => { hideLoading(); itemToRemove = null; });
+        });
+    }
+    
+    // Apply coupon
+    const applyBtn = document.getElementById('applyCouponBtn');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            const couponInput = document.getElementById('couponInput');
+            const couponCode = couponInput.value.trim().toUpperCase();
+            const messageEl = document.getElementById('couponMessage');
+            
+            if (!couponCode) {
+                messageEl.textContent = 'Please enter a coupon code';
+                messageEl.className = 'promo-message error';
+                return;
+            }
+            
+            showLoading();
+            
+            fetch('{% url "cart:apply_coupon" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ code: couponCode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageEl.textContent = 'Coupon applied successfully!';
+                    messageEl.className = 'promo-message success';
+                    updateCartTotals(data);
+                    showMessage('Coupon applied!', 'success');
+                } else {
+                    messageEl.textContent = data.error || 'Invalid coupon code';
+                    messageEl.className = 'promo-message error';
+                }
+            })
+            .catch(() => { messageEl.textContent = 'An error occurred'; messageEl.className = 'promo-message error'; })
+            .finally(() => hideLoading());
+        });
+    }
+    
+    // ✅ FIX Bug 2 - Save for later calls CORRECT URL
+    document.querySelectorAll('.save-for-later-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const cartItem = this.closest('.cart-item');
+            const productId = cartItem.dataset.productId;
+            
+            showLoading();
+            
+            // ✅ First save to wishlist
+            fetch('{% url "cart:wishlist_toggle" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ product_id: productId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // ✅ Then remove from cart
+                    return fetch('{% url "cart:cart_remove" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: JSON.stringify({ item_id: itemId })
+                    });
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cartItem.remove();
+                    updateCartTotals(data);
+                    showMessage('Item saved to wishlist', 'success');
+                    if (data.cart_count === 0) setTimeout(() => location.reload(), 500);
+                }
+            })
+            .catch(() => showMessage('An error occurred', 'error'))
+            .finally(() => hideLoading());
+        });
+    });
+    
+    // Quick add to cart from empty state
+    document.querySelectorAll('.quick-add-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const originalText = this.innerHTML;
+            
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            this.disabled = true;
+            
+            fetch('{% url "cart:cart_add" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Product added to cart!', 'success');
+                    const globalCartCount = document.querySelector('.cart-count');
+                    if (globalCartCount) globalCartCount.textContent = data.cart_count;
+                } else {
+                    showMessage(data.error || 'Error adding product', 'error');
+                }
+            })
+            .catch(() => showMessage('An error occurred', 'error'))
+            .finally(() => { this.innerHTML = originalText; this.disabled = false; });
+        });
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+            itemToRemove = null;
+        }
+    });
+    
+});
+</script>
+{% endblock %}

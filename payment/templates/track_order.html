@@ -1,0 +1,1213 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Track Order #{{ order.order_number }} - {{ request.tenant.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/variables.css' %}">
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<style>
+    /* ============================================
+       TRACK ORDER PAGE - WORLD-CLASS DESIGN
+    ============================================ */
+    :root {
+        --primary:        #2563eb;
+        --primary-dark:   #1d4ed8;
+        --primary-light:  #eff6ff;
+        --primary-ring:   rgba(37, 99, 235, 0.15);
+        --accent:         #f59e0b;
+        --success:        #10b981;
+        --success-light:  #ecfdf5;
+        --error:          #ef4444;
+        --error-light:    #fef2f2;
+        --warning:        #f59e0b;
+        --warning-light:  #fffbeb;
+
+        --white:          #ffffff;
+        --surface:        #f8fafc;
+        --surface-2:      #f1f5f9;
+        --border:         #e2e8f0;
+        --border-focus:   #93c5fd;
+
+        --text-primary:   #0f172a;
+        --text-secondary: #475569;
+        --text-muted:     #94a3b8;
+        --text-placeholder: #cbd5e1;
+
+        --radius-sm:  6px;
+        --radius-md:  10px;
+        --radius-lg:  16px;
+        --radius-xl:  20px;
+        --radius-full: 9999px;
+
+        --shadow-xs:  0 1px 2px rgba(0,0,0,.05);
+        --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md:  0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+        --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.03);
+        --shadow-xl:  0 20px 25px -5px rgba(0,0,0,.08), 0 10px 10px -5px rgba(0,0,0,.02);
+
+        --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* ─── Breadcrumb ──────────────────────────────────── */
+    .bc-bar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    .bc-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+        width: 100%;
+    }
+    .bc-inner a { color: var(--primary); text-decoration: none; font-weight: 500; }
+    .bc-inner a:hover { text-decoration: underline; }
+    .bc-sep { color: var(--text-placeholder); }
+    .bc-inner span { color: var(--text-secondary); font-weight: 600; }
+
+    /* ─── Page Wrapper ────────────────────────────────── */
+    .tr-page {
+        background: var(--surface);
+        min-height: calc(100vh - 44px);
+        padding: 32px 24px 60px;
+    }
+    .tr-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+    }
+
+    /* ─── Back Link ───────────────────────────────────── */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        transition: var(--transition);
+    }
+    .back-link:hover {
+        color: var(--primary);
+        gap: 12px;
+        background: var(--white);
+        box-shadow: var(--shadow-sm);
+    }
+    .back-link i { font-size: 12px; }
+
+    /* ─── Page Header ─────────────────────────────────── */
+    .tracking-header {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        padding: 28px 32px;
+        margin-bottom: 28px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .header-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: var(--radius-lg);
+        background: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 32px;
+        flex-shrink: 0;
+    }
+
+    .header-content {
+        flex: 1;
+    }
+
+    .tracking-header h1 {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        letter-spacing: -0.3px;
+    }
+
+    .order-number {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid transparent;
+    }
+    .status-pill i { font-size: 6px; }
+
+    .status-pending {
+        background: var(--warning-light);
+        color: #b45309;
+        border-color: #fde68a;
+    }
+    .status-paid {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+        border-color: #bfdbfe;
+    }
+    .status-processing {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+        border-color: #bfdbfe;
+    }
+    .status-shipped {
+        background: #ede9fe;
+        color: #6d28d9;
+        border-color: #ddd6fe;
+    }
+    .status-delivered {
+        background: var(--success-light);
+        color: #065f46;
+        border-color: #a7f3d0;
+    }
+    .status-cancelled {
+        background: var(--error-light);
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+
+    /* ─── Grid Layout ─────────────────────────────────── */
+    .tracking-grid {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* ─── Cards ───────────────────────────────────────── */
+    .content-card {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .content-card:last-child { margin-bottom: 0; }
+
+    .card-header {
+        padding: 18px 24px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .card-header h2 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .card-header h2 i {
+        color: var(--primary);
+        font-size: 14px;
+    }
+    .status-date {
+        font-size: 11px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* ─── Current Status Message ──────────────────────── */
+    .status-message {
+        padding: 24px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    .status-message i {
+        font-size: 32px;
+        flex-shrink: 0;
+    }
+    .status-message h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+    .status-message p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .status-message.success {
+        background: var(--success-light);
+        border-bottom: 1px solid #a7f3d0;
+    }
+    .status-message.success i { color: var(--success); }
+    .status-message.shipping {
+        background: #ede9fe;
+        border-bottom: 1px solid #ddd6fe;
+    }
+    .status-message.shipping i { color: #6d28d9; }
+    .status-message.processing {
+        background: var(--primary-light);
+        border-bottom: 1px solid #bfdbfe;
+    }
+    .status-message.processing i { color: var(--primary); }
+    .status-message.pending {
+        background: var(--warning-light);
+        border-bottom: 1px solid #fde68a;
+    }
+    .status-message.pending i { color: var(--warning); }
+    .status-message.cancelled {
+        background: var(--error-light);
+        border-bottom: 1px solid #fecaca;
+    }
+    .status-message.cancelled i { color: var(--error); }
+
+    .tracking-badge {
+        margin-top: 12px;
+        padding: 8px 12px;
+        background: rgba(37, 99, 235, 0.1);
+        border-radius: var(--radius-md);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    /* ─── Tracking Timeline ───────────────────────────── */
+    .tracking-timeline {
+        padding: 24px;
+        position: relative;
+    }
+
+    .timeline-step {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+        position: relative;
+    }
+    .timeline-step:last-child { margin-bottom: 0; }
+
+    .step-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 24px;
+    }
+    .step-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--border);
+        border: 2px solid var(--white);
+        box-shadow: 0 0 0 2px var(--border);
+        z-index: 2;
+    }
+    .timeline-step.completed .step-dot {
+        background: var(--primary);
+        box-shadow: 0 0 0 2px var(--primary-light);
+    }
+    .timeline-step.active .step-dot {
+        background: var(--primary);
+        box-shadow: 0 0 0 4px var(--primary-light);
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 4px var(--primary-light); }
+        50% { box-shadow: 0 0 0 6px var(--primary-light); }
+    }
+
+    .step-line {
+        width: 2px;
+        flex: 1;
+        background: var(--border);
+        margin: 4px 0;
+    }
+    .timeline-step.completed .step-line {
+        background: var(--primary);
+    }
+    .timeline-step:last-child .step-line { display: none; }
+
+    .step-details {
+        flex: 1;
+        display: flex;
+        gap: 16px;
+        padding-bottom: 8px;
+    }
+
+    .step-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        background: var(--surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    .step-icon-box.completed {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+    .step-icon-box.active {
+        background: var(--primary);
+        color: var(--white);
+        animation: bounce 1s infinite;
+    }
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+
+    .step-info { flex: 1; }
+    .step-info h3 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+    }
+    .step-time {
+        font-size: 11px;
+        color: var(--primary);
+        font-weight: 600;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .step-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .inline-tracking {
+        margin-top: 8px;
+        padding: 6px 10px;
+        background: var(--primary-light);
+        border-radius: var(--radius-md);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    /* ─── Cancelled Notice ────────────────────────────── */
+    .cancelled-notice {
+        background: var(--white);
+        border: 2px solid var(--error);
+        border-radius: var(--radius-xl);
+        padding: 24px;
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        margin-top: 24px;
+    }
+
+    .cancelled-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--error-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--error);
+        font-size: 28px;
+        flex-shrink: 0;
+    }
+
+    .cancelled-content h3 {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--error);
+        margin-bottom: 4px;
+    }
+    .cancelled-content p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+    }
+
+    .btn-shop-again {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: var(--primary);
+        color: var(--white);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: var(--transition);
+        box-shadow: 0 1px 3px rgba(37,99,235,.35);
+    }
+    .btn-shop-again:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37,99,235,.4);
+    }
+
+    /* ─── Sidebar Cards ───────────────────────────────── */
+    .sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .sidebar-card {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .sidebar-header {
+        padding: 16px 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .sidebar-header h3 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .sidebar-header h3 i {
+        color: var(--primary);
+        font-size: 13px;
+    }
+    .items-count {
+        background: var(--primary-light);
+        color: var(--primary);
+        padding: 2px 8px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    /* Items List */
+    .items-list {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .sidebar-item {
+        display: flex;
+        gap: 12px;
+    }
+    .item-image {
+        position: relative;
+        flex-shrink: 0;
+    }
+    .item-image img {
+        width: 52px;
+        height: 52px;
+        border-radius: var(--radius-md);
+        object-fit: cover;
+        border: 1px solid var(--border);
+    }
+    .item-placeholder {
+        width: 52px;
+        height: 52px;
+        border-radius: var(--radius-md);
+        background: var(--surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 20px;
+        border: 1px solid var(--border);
+    }
+    .item-badge {
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        background: var(--primary);
+        color: var(--white);
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: var(--radius-full);
+        min-width: 18px;
+        text-align: center;
+    }
+
+    .item-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .item-info h4 {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .item-price {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .items-total {
+        padding: 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        font-weight: 700;
+        background: var(--surface);
+    }
+    .items-total span:last-child {
+        color: var(--primary);
+    }
+
+    /* Address Info */
+    .address-info {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .address-line {
+        display: flex;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+    .address-line i {
+        width: 18px;
+        color: var(--primary);
+        font-size: 11px;
+        margin-top: 2px;
+    }
+
+    /* Delivery Details */
+    .delivery-details {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .detail-row {
+        display: flex;
+        gap: 12px;
+    }
+    .detail-row i {
+        width: 20px;
+        color: var(--primary);
+        font-size: 12px;
+        margin-top: 2px;
+    }
+    .detail-row strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+    }
+    .detail-row span {
+        font-size: 11px;
+        color: var(--text-secondary);
+    }
+
+    /* Help Card */
+    .help-card .help-content {
+        padding: 16px;
+    }
+    .help-card p {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+    }
+
+    .contact-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .contact-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+    .contact-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+        transform: translateX(4px);
+    }
+
+    /* ─── Toast Notifications ─────────────────────────── */
+    .toast-stack {
+        position: fixed;
+        bottom: 80px; right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+    .toast {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        padding: 14px 18px;
+        min-width: 280px;
+        max-width: 360px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        pointer-events: all;
+        animation: toastIn .3s cubic-bezier(0.34,1.56,0.64,1);
+        border: 1px solid var(--border);
+    }
+    .toast.exiting { animation: toastOut .25s ease forwards; }
+    @keyframes toastIn {
+        from { transform: translateX(120%) scale(.8); opacity: 0; }
+        to   { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes toastOut {
+        to   { transform: translateX(120%) scale(.9); opacity: 0; }
+    }
+    .toast-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        margin-top: 3px;
+        flex-shrink: 0;
+    }
+    .toast.success .toast-dot { background: var(--success); }
+    .toast.error   .toast-dot { background: var(--error); }
+    .toast.warning .toast-dot { background: var(--warning); }
+    .toast.info    .toast-dot { background: var(--primary); }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .toast-msg   { font-size: 13px; color: var(--text-secondary); margin-top: 1px; line-height: 1.4; }
+    .toast-close {
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 2px;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .toast-close:hover { color: var(--text-primary); }
+
+    /* ─── Responsive ──────────────────────────────────── */
+    @media (max-width: 1024px) {
+        .tracking-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .bc-bar { padding: 0 16px; }
+        .tr-page { padding: 24px 16px 40px; }
+
+        .tracking-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .cancelled-notice {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .step-details {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step-icon-box {
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+        }
+
+        .toast-stack {
+            bottom: 70px;
+            right: 12px;
+            left: 12px;
+        }
+        .toast {
+            min-width: auto;
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="bc-bar">
+    <nav class="bc-inner" aria-label="Breadcrumb">
+        <a href="{% url 'eccommence:home' %}"><i class="fas fa-home" style="font-size:11px;"></i> Home</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'payment:order_history' %}">My Orders</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'payment:order_detail' order.order_number %}">Order #{{ order.order_number|truncatechars:8 }}</a>
+        <span class="bc-sep">›</span>
+        <span>Track</span>
+    </nav>
+</div>
+
+<!-- Toast Stack -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<div class="tr-page">
+    <div class="tr-inner">
+
+        <!-- Back Link -->
+        <a href="{% url 'payment:order_detail' order.order_number %}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Order Details
+        </a>
+
+        <!-- Page Header -->
+        <div class="tracking-header">
+            <div class="header-icon">
+                <i class="fas fa-route"></i>
+            </div>
+            <div class="header-content">
+                <h1>Track Your Order</h1>
+                <span class="order-number">Order #{{ order.order_number }}</span>
+                <span class="status-pill status-{{ order.status }}">
+                    <i class="fas fa-circle"></i>
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <div class="tracking-grid">
+            <!-- Main Tracking Timeline -->
+            <div class="tracking-main">
+                <!-- Current Status Card -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-info-circle"></i> Current Status</h2>
+                        <div class="status-date">
+                            <i class="far fa-clock"></i>
+                            Updated: {{ order.updated_at|date:"M d, h:i A" }}
+                        </div>
+                    </div>
+                    
+                    {% if order.status == 'delivered' %}
+                    <div class="status-message success">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <h3>Delivered Successfully!</h3>
+                            <p>Your order was delivered on {{ order.delivered_at|date:"M d, Y h:i A" }}</p>
+                        </div>
+                    </div>
+                    {% elif order.status == 'shipped' %}
+                    <div class="status-message shipping">
+                        <i class="fas fa-shipping-fast"></i>
+                        <div>
+                            <h3>Your Order is On the Way!</h3>
+                            <p>Expected delivery in 1-2 business days</p>
+                            {% if order.tracking_number %}
+                            <div class="tracking-badge">
+                                <i class="fas fa-truck"></i>
+                                <span>Tracking: <strong>{{ order.tracking_number }}</strong></span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% elif order.status == 'processing' %}
+                    <div class="status-message processing">
+                        <i class="fas fa-cogs"></i>
+                        <div>
+                            <h3>Processing Your Order</h3>
+                            <p>We're preparing your items for shipment</p>
+                        </div>
+                    </div>
+                    {% elif order.status == 'cancelled' %}
+                    <div class="status-message cancelled">
+                        <i class="fas fa-times-circle"></i>
+                        <div>
+                            <h3>Order Cancelled</h3>
+                            <p>This order has been cancelled</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="status-message pending">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h3>Order Confirmed</h3>
+                            <p>We've received your order and will process it soon</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Tracking Timeline -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-map-marked-alt"></i> Delivery Timeline</h2>
+                    </div>
+                    
+                    <div class="tracking-timeline">
+                        <!-- Step 1: Order Placed -->
+                        <div class="timeline-step {% if order.created_at %}completed{% endif %}">
+                            <div class="step-indicator">
+                                <div class="step-dot"></div>
+                                <div class="step-line"></div>
+                            </div>
+                            <div class="step-details">
+                                <div class="step-icon-box completed">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="step-info">
+                                    <h3>Order Placed</h3>
+                                    <p class="step-time">{{ order.created_at|date:"M d, Y h:i A" }}</p>
+                                    <p class="step-desc">Your order has been successfully placed and confirmed</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Payment Confirmed -->
+                        <div class="timeline-step {% if order.is_paid %}completed{% endif %}">
+                            <div class="step-indicator">
+                                <div class="step-dot"></div>
+                                <div class="step-line"></div>
+                            </div>
+                            <div class="step-details">
+                                <div class="step-icon-box {% if order.is_paid %}completed{% endif %}">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                                <div class="step-info">
+                                    <h3>Payment {% if order.is_paid %}Confirmed{% else %}Pending{% endif %}</h3>
+                                    {% if order.paid_at %}
+                                    <p class="step-time">{{ order.paid_at|date:"M d, Y h:i A" }}</p>
+                                    <p class="step-desc">Payment received and verified successfully</p>
+                                    {% else %}
+                                    <p class="step-desc">Waiting for payment confirmation</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Processing -->
+                        <div class="timeline-step {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %} {% if order.status == 'processing' %}active{% endif %}">
+                            <div class="step-indicator">
+                                <div class="step-dot"></div>
+                                <div class="step-line"></div>
+                            </div>
+                            <div class="step-details">
+                                <div class="step-icon-box {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %} {% if order.status == 'processing' %}active{% endif %}">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                <div class="step-info">
+                                    <h3>Processing Order</h3>
+                                    {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}
+                                    <p class="step-desc">Your order is being prepared for shipment</p>
+                                    {% else %}
+                                    <p class="step-desc">Order will be processed after payment confirmation</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Shipped -->
+                        <div class="timeline-step {% if order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %} {% if order.status == 'shipped' %}active{% endif %}">
+                            <div class="step-indicator">
+                                <div class="step-dot"></div>
+                                <div class="step-line"></div>
+                            </div>
+                            <div class="step-details">
+                                <div class="step-icon-box {% if order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %} {% if order.status == 'shipped' %}active{% endif %}">
+                                    <i class="fas fa-shipping-fast"></i>
+                                </div>
+                                <div class="step-info">
+                                    <h3>Out for Delivery</h3>
+                                    {% if order.shipped_at %}
+                                    <p class="step-time">{{ order.shipped_at|date:"M d, Y h:i A" }}</p>
+                                    <p class="step-desc">Your package is on the way to you</p>
+                                    {% if order.tracking_number %}
+                                    <div class="inline-tracking">
+                                        <i class="fas fa-truck"></i>
+                                        <span>Tracking: <strong>{{ order.tracking_number }}</strong></span>
+                                    </div>
+                                    {% endif %}
+                                    {% else %}
+                                    <p class="step-desc">Your order will be shipped soon</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Delivered -->
+                        <div class="timeline-step {% if order.status == 'delivered' %}completed active{% endif %}">
+                            <div class="step-indicator">
+                                <div class="step-dot"></div>
+                            </div>
+                            <div class="step-details">
+                                <div class="step-icon-box {% if order.status == 'delivered' %}completed active{% endif %}">
+                                    <i class="fas fa-home"></i>
+                                </div>
+                                <div class="step-info">
+                                    <h3>Delivered</h3>
+                                    {% if order.delivered_at %}
+                                    <p class="step-time">{{ order.delivered_at|date:"M d, Y h:i A" }}</p>
+                                    <p class="step-desc">Package successfully delivered to your address</p>
+                                    {% else %}
+                                    <p class="step-desc">Estimated delivery: 1-3 business days</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cancelled Notice -->
+                {% if order.status == 'cancelled' %}
+                <div class="cancelled-notice">
+                    <div class="cancelled-icon">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                    <div class="cancelled-content">
+                        <h3>Order Cancelled</h3>
+                        <p>This order has been cancelled and will not be delivered.</p>
+                        <a href="{% url 'eccommence:home' %}" class="btn-shop-again">
+                            <i class="fas fa-shopping-bag"></i>
+                            Shop Again
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar Info -->
+            <div class="sidebar-section">
+                <!-- Order Items -->
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-box"></i> Order Items</h3>
+                        <span class="items-count">{{ order.items.count }} item{{ order.items.count|pluralize }}</span>
+                    </div>
+                    <div class="items-list">
+                        {% for item in order.items.all %}
+                        <div class="sidebar-item">
+                            <div class="item-image">
+                                {% if item.product_image %}
+                                <img src="{{ item.product_image }}" alt="{{ item.product_name }}">
+                                {% else %}
+                                <div class="item-placeholder">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                {% endif %}
+                                <span class="item-badge">{{ item.quantity }}</span>
+                            </div>
+                            <div class="item-info">
+                                <h4>{{ item.product_name|truncatechars:25 }}</h4>
+                                <span class="item-price">UGX {{ item.total|floatformat:0|intcomma }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="items-total">
+                        <span>Order Total</span>
+                        <span>UGX {{ order.total|floatformat:0|intcomma }}</span>
+                    </div>
+                </div>
+
+                <!-- Delivery Address -->
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-map-marker-alt"></i> Delivery Address</h3>
+                    </div>
+                    <div class="address-info">
+                        <div class="address-line">
+                            <i class="fas fa-user"></i>
+                            <strong>{{ order.full_name }}</strong>
+                        </div>
+                        <div class="address-line">
+                            <i class="fas fa-phone"></i>
+                            <span>{{ order.phone }}</span>
+                        </div>
+                        <div class="address-line">
+                            <i class="fas fa-envelope"></i>
+                            <span>{{ order.email }}</span>
+                        </div>
+                        <div class="address-line">
+                            <i class="fas fa-home"></i>
+                            <span>{{ order.shipping_address }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Information -->
+                <div class="sidebar-card">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-truck"></i> Delivery Info</h3>
+                    </div>
+                    <div class="delivery-details">
+                        <div class="detail-row">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <strong>Estimated Delivery</strong>
+                                <span>1-3 business days</span>
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <i class="fas fa-shipping-fast"></i>
+                            <div>
+                                <strong>Shipping Method</strong>
+                                <span>Standard Delivery</span>
+                            </div>
+                        </div>
+                        {% if order.customer_note %}
+                        <div class="detail-row">
+                            <i class="fas fa-sticky-note"></i>
+                            <div>
+                                <strong>Delivery Note</strong>
+                                <span>{{ order.customer_note }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Help & Support -->
+                <div class="sidebar-card help-card">
+                    <div class="sidebar-header">
+                        <h3><i class="fas fa-headset"></i> Need Help?</h3>
+                    </div>
+                    <div class="help-content">
+                        <p>Our support team is ready to assist you</p>
+                        <div class="contact-buttons">
+                            <a href="mailto:support@{{ request.tenant.domain }}" class="contact-btn">
+                                <i class="fas fa-envelope"></i>
+                                <span>Email Support</span>
+                            </a>
+                            <a href="tel:+256700000000" class="contact-btn">
+                                <i class="fas fa-phone"></i>
+                                <span>Call Us</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    "use strict";
+
+    // Toast notification system
+    const toastStack = document.getElementById('toastStack');
+
+    window.showToast = function(title, message, type = 'success') {
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `
+            <div class="toast-dot"></div>
+            <div class="toast-body">
+                <div class="toast-title">${title}</div>
+                ${message ? `<div class="toast-msg">${message}</div>` : ''}
+            </div>
+            <div class="toast-close" onclick="dismissToast(this.parentElement)">
+                <i class="fas fa-xmark"></i>
+            </div>`;
+        toastStack.appendChild(el);
+        setTimeout(() => dismissToast(el), 5000);
+    };
+
+    window.dismissToast = function(el) {
+        el.classList.add('exiting');
+        setTimeout(() => el.remove(), 260);
+    };
+
+    // Show Django messages as toasts
+    {% if messages %}
+        {% for message in messages %}
+            showToast(
+                "{{ message.tags|capfirst }}",
+                "{{ message }}",
+                "{{ message.tags }}"
+            );
+        {% endfor %}
+    {% endif %}
+
+    // Auto-refresh tracking status every 30 seconds (optional)
+    // Uncomment if you want real-time updates
+    /*
+    setInterval(function() {
+        fetch(window.location.href, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Update page content here if needed
+            console.log('Tracking status refreshed');
+        });
+    }, 30000);
+    */
+
+})();
+</script>
+{% endblock %}

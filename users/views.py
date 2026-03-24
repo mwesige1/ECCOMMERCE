@@ -1,232 +1,382 @@
-from django.shortcuts import render,redirect
-from django.contrib.auth .forms import AuthenticationForm
-from django.contrib.auth import login,logout,authenticate
-from django.contrib import messages
-from django.contrib.auth.models import User
-from.forms import RegisterForm,UpdateUserForm,ChangePasswordForm,UserProfileInfo,ProfilePictureForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from users.models import Profile
+from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.db import transaction
 import json
+from django.contrib.auth.views import PasswordResetView
+from django.urls import reverse_lazy
+
+from .models import User, VendorProfile, Address
+from .forms import (
+    CustomerRegistrationForm, UserUpdateForm,
+    ChangePasswordForm, AddressForm
+)
 from cart.cart import Cart
-from payment.models import ShippingAddress
-from payment.forms import ShippingForm
-from django.contrib.auth import update_session_auth_hash
+from eccommence.models import Customer  # Add this for customer profile
 
 
-
-
+# ============= AUTHENTICATION VIEWS =============
 
 def login_view(request):
-    # check if the user is already logged in
+    """User login view"""
+    # Redirect if already logged in
     if request.user.is_authenticated:
         return redirect('eccommence:home')
     
-    # handle submission
     if request.method == 'POST':
-        # create an instance of the authentication form with request data
-        form = AuthenticationForm(request, data=request.POST)
-        # check if form is valid 
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            # verify using django built in authentication
-            user = authenticate(username=username, password=password)
-            # if authentication was successful
-            if user is not None:
-                # login user
-                login(request, user)
-
-                # work on the cart so that after logging in back the previous cart info comes back
-                # Get the current user
-                current_user, created = Profile.objects.get_or_create(user=request.user)
-
-                # Get their saved cart from the database
-                saved_cart = current_user.cart_info
-
-                # convert the cart_info dictionary {"2":5,"4":1} to python dictionary
-                # let's first check if it's not empty
-                if saved_cart:
-                    # then we convert to python dictionary
-                    converted_cart = json.loads(saved_cart)
-                    # Access the cart class to add in the items from the db
-                    cart = Cart(request)
-                    # loop through all the items in the converted_cart and add them to the cart class
-                    for key, value in converted_cart.items():
-                        cart.db_add(product=key, quantity=value)
-                        # db_add is a separate function in the cart class that will 
-                        # add these products to the cart after login
-
-                # display message
-                messages.success(request, f'Hello {user.username}, Welcome Back')
-                # redirect
-                return redirect('eccommence:home')
-            else:
-                # display error if authentication failed
-                messages.error(request, 'Invalid username or Password')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        remember_me = request.POST.get('remember_me')
         
+        # Authenticate user
+        user = authenticate(request, username=email, password=password)
+        
+        if user is not None:
+            login(request, user)
+            
+            # Handle remember me
+            if not remember_me:
+                request.session.set_expiry(0)
+            
+            # Cart restoration - using Customer model instead of Profile
+            try:
+                customer = Customer.objects.get(user=user)
+                # Note: cart_info was in Profile, you may need to migrate this to Customer
+                # or handle it differently
+                pass
+            except Customer.DoesNotExist:
+                pass
+            
+            # Redirect to next or home
+            next_url = request.GET.get('next', 'eccommence:home')
+            return redirect(next_url)
         else:
-            # display an error if form is invalid
-            messages.error(request, 'Invalid username or password ')
-    else:
-        # if the request is get, just display an empty form
-        form = AuthenticationForm()
-    return render(request, 'grok/login.html', {'form': form})
+            messages.error(request, 'Invalid email or password.')
+    
+    return render(request, 'users/login.html')
+
 
 def logout_view(request):
+    """User logout view"""
     logout(request)
-    return redirect('login')  
+    return redirect('eccommence:home')
 
 
-def register(request):
-    if request.method == "POST":
-        #create a form instance with post data
-        form = RegisterForm(request.POST)
-        #check validity
-        if form.is_valid():
-            user = form.save()
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password1')
-
-            # authenticate the user
-            user = authenticate(username=username, password=password)
-
-            # log in automatically
-            login(request, user)
-
-            return redirect('user_info')
-        else:
-            # django will automatically show the error
-            messages.error(request,"Please correct the errors below")
-    
-    else:
-        form = RegisterForm()
-    return render(request,'register1.html',{'form':form})
-
-
-def update_user(request):
+def register_view(request):
+    """Customer registration view"""
     if request.user.is_authenticated:
-        current_user = User.objects.get(id=request.user.id)
+        return redirect('users:login')
+    
+    if request.method == 'POST':
+        form = CustomerRegistrationForm(request.POST)
         
-        # Get or create the user's profile
-        try:
-            user_profile = Profile.objects.get(user=current_user)
-        except Profile.DoesNotExist:
-            user_profile = Profile.objects.create(user=current_user)
+        if form.is_valid():
+            # Create user
+            user = form.save()
+            
+            # Create customer profile in eccommence
+            Customer.objects.create(user=user)
+            
+            # Auto login
+            login(request, user)
+            
+            messages.success(request, 'Registration successful! Welcome to our store.')
+            return redirect('eccommence:home')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CustomerRegistrationForm()
+    
+    return render(request, 'users/register.html', {'form': form})
+
+
+
+
+# ============= PROFILE VIEWS =============
+
+@login_required
+def profile_view(request):
+    """View user profile"""
+    # Get or create customer profile
+    customer, created = Customer.objects.get_or_create(user=request.user)
+    
+    # Get user's addresses from the Address model
+    addresses = []
+    default_address = None
+    
+    if hasattr(request.user, 'customer_profile'):
+        customer = request.user.customer_profile
+        addresses = customer.addresses.all()
+        default_address = addresses.filter(is_default=True).first()
+    
+    context = {
+        'user': request.user,
+        'customer': customer,
+        'addresses': addresses,
+        'default_address': default_address,
+    }
+    
+    return render(request, 'users/profile.html', context)
+
+
+@login_required
+def profile_edit(request):
+    """Edit user profile"""
+    # Note: Profile model is removed, so we only update User model
+    # Address management is done through Address model
+    
+    if request.method == 'POST':
+        user_form = UserUpdateForm(request.POST, instance=request.user)
         
-        # Initialize both forms
-        user_form = UpdateUserForm(request.POST or None, instance=current_user)
-        profile_form = UserProfileInfo(request.POST or None, instance=user_profile)
+        if user_form.is_valid():
+            user_form.save()
+            
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('users:profile_view')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+    
+    context = {
+        'user_form': user_form,
+    }
+    
+    return render(request, 'users/profile_edit.html', context)
+
+
+@login_required
+def profile_setup(request):
+    """Initial profile setup after registration"""
+    # This view might need updating based on your requirements
+    # For now, redirect to profile edit
+    return redirect('users:profile_edit')
+
+
+@login_required
+@require_http_methods(["POST"])
+def upload_profile_picture(request):
+    """Upload profile picture via AJAX"""
+    customer, created = Customer.objects.get_or_create(user=request.user)
+    
+    if 'profile_picture' in request.FILES:
+        customer.profile_picture = request.FILES['profile_picture']
+        customer.save()
         
-        if request.method == 'POST':
-            if user_form.is_valid() and profile_form.is_valid():
-                user_form.save()
-                profile_form.save()
-                
-                login(request, current_user)
-                messages.success(request, f'{current_user}, your information has been updated.')
-                return redirect('eccommence:home')
-            else:
-                messages.error(request, 'Please correct the errors below.')
-        
-        # IMPORTANT: Pass 'form' (not 'user_form') for template compatibility
-        return render(request, 'grok/edit_user_info.html', {
-            'form': user_form,          # Template expects 'form' for user fields
-            'profile_form': profile_form  # Template expects 'profile_form' for address fields
+        return JsonResponse({
+            'success': True,
+            'message': 'Profile picture updated successfully!',
+            'image_url': customer.profile_picture.url
         })
     
-    else:
-        messages.warning(request, 'You must be logged in to access this page.')
-        return redirect('login')
+    return JsonResponse({
+        'success': False,
+        'message': 'No image provided'
+    }, status=400)
 
 
-def update_password(request):
-    # Check if the user is authenticated
-    if request.user.is_authenticated:
-        # Get the current logged in user
-        current_user = request.user
-
-        # check if the form has been filled
-        if request.method == 'POST':
-            form = ChangePasswordForm(current_user, request.POST)
-
-            if form.is_valid():
-                user = form.save()
-                # re-login the user after changing the password
-                update_session_auth_hash(request, user)
-
-                messages.success(request, 'Password Changed Successfully')
-                return redirect('update_user')
-            else:
-                # form is not valid, render the same page with errors
-                return render(request, 'edit-info.html', {'form': form})
-
-
-        else:
-            form = ChangePasswordForm(current_user)
-            return render(request, 'edit-info.html', {'form': form})
-
-    else:
-        messages.warning(request, 'User has to be logged in to change password')
-        return redirect('eccommence:home')
+@login_required
+@require_http_methods(["POST"])
+def remove_profile_picture(request):
+    """Remove profile picture"""
+    customer = get_object_or_404(Customer, user=request.user)
     
+    if customer.profile_picture:
+        customer.profile_picture.delete()
+        customer.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Profile picture removed successfully!'
+        })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'No profile picture to remove'
+    }, status=400)
 
 
+# ============= PASSWORD MANAGEMENT =============
 
-# This decorator automatically redirects users to the login page if they are not logged in
+@login_required
+def change_password(request):
+    """Change user password"""
+    if request.method == 'POST':
+        form = ChangePasswordForm(request.user, request.POST)
+        
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            
+            messages.success(request, 'Your password has been changed successfully!')
+            return redirect('eccommence:home')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ChangePasswordForm(request.user)
+    
+    return render(request, 'users/change_password.html', {'form': form})
+
+
+# ============= ADDRESS MANAGEMENT =============
+
+@login_required
+def address_list(request):
+    """List all user addresses"""
+    addresses = Address.objects.filter(user=request.user)
+    
+    context = {
+        'addresses': addresses,
+    }
+    
+    return render(request, 'users/address_list.html', context)
+
+
+@login_required
+def address_add(request):
+    """Add new address"""
+    if request.method == 'POST':
+        form = AddressForm(request.POST)
+        
+        if form.is_valid():
+            address = form.save(commit=False)
+            address.user = request.user
+            address.save()
+            
+            messages.success(request, 'Address added successfully!')
+            return redirect('users:address_list')
+    else:
+        form = AddressForm()
+    
+    return render(request, 'users/address_form.html', {'form': form, 'action': 'Add'})
+
+
+@login_required
+def address_edit(request, pk):
+    """Edit existing address"""
+    address = get_object_or_404(Address, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        form = AddressForm(request.POST, instance=address)
+        
+        if form.is_valid():
+            form.save()
+            
+            messages.success(request, 'Address updated successfully!')
+            return redirect('users:address_list')
+    else:
+        form = AddressForm(instance=address)
+    
+    return render(request, 'users/address_form.html', {'form': form, 'action': 'Edit'})
+
+
+@login_required
+def address_delete(request, pk):
+    """Delete address"""
+    address = get_object_or_404(Address, pk=pk, user=request.user)
+    
+    if request.method == 'POST':
+        address.delete()
+        messages.success(request, 'Address deleted successfully!')
+        return redirect('users:address_list')
+    
+    return render(request, 'users/address_confirm_delete.html', {'address': address})
+
+
+@login_required
+@require_http_methods(["POST"])
+def address_set_default(request, pk):
+    """Set address as default"""
+    address = get_object_or_404(Address, pk=pk, user=request.user)
+    
+    # Remove default from all addresses
+    Address.objects.filter(user=request.user, address_type=address.address_type).update(is_default=False)
+    
+    # Set this as default
+    address.is_default = True
+    address.save()
+    
+    return JsonResponse({
+        'success': True,
+        'message': 'Default address updated!'
+    })
+
+
+# ============= ACCOUNT SETTINGS =============
+
+@login_required
+def account_settings(request):
+    """Account settings page"""
+    customer, created = Customer.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        # Update notification preferences
+        customer.newsletter_subscription = request.POST.get('newsletter_subscription') == 'on'
+        customer.sms_notifications = request.POST.get('sms_notifications') == 'on'
+        customer.email_notifications = request.POST.get('email_notifications') == 'on'
+        customer.save()
+        
+        messages.success(request, 'Settings updated successfully!')
+        return redirect('users:account_settings')
+    
+    return render(request, 'users/account_settings.html', {'customer': customer})
+
+
+@login_required
+def delete_account(request):
+    """Delete user account"""
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        
+        # Verify password
+        if request.user.check_password(password):
+            user = request.user
+            logout(request)
+            user.delete()
+            
+            messages.success(request, 'Your account has been deleted.')
+            return redirect('eccommence:home')
+        else:
+            messages.error(request, 'Incorrect password.')
+    
+    return render(request, 'users/delete_account.html')
+
+
+# ============= LEGACY SUPPORT (Keep for backward compatibility) =============
+
+@login_required
+def update_user(request):
+    """Legacy view - redirect to profile_edit"""
+    return redirect('users:profile_edit')
+
+
 @login_required
 def user_info(request):
-    # Get the profile that belongs to the currently logged-in user
-    # "request.user" gives the User object of whoever is logged in
-    profile = Profile.objects.get(user=request.user)
-    user = request.user
+    """Legacy view - redirect to profile_view"""
+    return redirect('users:profile_view')
 
 
-    # Get the shipping user information for the logged-in user
-    # get_or_create returns a tuple (object, created), so we unpack it
-    user_shipping, created = ShippingAddress.objects.get_or_create(user=request.user)
-
-    # Check if the form is being submitted (POST request)
-    if request.method == 'POST':
-        # Bind the submitted form data (request.POST) to the existing profile instance
-        form = UserProfileInfo(request.POST, instance=profile)
-        shipping_form = ShippingForm(request.POST, instance=user_shipping)
-
-        # Check if the submitted form is valid
-        if form.is_valid() or shipping_form.is_valid():
-            # Save the updated profile information to the database
-            form.save()
-
-            # Save the updated shipping information to the database
-            shipping_form.save()
-
-            # Show a success message to the user
-            messages.success(request, 'Your information has been updated successfully.')
-
-            # Redirect the user to the homepage (you can change this to any page you prefer)
-            return redirect('eccommence:home')
-
-    # If it's not a POST request (GET request), show the form with existing profile data
-    else:
-        form = UserProfileInfo(instance=profile)
-        shipping_form = ShippingForm(instance=user_shipping)
-
-    # Finally, render the template and pass the forms to it
-    return render(request, 'grok/user-info.html', {'form': form, 'shipping_form': shipping_form,'user':user})
+@login_required
+def update_password(request):
+    """Legacy view - redirect to change_password"""
+    return redirect('users:change_password')
 
 
 @login_required
 def change_profile_picture(request):
-    profile = request.user.profile
-
-    if request.method == 'POST':
-        form = ProfilePictureForm(request.POST, request.FILES, instance=profile)
-        if form.is_valid():
-            form.save()
-            return redirect('user_info')  # or wherever you want
-    else:
-        form = ProfilePictureForm(instance=profile)  # for GET requests
-
-    # Always return a response (renders form for GET or invalid POST)
-    return render(request, 'grok/edit_user_info.html', {'form': form})
+    """Legacy view - redirect to profile_edit"""
+    return redirect('users:profile_edit')
 
 
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'users/password_reset.html'
+    email_template_name = 'users/password_reset_email.html'
+    subject_template_name = 'users/password_reset_subject.txt'
+    success_url = reverse_lazy('users:password_reset_done')
+
+    def form_valid(self, form):
+        self.request.session['reset_email'] = form.cleaned_data['email']
+        return super().form_valid(form)

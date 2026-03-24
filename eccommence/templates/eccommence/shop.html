@@ -1,0 +1,403 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+
+{% block title %}Shop All Products - {{ request.tenant.name }}{% endblock %}
+
+{% block content %}
+
+<!-- Shop Header -->
+<section style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2.5rem 0; margin-bottom: 2rem;">
+    <div style="max-width: 1400px; margin: 0 auto; padding: 0 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; color: white;">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem; font-weight: 600;">Shop All Products</h1>
+                <p style="opacity: 0.9; margin: 0;">Discover amazing deals on thousands of products</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 0.75rem 1.5rem; border-radius: 8px;">
+                <span style="font-size: 1.5rem; font-weight: bold;">{{ total_products }}</span>
+                <span style="opacity: 0.9; margin-left: 0.5rem;">Products</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Shop Layout -->
+<main class="product-main">
+    <!-- Advanced Filters Sidebar -->
+    <aside class="filters-sidebar">
+        <!-- Search in Shop -->
+        <div class="filter-section" style="border-bottom: 2px solid #e0e0e0; padding-bottom: 1.5rem;">
+            <form action="{% url 'eccommence:shop' %}" method="get">
+                <input type="text" 
+                       name="q" 
+                       placeholder="Search products..." 
+                       value="{{ query }}"
+                       style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;">
+                <button type="submit" 
+                        style="width: 100%; margin-top: 0.5rem; padding: 0.75rem; background: #667eea; color: white; 
+                               border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </form>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="filter-section">
+            <h3 class="filter-title">Categories</h3>
+            <ul class="filter-options">
+                <li class="filter-option">
+                    <a href="{% url 'eccommence:shop' %}" 
+                       style="text-decoration: none; color: {% if not current_category %}#667eea{% else %}#333{% endif %}; font-weight: {% if not current_category %}600{% else %}normal{% endif %};">
+                        All Categories
+                    </a>
+                </li>
+                {% for category in categories %}
+                <li class="filter-option">
+                    <a href="{% url 'eccommence:shop' %}?category={{ category.slug }}" 
+                       style="text-decoration: none; color: {% if current_category == category.slug %}#667eea{% else %}#333{% endif %}; 
+                              font-weight: {% if current_category == category.slug %}600{% else %}normal{% endif %};">
+                        {{ category.name }}
+                        <span style="color: #999; font-size: 0.85rem;">({{ category.products.count }})</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-section">
+            <h3 class="filter-title">Price Range</h3>
+            <div class="price-range-container">
+                {% if price_range.min_price and price_range.max_price %}
+                <div style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">
+                    UGX {{ price_range.min_price|floatformat:0 }} - UGX {{ price_range.max_price|floatformat:0 }}
+                </div>
+                {% endif %}
+                <div class="price-inputs">
+                    <div class="price-input-group">
+                        <span class="price-label">Min</span>
+                        <input type="number" class="price-input" id="minPrice" 
+                               value="{{ request.GET.min_price }}" placeholder="0">
+                    </div>
+                    <div class="price-input-group">
+                        <span class="price-label">Max</span>
+                        <input type="number" class="price-input" id="maxPrice" 
+                               value="{{ request.GET.max_price }}" placeholder="Any">
+                    </div>
+                </div>
+                <button class="go-button" onclick="applyFilters()">Apply Price</button>
+            </div>
+        </div>
+
+        <!-- Availability -->
+        <div class="filter-section">
+            <h3 class="filter-title">Availability</h3>
+            <ul class="filter-options">
+                <li class="filter-option">
+                    <input type="checkbox" id="in_stock" name="in_stock" {% if request.GET.in_stock %}checked{% endif %}>
+                    <label for="in_stock">In Stock Only</label>
+                </li>
+                <li class="filter-option">
+                    <input type="checkbox" id="on_sale" name="on_sale" {% if request.GET.on_sale %}checked{% endif %}>
+                    <label for="on_sale">On Sale</label>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Customer Rating -->
+        <div class="filter-section">
+            <h3 class="filter-title">Customer Rating</h3>
+            {% for rating in "54321" %}
+            <div class="rating-option" onclick="filterByRating({{ rating }})" 
+                 style="cursor: pointer; padding: 0.5rem; margin: 0.25rem 0; border-radius: 4px; 
+                        transition: background 0.2s; {% if request.GET.rating == rating %}background: #f0f0f0;{% endif %}">
+                <div class="rating-stars" style="display: inline-flex;">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= rating|add:"0" %}
+                            <i class="fas fa-star" style="color: #FFA41C; font-size: 0.9rem;"></i>
+                        {% else %}
+                            <i class="far fa-star" style="color: #FFA41C; font-size: 0.9rem;"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span style="margin-left: 0.5rem; color: #666; font-size: 0.9rem;">& Up</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Vendor Filter -->
+        {% if vendors %}
+        <div class="filter-section">
+            <h3 class="filter-title">Vendors</h3>
+            <ul class="filter-options" style="max-height: 200px; overflow-y: auto;">
+                {% for vendor in vendors %}
+                <li class="filter-option">
+                    <input type="checkbox" id="vendor_{{ vendor.id }}" name="vendor" value="{{ vendor.slug }}"
+                           {% if vendor.slug in selected_vendors %}checked{% endif %}>
+                    <label for="vendor_{{ vendor.id }}">{{ vendor.store_name }}</label>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Clear Filters -->
+        {% if request.GET.q or request.GET.category or request.GET.min_price or request.GET.max_price or request.GET.in_stock or request.GET.on_sale or request.GET.rating %}
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'eccommence:shop' %}" 
+               style="display: block; text-align: center; padding: 0.75rem; background: #f8f9fa; 
+                      color: #667eea; text-decoration: none; border-radius: 6px; font-weight: 500; border: 1px solid #667eea;">
+                <i class="fas fa-times-circle"></i> Clear All Filters
+            </a>
+        </div>
+        {% endif %}
+    </aside>
+
+    <!-- Products Section -->
+    <section class="products-section">
+        <!-- Toolbar -->
+        <div style="margin-bottom: 1.5rem; padding: 1.25rem; background: white; border-radius: 8px; 
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; 
+                    align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <!-- Results Info -->
+            <div style="font-size: 0.95rem; color: #666;">
+                {% if query %}
+                    Search results for "<strong>{{ query }}</strong>" - 
+                {% endif %}
+                Showing <strong>{{ products|length }}</strong> of <strong>{{ total_products }}</strong> products
+            </div>
+
+            <!-- Sort Dropdown -->
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <label style="color: #666; font-size: 0.9rem;">Sort by:</label>
+                <select class="sort-select" id="sortSelect" style="padding: 0.5rem 1rem; border: 1px solid #ddd; 
+                        border-radius: 6px; font-size: 0.9rem; cursor: pointer;">
+                    <option value="">Featured</option>
+                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Name: A-Z</option>
+                    <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Name: Z-A</option>
+                    <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Top Rated</option>
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-grid">
+            {% if products %}
+                {% for product in products %}
+                <div class="product-card">
+                    {% if product.is_on_sale %}
+                        <div class="product-badge">Sale</div>
+                    {% endif %}
+                    
+                    <a href="{% url 'eccommence:product_detail' product.slug %}">
+                        {% if product.images.exists %}
+                            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-image">
+                        {% else %}
+                            <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" class="product-image">
+                        {% endif %}
+                    </a>
+                    
+                    <a href="{% url 'eccommence:product_detail' product.slug %}" class="product-title">
+                        {{ product.name|truncatewords:12 }}
+                    </a>
+                    
+                    <div class="product-rating">
+                        <div class="rating-stars-small">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= product.rating|floatformat:0|add:"0" %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="rating-count">({{ product.total_reviews }})</span>
+                    </div>
+                    
+                    <div class="product-price">
+                        {% if product.is_on_sale and product.sale_price %}
+                            <div class="price-main">UGX {{ product.sale_price|floatformat:0 }}</div>
+                            <div>
+                                <span class="price-old">UGX {{ product.price|floatformat:0 }}</span>
+                                <span class="discount-badge">-{{ product.discount_percentage }}%</span>
+                            </div>
+                        {% else %}
+                            <div class="price-main">UGX {{ product.price|floatformat:0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-actions">
+                        {% if product.is_in_stock %}
+                            <button type="button" class="btn-add-cart add-cart-home" data-product-id="{{ product.id }}">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn-add-cart" disabled style="background: #999; cursor: not-allowed;">
+                                Out of Stock
+                            </button>
+                        {% endif %}
+                        <button class="btn-wishlist" data-product-id="{{ product.id }}">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- No Products -->
+                <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: #f8f9fa; border-radius: 12px;">
+                    <i class="fas fa-search" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #666; margin-bottom: 0.5rem;">No Products Found</h3>
+                    <p style="color: #999; margin-bottom: 1.5rem;">
+                        {% if query %}
+                            No results for "{{ query }}". Try different keywords or
+                        {% else %}
+                            Try adjusting your filters or
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'eccommence:shop' %}" 
+                       style="display: inline-block; padding: 0.75rem 2rem; background: #667eea; color: white; 
+                              text-decoration: none; border-radius: 6px; font-weight: 500;">
+                        <i class="fas fa-redo"></i> Reset Filters
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <div class="pagination-bottom">
+            <div class="pagination-pages">
+                {% if products.has_previous %}
+                    <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="page-btn-arrow">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                {% endif %}
+                
+                {% for num in products.paginator.page_range %}
+                    {% if products.number == num %}
+                        <button class="page-btn active">{{ num }}</button>
+                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="page-btn">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if products.has_next %}
+                    <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="page-btn-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+<script>
+// Sort functionality
+document.getElementById('sortSelect')?.addEventListener('change', function() {
+    const url = new URL(window.location);
+    if (this.value) {
+        url.searchParams.set('sort', this.value);
+    } else {
+        url.searchParams.delete('sort');
+    }
+    window.location.href = url.toString();
+});
+
+// Rating filter
+function filterByRating(rating) {
+    const url = new URL(window.location);
+    url.searchParams.set('rating', rating);
+    window.location.href = url.toString();
+}
+
+// Apply filters
+function applyFilters() {
+    const url = new URL(window.location);
+    const minPrice = document.getElementById('minPrice').value;
+    const maxPrice = document.getElementById('maxPrice').value;
+    
+    if (minPrice) url.searchParams.set('min_price', minPrice);
+    else url.searchParams.delete('min_price');
+    
+    if (maxPrice) url.searchParams.set('max_price', maxPrice);
+    else url.searchParams.delete('max_price');
+    
+    if (document.getElementById('in_stock').checked) url.searchParams.set('in_stock', 'true');
+    else url.searchParams.delete('in_stock');
+    
+    if (document.getElementById('on_sale').checked) url.searchParams.set('on_sale', 'true');
+    else url.searchParams.delete('on_sale');
+    
+    // Vendor filters
+    const vendors = [];
+    document.querySelectorAll('input[name="vendor"]:checked').forEach(checkbox => {
+        vendors.push(checkbox.value);
+    });
+    if (vendors.length) url.searchParams.set('vendor', vendors.join(','));
+    else url.searchParams.delete('vendor');
+    
+    window.location.href = url.toString();
+}
+
+// Add to cart
+$(document).on("click", ".add-cart-home", function(e) {
+    e.preventDefault();
+    const productId = $(this).data('product-id');
+    
+    $.ajax({
+        type: "POST",
+        url: "{% url 'cart:cart_add' %}",
+        data: {
+            product_id: productId,
+            product_qty: 1,
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+            action: "post",
+        },
+        success: function(json) {
+            alert('Product added to cart!');
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) cartCount.textContent = json.qty;
+        },
+        error: function() {
+            alert('Error adding to cart');
+        }
+    });
+});
+
+// Wishlist
+$(document).on('click', '.btn-wishlist', function(e) {
+    e.preventDefault();
+    const button = $(this);
+    const productId = button.data('product-id');
+    
+    $.ajax({
+        type: "POST",
+        url: "{% url 'eccommence:toggle_wishlist' %}",
+        data: {
+            product_id: productId,
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+        },
+        success: function(json) {
+            const heartIcon = button.find('i');
+            if (json.added) {
+                heartIcon.removeClass('far').addClass('fas');
+            } else {
+                heartIcon.removeClass('fas').addClass('far');
+            }
+            alert(json.message);
+        },
+        error: function() {
+            alert('Please login to use wishlist');
+        }
+    });
+});
+</script>
+{% endblock %}

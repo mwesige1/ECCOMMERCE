@@ -1,1 +1,767 @@
-<h1>Payment Success</h1>
+{% extends 'eccommence/base.html' %}
+{% load static %}
+
+{% block title %}Order Confirmed - {{ request.tenant.name }}{% endblock %}
+
+{% block content %}
+<div class="success-page">
+    <div class="success-container">
+        <!-- Success Animation -->
+        <div class="success-animation">
+            <div class="success-checkmark">
+                <div class="check-icon">
+                    <span class="icon-line line-tip"></span>
+                    <span class="icon-line line-long"></span>
+                    <div class="icon-circle"></div>
+                    <div class="icon-fix"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Content -->
+        <div class="success-content">
+            <h1>Order Placed Successfully!</h1>
+            <p class="success-subtitle">Thank you for your purchase. Your order has been received and is being processed.</p>
+
+            <!-- Order Number -->
+            <div class="order-number-card">
+                <div class="order-number-label">Order Number</div>
+                <div class="order-number-value">{{ order.order_number }}</div>
+                <div class="order-date">
+                    <i class="far fa-calendar"></i> {{ order.created_at|date:"F d, Y" }} at {{ order.created_at|date:"h:i A" }}
+                </div>
+            </div>
+
+            <!-- Quick Summary -->
+            <div class="quick-summary">
+                <div class="summary-item">
+                    <i class="fas fa-box"></i>
+                    <div>
+                        <strong>{{ order.items.count }}</strong>
+                        <span>Item{{ order.items.count|pluralize }}</span>
+                    </div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <div>
+                        <strong>UGX {{ order.total|floatformat:0 }}</strong>
+                        <span>Total Amount</span>
+                    </div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <i class="fas fa-credit-card"></i>
+                    <div>
+                        <strong>{{ order.get_payment_method_display }}</strong>
+                        <span>Payment Method</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Confirmation -->
+            <div class="email-notice">
+                <i class="fas fa-envelope-open-text"></i>
+                <div>
+                    <strong>Confirmation email sent!</strong>
+                    <p>We've sent order confirmation details to <span class="email-highlight">{{ order.email }}</span></p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{% url 'payment:order_detail' order.order_number %}" class="btn-primary">
+                    <i class="fas fa-receipt"></i> View Order Details
+                </a>
+                <a href="{% url 'eccommence:home' %}" class="btn-secondary">
+                    <i class="fas fa-shopping-bag"></i> Continue Shopping
+                </a>
+            </div>
+        </div>
+
+        <!-- Order Details Card -->
+        <div class="order-details-card">
+            <h2><i class="fas fa-box-open"></i> Order Items</h2>
+            <div class="items-list">
+                {% for item in order.items.all %}
+                <div class="success-item">
+                    <div class="item-image-wrapper">
+                        {% if item.product_image %}
+                        <img src="{{ item.product_image }}" alt="{{ item.product_name }}">
+                        {% else %}
+                        <div class="item-placeholder">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        {% endif %}
+                        <span class="item-qty">×{{ item.quantity }}</span>
+                    </div>
+                    <div class="item-details">
+                        <h4>{{ item.product_name }}</h4>
+                        <p class="item-vendor"><i class="fas fa-store"></i> {{ item.vendor.store_name }}</p>
+                    </div>
+                    <div class="item-price">
+                        UGX {{ item.total|floatformat:0 }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="price-breakdown">
+                <div class="price-row">
+                    <span>Subtotal</span>
+                    <span>UGX {{ order.subtotal|floatformat:0 }}</span>
+                </div>
+                <div class="price-row">
+                    <span>Shipping</span>
+                    <span>
+                        {% if order.shipping_cost == 0 %}
+                        <span class="free-tag">FREE</span>
+                        {% else %}
+                        UGX {{ order.shipping_cost|floatformat:0 }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% if order.tax > 0 %}
+                <div class="price-row">
+                    <span>Tax</span>
+                    <span>UGX {{ order.tax|floatformat:0 }}</span>
+                </div>
+                {% endif %}
+                <div class="price-row total">
+                    <span>Total</span>
+                    <strong>UGX {{ order.total|floatformat:0 }}</strong>
+                </div>
+            </div>
+
+            <!-- Shipping Info -->
+            <div class="shipping-info-card">
+                <h3><i class="fas fa-shipping-fast"></i> Delivery Address</h3>
+                <div class="shipping-content">
+                    <p><strong>{{ order.full_name }}</strong></p>
+                    <p>{{ order.phone }}</p>
+                    <p style="white-space: pre-line; margin-top: 0.5rem; color: var(--gray-600);">{{ order.shipping_address }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- What's Next -->
+        <div class="whats-next-card">
+            <h2><i class="fas fa-clock"></i> What Happens Next?</h2>
+            <div class="steps-grid">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <h4>Order Confirmation</h4>
+                    <p>You'll receive an email with your order details</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <h4>Processing</h4>
+                    <p>We'll prepare your items for shipment</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <h4>Shipping</h4>
+                    <p>Your order will be dispatched for delivery</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <h4>Delivery</h4>
+                    <p>Receive your items at your doorstep</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.success-page {
+    background: #f5f5f5;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+body.dark-mode .success-page {
+    background: var(--black-rich);
+}
+
+.success-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Success Animation */
+.success-animation {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.success-checkmark {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: block;
+    stroke-width: 3;
+    stroke: #fff;
+    stroke-miterlimit: 10;
+    box-shadow: inset 0 0 0 var(--success-green);
+    animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+    position: relative;
+}
+
+.success-checkmark .check-icon {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    border-radius: 50%;
+    box-sizing: content-box;
+    border: 4px solid var(--success-green);
+}
+
+.success-checkmark .check-icon::before {
+    top: 3px;
+    left: -2px;
+    width: 30px;
+    transform-origin: 100% 50%;
+    border-radius: 100px 0 0 100px;
+}
+
+.success-checkmark .check-icon::after {
+    top: 0;
+    left: 30px;
+    width: 60px;
+    transform-origin: 0 50%;
+    border-radius: 0 100px 100px 0;
+    animation: rotate-circle 4.25s ease-in;
+}
+
+.success-checkmark .check-icon::before, .success-checkmark .check-icon::after {
+    content: '';
+    height: 100px;
+    position: absolute;
+    background: #f5f5f5;
+    transform: rotate(-45deg);
+}
+
+body.dark-mode .success-checkmark .check-icon::before,
+body.dark-mode .success-checkmark .check-icon::after {
+    background: var(--black-rich);
+}
+
+.success-checkmark .icon-line {
+    height: 5px;
+    background-color: var(--success-green);
+    display: block;
+    border-radius: 2px;
+    position: absolute;
+    z-index: 10;
+}
+
+.success-checkmark .icon-line.line-tip {
+    top: 46px;
+    left: 14px;
+    width: 25px;
+    transform: rotate(45deg);
+    animation: icon-line-tip 0.75s;
+}
+
+.success-checkmark .icon-line.line-long {
+    top: 38px;
+    right: 8px;
+    width: 47px;
+    transform: rotate(-45deg);
+    animation: icon-line-long 0.75s;
+}
+
+.success-checkmark .icon-circle {
+    top: -4px;
+    left: -4px;
+    z-index: 10;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    position: absolute;
+    box-sizing: content-box;
+    border: 4px solid rgba(76, 175, 80, 0.5);
+}
+
+.success-checkmark .icon-fix {
+    top: 8px;
+    width: 5px;
+    left: 26px;
+    z-index: 1;
+    height: 85px;
+    position: absolute;
+    transform: rotate(-45deg);
+    background-color: #f5f5f5;
+}
+
+body.dark-mode .success-checkmark .icon-fix {
+    background-color: var(--black-rich);
+}
+
+@keyframes rotate-circle {
+    0% { transform: rotate(-45deg); }
+    5% { transform: rotate(-45deg); }
+    12% { transform: rotate(-405deg); }
+    100% { transform: rotate(-405deg); }
+}
+
+@keyframes icon-line-tip {
+    0% { width: 0; left: 1px; top: 19px; }
+    54% { width: 0; left: 1px; top: 19px; }
+    70% { width: 50px; left: -8px; top: 37px; }
+    84% { width: 17px; left: 21px; top: 48px; }
+    100% { width: 25px; left: 14px; top: 46px; }
+}
+
+@keyframes icon-line-long {
+    0% { width: 0; right: 46px; top: 54px; }
+    65% { width: 0; right: 46px; top: 54px; }
+    84% { width: 55px; right: 0; top: 35px; }
+    100% { width: 47px; right: 8px; top: 38px; }
+}
+
+@keyframes fill {
+    100% { box-shadow: inset 0 0 0 60px var(--success-green); }
+}
+
+@keyframes scale {
+    0%, 100% { transform: none; }
+    50% { transform: scale3d(1.1, 1.1, 1); }
+}
+
+/* Success Content */
+.success-content {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.success-content h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    color: var(--gray-darker);
+}
+
+body.dark-mode .success-content h1 {
+    color: var(--white-soft);
+}
+
+.success-subtitle {
+    font-size: 1.125rem;
+    color: var(--gray-600);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.order-number-card {
+    background: linear-gradient(135deg, var(--primary-blue), #1e40af);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.order-number-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.order-number-value {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 1rem;
+}
+
+.order-date {
+    font-size: 0.9375rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.quick-summary {
+    display: flex;
+    justify-content: space-around;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+body.dark-mode .quick-summary {
+    background: var(--black-soft);
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.summary-item i {
+    font-size: 2rem;
+    color: var(--primary-blue);
+}
+
+.summary-item strong {
+    display: block;
+    font-size: 1.125rem;
+    font-weight: 800;
+}
+
+.summary-item span {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.summary-divider {
+    width: 1px;
+    background: var(--gray-200);
+}
+
+body.dark-mode .summary-divider {
+    background: var(--gray-darker);
+}
+
+.email-notice {
+    background: rgba(16, 185, 129, 0.1);
+    border: 2px solid var(--success-green);
+    color: var(--success-green);
+    padding: 1.25rem;
+    border-radius: 12px;
+    display: flex;
+    gap: 1rem;
+    text-align: left;
+    margin-bottom: 2rem;
+}
+
+.email-notice i {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.email-notice strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.email-notice p {
+    font-size: 0.875rem;
+    color: var(--gray-darker);
+}
+
+body.dark-mode .email-notice p {
+    color: var(--gray-400);
+}
+
+.email-highlight {
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 0.9375rem;
+}
+
+.btn-primary {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-blue-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--primary-blue);
+    border: 2px solid var(--primary-blue);
+}
+
+body.dark-mode .btn-secondary {
+    background: var(--black-soft);
+}
+
+.btn-secondary:hover {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.order-details-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+body.dark-mode .order-details-card {
+    background: var(--black-soft);
+}
+
+.order-details-card h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.success-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(0,0,0,0.02);
+    border-radius: 8px;
+}
+
+body.dark-mode .success-item {
+    background: rgba(255,255,255,0.03);
+}
+
+.item-image-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.item-image-wrapper img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.item-placeholder {
+    width: 80px;
+    height: 80px;
+    background: var(--gray-200);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-400);
+    font-size: 2rem;
+}
+
+.item-qty {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    background: var(--gray-darker);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-details h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.item-vendor {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.item-price {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--gray-darker);
+}
+
+body.dark-mode .item-price {
+    color: var(--white-soft);
+}
+
+.price-breakdown {
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.02);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+body.dark-mode .price-breakdown {
+    background: rgba(255,255,255,0.03);
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    font-size: 0.9375rem;
+}
+
+.price-row.total {
+    font-size: 1.25rem;
+    font-weight: 800;
+    padding-top: 1rem;
+    margin-top: 0.75rem;
+    border-top: 2px solid var(--gray-200);
+}
+
+body.dark-mode .price-row.total {
+    border-top-color: var(--gray-darker);
+}
+
+.free-tag {
+    background: var(--success-green);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.shipping-info-card {
+    padding: 1.5rem;
+    background: rgba(37, 99, 235, 0.05);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    border-radius: 8px;
+}
+
+.shipping-info-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shipping-content p {
+    margin-bottom: 0.375rem;
+}
+
+.whats-next-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+}
+
+body.dark-mode .whats-next-card {
+    background: var(--black-soft);
+}
+
+.whats-next-card h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.step-item {
+    text-align: center;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-blue);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 auto 1rem;
+}
+
+.step-item h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.step-item p {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+@media (max-width: 768px) {
+    .success-content h1 {
+        font-size: 2rem;
+    }
+
+    .order-number-value {
+        font-size: 1.5rem;
+    }
+
+    .quick-summary {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .summary-divider {
+        display: none;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .steps-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

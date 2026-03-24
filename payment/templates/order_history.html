@@ -1,0 +1,822 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}My Orders - {{ request.tenant.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/variables.css' %}">
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<style>
+    /* ============================================
+       ORDER HISTORY PAGE - WORLD-CLASS DESIGN
+    ============================================ */
+    :root {
+        --primary:        #2563eb;
+        --primary-dark:   #1d4ed8;
+        --primary-light:  #eff6ff;
+        --primary-ring:   rgba(37, 99, 235, 0.15);
+        --accent:         #f59e0b;
+        --success:        #10b981;
+        --success-light:  #ecfdf5;
+        --error:          #ef4444;
+        --error-light:    #fef2f2;
+        --warning:        #f59e0b;
+        --warning-light:  #fffbeb;
+
+        --white:          #ffffff;
+        --surface:        #f8fafc;
+        --surface-2:      #f1f5f9;
+        --border:         #e2e8f0;
+        --border-focus:   #93c5fd;
+
+        --text-primary:   #0f172a;
+        --text-secondary: #475569;
+        --text-muted:     #94a3b8;
+        --text-placeholder: #cbd5e1;
+
+        --radius-sm:  6px;
+        --radius-md:  10px;
+        --radius-lg:  16px;
+        --radius-xl:  20px;
+        --radius-full: 9999px;
+
+        --shadow-xs:  0 1px 2px rgba(0,0,0,.05);
+        --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md:  0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+        --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.03);
+        --shadow-xl:  0 20px 25px -5px rgba(0,0,0,.08), 0 10px 10px -5px rgba(0,0,0,.02);
+
+        --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* ─── Breadcrumb ──────────────────────────────────── */
+    .bc-bar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    .bc-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+        width: 100%;
+    }
+    .bc-inner a { color: var(--primary); text-decoration: none; font-weight: 500; }
+    .bc-inner a:hover { text-decoration: underline; }
+    .bc-sep { color: var(--text-placeholder); }
+    .bc-inner span { color: var(--text-secondary); font-weight: 600; }
+
+    /* ─── Page Wrapper ────────────────────────────────── */
+    .oh-page {
+        background: var(--surface);
+        min-height: calc(100vh - 44px);
+        padding: 32px 24px 60px;
+    }
+    .oh-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* ─── Page Header ─────────────────────────────────── */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .header-content h1 {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: -0.3px;
+    }
+    .header-content h1 i {
+        color: var(--primary);
+        font-size: 20px;
+    }
+    .subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .header-stats {
+        display: flex;
+        gap: 20px;
+        background: var(--white);
+        padding: 12px 24px;
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+    }
+    .stat-item {
+        text-align: center;
+    }
+    .stat-item strong {
+        display: block;
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1.2;
+    }
+    .stat-item span {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    /* ─── Orders Grid ─────────────────────────────────── */
+    .orders-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* ─── Order Card ──────────────────────────────────── */
+    .order-card {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+    .order-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    /* Card Header */
+    .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 16px 24px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .order-info h3 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .order-info h3 i {
+        color: var(--primary);
+        font-size: 13px;
+    }
+
+    .order-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .order-meta i {
+        font-size: 11px;
+    }
+    .separator {
+        color: var(--border);
+    }
+
+    /* Status Badge */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid transparent;
+    }
+    .status-badge i { font-size: 6px; }
+
+    .status-pending {
+        background: var(--warning-light);
+        color: #b45309;
+        border-color: #fde68a;
+    }
+    .status-paid {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+        border-color: #bfdbfe;
+    }
+    .status-processing {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+        border-color: #bfdbfe;
+    }
+    .status-shipped {
+        background: #ede9fe;
+        color: #6d28d9;
+        border-color: #ddd6fe;
+    }
+    .status-delivered {
+        background: var(--success-light);
+        color: #065f46;
+        border-color: #a7f3d0;
+    }
+    .status-cancelled {
+        background: var(--error-light);
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+    .status-refunded {
+        background: var(--surface-2);
+        color: var(--text-secondary);
+        border-color: var(--border);
+    }
+
+    /* Order Items Preview */
+    .order-items-preview {
+        padding: 20px 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+
+    .preview-item {
+        display: flex;
+        gap: 12px;
+        padding: 10px;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
+        transition: var(--transition);
+    }
+    .preview-item:hover {
+        background: var(--primary-light);
+        border-color: var(--primary);
+    }
+
+    .preview-image {
+        position: relative;
+        flex-shrink: 0;
+    }
+    .preview-image img {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-md);
+        object-fit: cover;
+        border: 1px solid var(--border);
+    }
+    .preview-placeholder {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-md);
+        background: var(--surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 20px;
+        border: 1px solid var(--border);
+    }
+    .preview-qty {
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        background: var(--primary);
+        color: var(--white);
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: var(--radius-full);
+        min-width: 18px;
+        text-align: center;
+    }
+
+    .preview-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .preview-info h4 {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .preview-vendor {
+        font-size: 10px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .preview-vendor i {
+        color: var(--primary);
+        font-size: 9px;
+    }
+
+    .more-items-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px;
+        background: var(--primary-light);
+        color: var(--primary);
+        border-radius: var(--radius-lg);
+        font-size: 11px;
+        font-weight: 700;
+        border: 1px solid #bfdbfe;
+    }
+
+    /* Card Footer */
+    .order-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+    }
+
+    .order-total {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .total-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    .total-value {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1.2;
+    }
+
+    .order-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-view, .btn-track {
+        padding: 8px 16px;
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: var(--transition);
+        cursor: pointer;
+        border: none;
+    }
+    .btn-view {
+        background: var(--primary);
+        color: var(--white);
+        box-shadow: 0 1px 3px rgba(37,99,235,.35);
+    }
+    .btn-view:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37,99,235,.4);
+    }
+    .btn-track {
+        background: var(--white);
+        color: var(--primary);
+        border: 1px solid var(--border);
+    }
+    .btn-track:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    /* ─── Empty State ─────────────────────────────────── */
+    .empty-state {
+        text-align: center;
+        padding: 60px 24px;
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 2px dashed var(--border);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .empty-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+    .empty-icon i {
+        font-size: 40px;
+        color: var(--primary);
+    }
+
+    .empty-state h2 {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 24px;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+    }
+
+    .btn-start-shopping {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 28px;
+        background: var(--primary);
+        color: var(--white);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: var(--transition);
+        box-shadow: 0 1px 3px rgba(37,99,235,.35);
+    }
+    .btn-start-shopping:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37,99,235,.4);
+    }
+
+    /* ─── Filter Tabs ─────────────────────────────────── */
+    .filter-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    .filter-tab {
+        padding: 8px 16px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: var(--transition);
+    }
+    .filter-tab:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    .filter-tab.active {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary);
+    }
+
+    /* ─── Toast Notifications ─────────────────────────── */
+    .toast-stack {
+        position: fixed;
+        bottom: 80px; right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+    .toast {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        padding: 14px 18px;
+        min-width: 280px;
+        max-width: 360px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        pointer-events: all;
+        animation: toastIn .3s cubic-bezier(0.34,1.56,0.64,1);
+        border: 1px solid var(--border);
+    }
+    .toast.exiting { animation: toastOut .25s ease forwards; }
+    @keyframes toastIn {
+        from { transform: translateX(120%) scale(.8); opacity: 0; }
+        to   { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes toastOut {
+        to   { transform: translateX(120%) scale(.9); opacity: 0; }
+    }
+    .toast-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        margin-top: 3px;
+        flex-shrink: 0;
+    }
+    .toast.success .toast-dot { background: var(--success); }
+    .toast.error   .toast-dot { background: var(--error); }
+    .toast.warning .toast-dot { background: var(--warning); }
+    .toast.info    .toast-dot { background: var(--primary); }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .toast-msg   { font-size: 13px; color: var(--text-secondary); margin-top: 1px; line-height: 1.4; }
+    .toast-close {
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 2px;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .toast-close:hover { color: var(--text-primary); }
+
+    /* ─── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+        .bc-bar { padding: 0 16px; }
+        .oh-page { padding: 24px 16px 40px; }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .order-card-header,
+        .order-card-footer {
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .order-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+        .btn-view, .btn-track {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .order-total {
+            width: 100%;
+        }
+
+        .order-items-preview {
+            grid-template-columns: 1fr;
+        }
+
+        .toast-stack {
+            bottom: 70px;
+            right: 12px;
+            left: 12px;
+        }
+        .toast {
+            min-width: auto;
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .filter-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .filter-tab {
+            white-space: nowrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="bc-bar">
+    <nav class="bc-inner" aria-label="Breadcrumb">
+        <a href="{% url 'eccommence:home' %}"><i class="fas fa-home" style="font-size:11px;"></i> Home</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'users:profile_view' %}">Your Account</a>
+        <span class="bc-sep">›</span>
+        <span>My Orders</span>
+    </nav>
+</div>
+
+<!-- Toast Stack -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<div class="oh-page">
+    <div class="oh-inner">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1><i class="fas fa-shopping-bag"></i> My Orders</h1>
+                <p class="subtitle">Track, manage, and view all your orders</p>
+            </div>
+            {% if orders %}
+            <div class="header-stats">
+                <div class="stat-item">
+                    <strong>{{ orders|length }}</strong>
+                    <span>Total</span>
+                </div>
+                {% with delivered=orders|dictsort:"status"|length %}
+                <div class="stat-item">
+                    <strong>{{ orders|dictsort:"status"|length }}</strong>
+                    <span>Delivered</span>
+                </div>
+                {% endwith %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <a href="{% url 'payment:order_history' %}" class="filter-tab {% if current_filter == 'all' or not current_filter %}active{% endif %}">
+                <i class="fas fa-list-ul"></i> All Orders
+            </a>
+            <a href="{% url 'payment:order_history' %}?status=pending" class="filter-tab {% if current_filter == 'pending' %}active{% endif %}">
+                <i class="fas fa-clock"></i> Pending
+            </a>
+            <a href="{% url 'payment:order_history' %}?status=processing" class="filter-tab {% if current_filter == 'processing' %}active{% endif %}">
+                <i class="fas fa-cogs"></i> Processing
+            </a>
+            <a href="{% url 'payment:order_history' %}?status=shipped" class="filter-tab {% if current_filter == 'shipped' %}active{% endif %}">
+                <i class="fas fa-shipping-fast"></i> Shipped
+            </a>
+            <a href="{% url 'payment:order_history' %}?status=delivered" class="filter-tab {% if current_filter == 'delivered' %}active{% endif %}">
+                <i class="fas fa-check-circle"></i> Delivered
+            </a>
+        </div>
+
+        {% if orders %}
+        <!-- Orders Grid -->
+        <div class="orders-grid">
+            {% for order in orders %}
+            <div class="order-card">
+                <!-- Order Header -->
+                <div class="order-card-header">
+                    <div class="order-info">
+                        <h3>
+                            <i class="fas fa-receipt"></i>
+                            Order #{{ order.order_number }}
+                        </h3>
+                        <p class="order-meta">
+                            <i class="far fa-calendar"></i>
+                            {{ order.created_at|date:"M d, Y" }}
+                            <span class="separator">•</span>
+                            {{ order.items.count }} item{{ order.items.count|pluralize }}
+                        </p>
+                    </div>
+                    <span class="status-badge status-{{ order.status }}">
+                        <i class="fas fa-circle"></i>
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+
+                <!-- Order Items Preview -->
+                <div class="order-items-preview">
+                    {% for item in order.items.all|slice:":3" %}
+                    <div class="preview-item">
+                        <div class="preview-image">
+                            {% if item.product_image %}
+                            <img src="{{ item.product_image }}" alt="{{ item.product_name }}">
+                            {% else %}
+                            <div class="preview-placeholder">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            {% endif %}
+                            <span class="preview-qty">{{ item.quantity }}</span>
+                        </div>
+                        <div class="preview-info">
+                            <h4>{{ item.product_name|truncatechars:30 }}</h4>
+                            <p class="preview-vendor">
+                                <i class="fas fa-store"></i>
+                                {{ item.vendor.store_name|truncatechars:15 }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if order.items.count > 3 %}
+                    <div class="more-items-badge">
+                        <i class="fas fa-plus"></i>
+                        {{ order.items.count|add:"-3" }} more item{{ order.items.count|add:"-3"|pluralize }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Order Footer -->
+                <div class="order-card-footer">
+                    <div class="order-total">
+                        <span class="total-label">Total Amount</span>
+                        <strong class="total-value">UGX {{ order.total|floatformat:0|intcomma }}</strong>
+                    </div>
+                    <div class="order-actions">
+                        <a href="{% url 'payment:order_detail' order.order_number %}" class="btn-view">
+                            <i class="fas fa-eye"></i>
+                            View Details
+                        </a>
+                        {% if order.status == 'processing' or order.status == 'shipped' %}
+                        <a href="{% url 'payment:track_order' order.order_number %}" class="btn-track">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Track
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <h2>No Orders Yet</h2>
+            <p>You haven't placed any orders yet. Start shopping and discover amazing products!</p>
+            <a href="{% url 'eccommence:home' %}" class="btn-start-shopping">
+                <i class="fas fa-shopping-cart"></i>
+                Start Shopping
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+(function() {
+    "use strict";
+
+    // Toast notification system
+    const toastStack = document.getElementById('toastStack');
+
+    window.showToast = function(title, message, type = 'success') {
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `
+            <div class="toast-dot"></div>
+            <div class="toast-body">
+                <div class="toast-title">${title}</div>
+                ${message ? `<div class="toast-msg">${message}</div>` : ''}
+            </div>
+            <div class="toast-close" onclick="dismissToast(this.parentElement)">
+                <i class="fas fa-xmark"></i>
+            </div>`;
+        toastStack.appendChild(el);
+        setTimeout(() => dismissToast(el), 5000);
+    };
+
+    window.dismissToast = function(el) {
+        el.classList.add('exiting');
+        setTimeout(() => el.remove(), 260);
+    };
+
+    // Show Django messages as toasts
+    {% if messages %}
+        {% for message in messages %}
+            showToast(
+                "{{ message.tags|capfirst }}",
+                "{{ message }}",
+                "{{ message.tags }}"
+            );
+        {% endfor %}
+    {% endif %}
+
+})();
+</script>
+{% endblock %}

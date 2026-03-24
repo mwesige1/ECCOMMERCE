@@ -1,0 +1,1784 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - {{ request.tenant.name|default:"Homies" }}</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-blue: #2563eb;
+            --primary-blue-dark: #1d4ed8;
+            --accent-orange: #f59e0b;
+            --yellow: #ffd814;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+            --purple: #8b5cf6;
+            --white-pure: #ffffff;
+            --white-soft: #f8fafc;
+            --white-muted: #f1f5f9;
+            --gray-light: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-medium: #94a3b8;
+            --gray-dark: #475569;
+            --gray-darker: #334155;
+            --black-soft: #1e293b;
+            --black-rich: #0f172a;
+            --border-radius-sm: 4px;
+            --border-radius-md: 6px;
+            --border-radius-lg: 12px;
+            --radius: 16px;
+            --shadow-soft: 0 1px 3px 0 rgba(0,0,0,0.08);
+            --shadow-medium: 0 4px 6px -1px rgba(0,0,0,0.08);
+            --shadow: 0 10px 30px rgba(0,0,0,0.08);
+            --shadow-lg: 0 20px 40px rgba(0,0,0,0.10);
+            --transition: all 0.3s ease-in-out;
+            --sidebar-width: 260px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--white-soft);
+            color: var(--gray-darker);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        body.dark-mode {
+            background: var(--black-rich);
+            color: var(--white-soft);
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* ══════════════════════════════════════════
+           TOP NAVBAR
+        ══════════════════════════════════════════ */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            height: 64px;
+            background: var(--white-pure);
+            border-bottom: 1px solid var(--gray-light);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            gap: 1rem;
+        }
+
+        body.dark-mode .top-nav {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+        }
+
+        .nav-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white-pure);
+            font-size: 0.9375rem;
+        }
+
+        .nav-logo-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--black-soft);
+            letter-spacing: -0.5px;
+        }
+
+        body.dark-mode .nav-logo-text { color: var(--white-pure); }
+
+        .nav-center { flex: 1; }
+
+        .nav-search {
+            position: relative;
+            max-width: 400px;
+        }
+
+        .nav-search input {
+            width: 100%;
+            padding: 0.5625rem 1rem 0.5625rem 2.5rem;
+            border: 1.5px solid var(--gray-light);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-family: inherit;
+            background: var(--white-soft);
+            color: var(--gray-darker);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        body.dark-mode .nav-search input {
+            background: var(--black-rich);
+            border-color: var(--gray-darker);
+            color: var(--white-soft);
+        }
+
+        .nav-search input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        .nav-search-icon {
+            position: absolute;
+            left: 0.875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-medium);
+            font-size: 0.875rem;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: var(--white-soft);
+            color: var(--gray-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        body.dark-mode .nav-icon-btn {
+            background: var(--black-rich);
+            color: var(--gray-300);
+        }
+
+        .nav-icon-btn:hover {
+            background: var(--primary-blue);
+            color: var(--white-pure);
+        }
+
+        .nav-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 18px;
+            height: 18px;
+            background: var(--error-red);
+            border-radius: 50%;
+            font-size: 0.625rem;
+            font-weight: 700;
+            color: var(--white-pure);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--white-pure);
+        }
+
+        .nav-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--gray-light);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .nav-avatar:hover { border-color: var(--primary-blue); }
+
+        .nav-avatar-placeholder {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white-pure);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .nav-avatar-placeholder:hover { border-color: var(--primary-blue); }
+
+        /* ══════════════════════════════════════════
+           LAYOUT
+        ══════════════════════════════════════════ */
+        .dashboard-layout {
+            display: flex;
+            padding-top: 64px;
+            min-height: 100vh;
+        }
+
+        /* ══════════════════════════════════════════
+           SIDEBAR
+        ══════════════════════════════════════════ */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--white-pure);
+            border-right: 1px solid var(--gray-light);
+            position: fixed;
+            top: 64px;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        body.dark-mode .sidebar {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+
+        .sidebar-section {
+            padding: 1.25rem 1rem 0.5rem;
+        }
+
+        .sidebar-section-label {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: var(--gray-medium);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            padding: 0 0.5rem;
+            margin-bottom: 0.375rem;
+        }
+
+        .sidebar-nav { list-style: none; }
+
+        .sidebar-nav-item { margin-bottom: 2px; }
+
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6875rem 0.875rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-dark);
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        body.dark-mode .sidebar-nav-link { color: var(--gray-300); }
+
+        .sidebar-nav-link:hover {
+            background: var(--white-soft);
+            color: var(--primary-blue);
+        }
+
+        body.dark-mode .sidebar-nav-link:hover {
+            background: var(--black-rich);
+            color: var(--primary-blue);
+        }
+
+        .sidebar-nav-link.active {
+            background: rgba(37,99,235,0.08);
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .sidebar-nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 20%;
+            bottom: 20%;
+            width: 3px;
+            background: var(--primary-blue);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .sidebar-nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 0.9375rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav-badge {
+            margin-left: auto;
+            background: var(--primary-blue);
+            color: var(--white-pure);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 50px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-nav-badge.orange { background: var(--accent-orange); }
+        .sidebar-nav-badge.green  { background: var(--success-green); }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--gray-light);
+            margin: 0.75rem 1rem;
+        }
+
+        body.dark-mode .sidebar-divider { background: var(--gray-darker); }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 1rem;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        body.dark-mode .sidebar-bottom { border-color: var(--gray-darker); }
+
+        .sidebar-logout {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6875rem 0.875rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--error-red);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .sidebar-logout:hover {
+            background: rgba(239,68,68,0.08);
+        }
+
+        /* ══════════════════════════════════════════
+           MAIN CONTENT
+        ══════════════════════════════════════════ */
+        .main-area {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+            max-width: calc(1400px - var(--sidebar-width));
+        }
+
+        /* ── PAGE HEADER ── */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .page-header-left h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--black-soft);
+            margin-bottom: 0.25rem;
+        }
+
+        body.dark-mode .page-header-left h1 { color: var(--white-pure); }
+
+        .page-header-left p {
+            font-size: 0.9375rem;
+            color: var(--gray-medium);
+        }
+
+        .page-header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.625rem 1.125rem;
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-darker);
+            background: var(--white-pure);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        body.dark-mode .btn-outline {
+            background: var(--black-soft);
+            border-color: var(--gray-dark);
+            color: var(--gray-300);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        .btn-primary-sm {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.625rem 1.125rem;
+            background: var(--primary-blue);
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--white-pure);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-primary-sm:hover {
+            background: var(--primary-blue-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+        }
+
+        /* ── WELCOME BANNER ── */
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 220px;
+            height: 220px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+        }
+
+        .welcome-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -40px;
+            left: 30%;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+
+        .welcome-left {
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-greeting {
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 0.375rem;
+            font-weight: 500;
+        }
+
+        .welcome-name {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--white-pure);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-name span {
+            background: linear-gradient(90deg, var(--yellow), var(--accent-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-sub {
+            font-size: 0.9375rem;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .welcome-actions {
+            display: flex;
+            gap: 0.75rem;
+            position: relative;
+            z-index: 1;
+            flex-shrink: 0;
+        }
+
+        .welcome-btn {
+            padding: 0.6875rem 1.25rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.875rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .welcome-btn-primary {
+            background: var(--yellow);
+            color: var(--black-soft);
+            border: none;
+        }
+
+        .welcome-btn-primary:hover {
+            background: #f7ca00;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255,216,20,0.4);
+        }
+
+        .welcome-btn-secondary {
+            background: rgba(255,255,255,0.12);
+            color: var(--white-pure);
+            border: 1.5px solid rgba(255,255,255,0.25);
+        }
+
+        .welcome-btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* ── PROFILE COMPLETION ── */
+        .completion-bar {
+            background: var(--white-pure);
+            border-radius: var(--border-radius-lg);
+            padding: 1.25rem 1.5rem;
+            border: 1px solid var(--gray-light);
+            margin-bottom: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        body.dark-mode .completion-bar {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        .completion-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(37,99,235,0.08);
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-size: 1.125rem;
+            flex-shrink: 0;
+        }
+
+        .completion-info { flex: 1; }
+
+        .completion-info h4 {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--gray-darker);
+            margin-bottom: 0.25rem;
+        }
+
+        body.dark-mode .completion-info h4 { color: var(--white-soft); }
+
+        .completion-info p {
+            font-size: 0.8125rem;
+            color: var(--gray-medium);
+        }
+
+        .completion-track {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .completion-numbers {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 0.375rem;
+        }
+
+        .completion-pct { font-weight: 700; color: var(--primary-blue); }
+        .completion-label { color: var(--gray-medium); }
+
+        .completion-progress {
+            height: 6px;
+            background: var(--gray-light);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        body.dark-mode .completion-progress { background: var(--gray-darker); }
+
+        .completion-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-blue), var(--primary-blue-dark));
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        .completion-cta {
+            padding: 0.5625rem 1rem;
+            background: var(--primary-blue);
+            color: var(--white-pure);
+            border-radius: var(--border-radius-md);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .completion-cta:hover {
+            background: var(--primary-blue-dark);
+        }
+
+        /* ── STATS GRID ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .stat-card {
+            background: var(--white-pure);
+            border-radius: var(--border-radius-lg);
+            padding: 1.375rem 1.5rem;
+            border: 1px solid var(--gray-light);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        body.dark-mode .stat-card {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary-blue);
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.blue    { background: rgba(37,99,235,0.1);  color: var(--primary-blue); }
+        .stat-icon.green   { background: rgba(16,185,129,0.1); color: var(--success-green); }
+        .stat-icon.orange  { background: rgba(245,158,11,0.1); color: var(--accent-orange); }
+        .stat-icon.purple  { background: rgba(139,92,246,0.1); color: var(--purple); }
+
+        .stat-info h3 {
+            font-size: 1.625rem;
+            font-weight: 800;
+            color: var(--black-soft);
+            line-height: 1.2;
+            margin-bottom: 0.2rem;
+        }
+
+        body.dark-mode .stat-info h3 { color: var(--white-pure); }
+
+        .stat-info p {
+            font-size: 0.8125rem;
+            color: var(--gray-medium);
+            font-weight: 500;
+        }
+
+        /* ── CONTENT GRID ── */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 1.5rem;
+        }
+
+        /* ── CARD BASE ── */
+        .dash-card {
+            background: var(--white-pure);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+        }
+
+        body.dark-mode .dash-card {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        .dash-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        body.dark-mode .dash-card-header {
+            border-color: var(--gray-darker);
+        }
+
+        .dash-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--black-soft);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        body.dark-mode .dash-card-title { color: var(--white-pure); }
+
+        .dash-card-title i {
+            color: var(--primary-blue);
+            font-size: 0.9375rem;
+        }
+
+        .dash-card-link {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: gap 0.2s;
+        }
+
+        .dash-card-link:hover { gap: 0.5rem; }
+
+        /* ── ORDERS TABLE ── */
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orders-table th {
+            padding: 0.75rem 1.5rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--gray-medium);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: var(--white-soft);
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        body.dark-mode .orders-table th {
+            background: var(--black-rich);
+            border-color: var(--gray-darker);
+        }
+
+        .orders-table td {
+            padding: 1rem 1.5rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--gray-light);
+            color: var(--gray-darker);
+            vertical-align: middle;
+        }
+
+        body.dark-mode .orders-table td {
+            border-color: var(--gray-darker);
+            color: var(--gray-300);
+        }
+
+        .orders-table tr:last-child td { border-bottom: none; }
+
+        .orders-table tr:hover td {
+            background: var(--white-soft);
+        }
+
+        body.dark-mode .orders-table tr:hover td {
+            background: var(--black-rich);
+        }
+
+        .order-number {
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .order-number:hover { text-decoration: underline; }
+
+        .order-product-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        .order-product-img {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--border-radius-sm);
+            background: var(--gray-light);
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .order-product-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-darker);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px;
+        }
+
+        body.dark-mode .order-product-name { color: var(--gray-300); }
+
+        .order-product-count {
+            font-size: 0.75rem;
+            color: var(--gray-medium);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-pending    { background: #fef3c7; color: #b45309; }
+        .status-processing { background: #dbeafe; color: #1d4ed8; }
+        .status-shipped    { background: #ede9fe; color: #6d28d9; }
+        .status-delivered  { background: #d1fae5; color: #065f46; }
+        .status-cancelled  { background: #fee2e2; color: #991b1b; }
+        .status-paid       { background: #d1fae5; color: #065f46; }
+        .status-refunded   { background: #f3f4f6; color: #6b7280; }
+
+        .order-amount {
+            font-weight: 700;
+            color: var(--black-soft);
+        }
+
+        body.dark-mode .order-amount { color: var(--white-soft); }
+
+        .empty-state {
+            padding: 3rem 1.5rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--white-soft);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.75rem;
+            color: var(--gray-medium);
+        }
+
+        body.dark-mode .empty-icon { background: var(--black-rich); }
+
+        .empty-state h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gray-darker);
+            margin-bottom: 0.375rem;
+        }
+
+        body.dark-mode .empty-state h4 { color: var(--white-soft); }
+
+        .empty-state p {
+            font-size: 0.875rem;
+            color: var(--gray-medium);
+            margin-bottom: 1.25rem;
+        }
+
+        .empty-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.625rem 1.25rem;
+            background: var(--primary-blue);
+            color: var(--white-pure);
+            border-radius: var(--border-radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .empty-cta:hover {
+            background: var(--primary-blue-dark);
+        }
+
+        /* ── RIGHT COLUMN ── */
+        .right-col { display: flex; flex-direction: column; gap: 1.5rem; }
+
+        /* Profile card */
+        .profile-card {
+            background: var(--white-pure);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+        }
+
+        body.dark-mode .profile-card {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        .profile-card-cover {
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+        }
+
+        .profile-card-body {
+            padding: 0 1.25rem 1.25rem;
+            text-align: center;
+        }
+
+        .profile-card-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: 4px solid var(--white-pure);
+            margin: -36px auto 0.875rem;
+            display: block;
+            object-fit: cover;
+            background: var(--gray-light);
+        }
+
+        body.dark-mode .profile-card-avatar {
+            border-color: var(--black-soft);
+        }
+
+        .profile-card-avatar-placeholder {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: 4px solid var(--white-pure);
+            margin: -36px auto 0.875rem;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white-pure);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        body.dark-mode .profile-card-avatar-placeholder {
+            border-color: var(--black-soft);
+        }
+
+        .profile-card-name {
+            font-size: 1.0625rem;
+            font-weight: 700;
+            color: var(--black-soft);
+            margin-bottom: 0.25rem;
+        }
+
+        body.dark-mode .profile-card-name { color: var(--white-pure); }
+
+        .profile-card-email {
+            font-size: 0.8125rem;
+            color: var(--gray-medium);
+            margin-bottom: 1rem;
+        }
+
+        .profile-card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            border-top: 1px solid var(--gray-light);
+            margin: 0 -1.25rem;
+        }
+
+        body.dark-mode .profile-card-stats { border-color: var(--gray-darker); }
+
+        .profile-stat {
+            padding: 0.875rem 0.5rem;
+            text-align: center;
+            border-right: 1px solid var(--gray-light);
+        }
+
+        body.dark-mode .profile-stat { border-color: var(--gray-darker); }
+
+        .profile-stat:last-child { border-right: none; }
+
+        .profile-stat-num {
+            font-size: 1.125rem;
+            font-weight: 800;
+            color: var(--black-soft);
+            display: block;
+        }
+
+        body.dark-mode .profile-stat-num { color: var(--white-pure); }
+
+        .profile-stat-label {
+            font-size: 0.6875rem;
+            color: var(--gray-medium);
+            font-weight: 500;
+        }
+
+        .profile-card-edit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            margin-top: 1rem;
+            padding: 0.5625rem 1rem;
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--gray-dark);
+            transition: all 0.2s;
+        }
+
+        body.dark-mode .profile-card-edit {
+            border-color: var(--gray-dark);
+            color: var(--gray-300);
+        }
+
+        .profile-card-edit:hover {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        /* Quick actions */
+        .quick-actions { display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; }
+
+        .quick-action-item {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            padding: 0.875rem 1rem;
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--gray-light);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        body.dark-mode .quick-action-item {
+            border-color: var(--gray-darker);
+        }
+
+        .quick-action-item:hover {
+            border-color: var(--primary-blue);
+            background: rgba(37,99,235,0.04);
+            transform: translateX(3px);
+        }
+
+        .quick-action-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .quick-action-icon.blue   { background: rgba(37,99,235,0.08);  color: var(--primary-blue); }
+        .quick-action-icon.green  { background: rgba(16,185,129,0.08); color: var(--success-green); }
+        .quick-action-icon.orange { background: rgba(245,158,11,0.08); color: var(--accent-orange); }
+        .quick-action-icon.purple { background: rgba(139,92,246,0.08); color: var(--purple); }
+        .quick-action-icon.red    { background: rgba(239,68,68,0.08);  color: var(--error-red); }
+
+        .quick-action-text h5 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-darker);
+            margin-bottom: 0.125rem;
+        }
+
+        body.dark-mode .quick-action-text h5 { color: var(--white-soft); }
+
+        .quick-action-text p {
+            font-size: 0.75rem;
+            color: var(--gray-medium);
+        }
+
+        .quick-action-arrow {
+            margin-left: auto;
+            color: var(--gray-300);
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .quick-action-item:hover .quick-action-arrow {
+            color: var(--primary-blue);
+            transform: translateX(3px);
+        }
+
+        /* Mobile toggle */
+        .sidebar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--gray-dark);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        body.dark-mode .sidebar-toggle { color: var(--gray-300); }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 99;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .content-grid { grid-template-columns: 1fr; }
+            .right-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: var(--shadow-lg);
+            }
+
+            .sidebar-overlay.visible { display: block; }
+
+            .sidebar-toggle { display: flex; }
+
+            .main-area {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+
+            .nav-logo { width: auto; }
+        }
+
+        @media (max-width: 768px) {
+            .welcome-banner { flex-direction: column; align-items: flex-start; }
+            .welcome-actions { flex-wrap: wrap; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .right-col { grid-template-columns: 1fr; }
+            .page-header { flex-direction: column; }
+            .page-header-actions { flex-wrap: wrap; }
+            .orders-table th:nth-child(3),
+            .orders-table td:nth-child(3) { display: none; }
+            .completion-track { display: none; }
+        }
+
+        @media (max-width: 540px) {
+            .main-area { padding: 1rem; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+            .stat-card { padding: 1rem; }
+            .stat-info h3 { font-size: 1.25rem; }
+            .nav-search { display: none; }
+            .orders-table th:nth-child(4),
+            .orders-table td:nth-child(4) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ══ TOP NAV ══ -->
+    <nav class="top-nav">
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <a href="{% url 'eccommence:home' %}" class="nav-logo">
+            <div class="nav-logo-icon">
+                <i class="fas fa-box-open"></i>
+            </div>
+            <span class="nav-logo-text">{{ request.tenant.name|upper|default:"HOMIES" }}</span>
+        </a>
+
+        <div class="nav-center">
+            <div class="nav-search">
+                <i class="fas fa-search nav-search-icon"></i>
+                <input type="text" placeholder="Search orders, products…">
+            </div>
+        </div>
+
+        <div class="nav-right">
+            <a href="{% url 'eccommence:home' %}">
+                <button class="nav-icon-btn" title="Shop">
+                    <i class="fas fa-store"></i>
+                </button>
+            </a>
+
+            <a href="{% url 'cart:cart_detail' %}">
+                <button class="nav-icon-btn" title="Cart">
+                    <i class="fas fa-shopping-cart"></i>
+                </button>
+            </a>
+
+            {% if profile and profile.profile_picture %}
+                <img
+                    src="{{ profile.profile_picture.url }}"
+                    class="nav-avatar"
+                    alt="{{ user.get_full_name }}"
+                >
+            {% else %}
+                <div class="nav-avatar-placeholder">
+                    {{ user.first_name|slice:":1"|upper|default:"?" }}
+                </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- ══ SIDEBAR OVERLAY ══ -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-layout">
+
+        <!-- ══ SIDEBAR ══ -->
+        <aside class="sidebar" id="sidebar">
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Main Menu</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item">
+                        <a href="{% url 'users:dashboard' %}" class="sidebar-nav-link active">
+                            <span class="sidebar-nav-icon"><i class="fas fa-home"></i></span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="{% url 'payment:order_history' %}" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-box"></i></span>
+                            My Orders
+                            {% if recent_orders %}
+                            <span class="sidebar-nav-badge">{{ recent_orders|length }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="{% url 'cart:wishlist' %}" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-heart"></i></span>
+                            Wishlist
+                            {% if wishlist_count %}
+                            <span class="sidebar-nav-badge orange">{{ wishlist_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="{% url 'eccommence:home' %}" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-store"></i></span>
+                            Browse Shop
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Account</div>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item">
+                        <a href="{% url 'users:profile_view' %}" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-user"></i></span>
+                            Profile
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="{% url 'users:address_list' %}" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-map-marker-alt"></i></span>
+                            Addresses
+                            {% if addresses_count %}
+                            <span class="sidebar-nav-badge green">{{ addresses_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="{% url 'users:account_settings' %}" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-cog"></i></span>
+                            Settings
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="{% url 'users:change_password' %}" class="sidebar-nav-link">
+                            <span class="sidebar-nav-icon"><i class="fas fa-lock"></i></span>
+                            Change Password
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-bottom">
+                <a href="{% url 'users:logout' %}">
+                    <button class="sidebar-logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Sign Out
+                    </button>
+                </a>
+            </div>
+
+        </aside>
+
+        <!-- ══ MAIN AREA ══ -->
+        <main class="main-area">
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1>My Dashboard</h1>
+                    <p>Manage your orders, profile and account settings</p>
+                </div>
+                <div class="page-header-actions">
+                    <a href="{% url 'eccommence:home' %}" class="btn-outline">
+                        <i class="fas fa-shopping-bag"></i>
+                        Continue Shopping
+                    </a>
+                    <a href="{% url 'users:profile_edit' %}" class="btn-primary-sm">
+                        <i class="fas fa-edit"></i>
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+                <div class="welcome-left">
+                    <div class="welcome-greeting">
+                        {% now "H" as current_hour %}
+                        {% if current_hour < "12" %}Good morning{% elif current_hour < "17" %}Good afternoon{% else %}Good evening{% endif %} 👋
+                    </div>
+                    <div class="welcome-name">
+                        Welcome back, <span>{{ user.first_name|default:user.email }}</span>
+                    </div>
+                    <div class="welcome-sub">
+                        Here's what's happening with your account today.
+                    </div>
+                </div>
+                <div class="welcome-actions">
+                    <a href="{% url 'eccommence:home' %}" class="welcome-btn welcome-btn-primary">
+                        <i class="fas fa-bolt"></i>
+                        Shop Now
+                    </a>
+                    <a href="{% url 'payment:order_history' %}" class="welcome-btn welcome-btn-secondary">
+                        <i class="fas fa-box"></i>
+                        Track Orders
+                    </a>
+                </div>
+            </div>
+
+            <!-- Profile Completion -->
+            {% with completion=0 %}
+            {% if user.first_name %}{% with completion=completion|add:20 %}{% endwith %}{% endif %}
+            {% if profile.profile_picture %}{% with completion=completion|add:20 %}{% endwith %}{% endif %}
+            {% if profile.city %}{% with completion=completion|add:20 %}{% endwith %}{% endif %}
+            {% if user.phone %}{% with completion=completion|add:20 %}{% endwith %}{% endif %}
+            {% if profile.date_of_birth %}{% with completion=completion|add:20 %}{% endwith %}{% endif %}
+            {% endwith %}
+
+            <div class="completion-bar">
+                <div class="completion-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="completion-info">
+                    <h4>Complete your profile</h4>
+                    <p>A complete profile gives you faster checkout and better recommendations</p>
+                </div>
+                <div class="completion-track">
+                    <div class="completion-numbers">
+                        <span class="completion-pct" id="completionPct">Calculating…</span>
+                        <span class="completion-label">complete</span>
+                    </div>
+                    <div class="completion-progress">
+                        <div class="completion-fill" id="completionFill" style="width:0%"></div>
+                    </div>
+                </div>
+                <a href="{% url 'users:profile_edit' %}" class="completion-cta">
+                    Complete Profile →
+                </a>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <a href="{% url 'payment:order_history' %}" class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>{{ recent_orders|length }}</h3>
+                        <p>Total Orders</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'payment:order_history' %}?status=delivered" class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>
+                            {% with delivered=0 %}
+                            {% for order in recent_orders %}
+                                {% if order.status == 'delivered' %}
+                                    {% with delivered=delivered|add:1 %}{% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ delivered }}
+                            {% endwith %}
+                        </h3>
+                        <p>Delivered</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'cart:wishlist' %}" class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>{{ wishlist_count|default:"0" }}</h3>
+                        <p>Wishlist Items</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'users:address_list' %}" class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>{{ addresses_count|default:"0" }}</h3>
+                        <p>Saved Addresses</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid">
+
+                <!-- Recent Orders -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <div class="dash-card-title">
+                            <i class="fas fa-box"></i>
+                            Recent Orders
+                        </div>
+                        <a href="{% url 'payment:order_history' %}" class="dash-card-link">
+                            View all <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    {% if recent_orders %}
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Items</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'payment:order_detail' order.order_number %}"
+                                       class="order-number">
+                                        #{{ order.order_number|slice:"-8:" }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="order-product-preview">
+                                        {% with first_item=order.items.first %}
+                                        {% if first_item and first_item.product_image %}
+                                            <img
+                                                src="{{ first_item.product_image }}"
+                                                class="order-product-img"
+                                                alt="{{ first_item.product_name }}"
+                                            >
+                                        {% else %}
+                                            <div class="order-product-img"
+                                                 style="background:var(--white-muted);
+                                                        display:flex;align-items:center;
+                                                        justify-content:center;
+                                                        color:var(--gray-medium);">
+                                                <i class="fas fa-box" style="font-size:0.875rem;"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <div class="order-product-name">
+                                                {% if first_item %}{{ first_item.product_name }}{% else %}—{% endif %}
+                                            </div>
+                                            <div class="order-product-count">
+                                                {{ order.items.count }} item{{ order.items.count|pluralize }}
+                                            </div>
+                                        </div>
+                                        {% endwith %}
+                                    </div>
+                                </td>
+                                <td style="white-space:nowrap;color:var(--gray-medium);font-size:0.8125rem;">
+                                    {{ order.created_at|date:"d M Y" }}
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ order.status }}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="order-amount">
+                                    UGX {{ order.total|floatformat:0 }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <h4>No orders yet</h4>
+                        <p>Looks like you haven't placed any orders. Start shopping!</p>
+                        <a href="{% url 'eccommence:home' %}" class="empty-cta">
+                            <i class="fas fa-bolt"></i>
+                            Browse Products
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Right Column -->
+                <div class="right-col">
+
+                    <!-- Profile Card -->
+                    <div class="profile-card">
+                        <div class="profile-card-cover"></div>
+                        <div class="profile-card-body">
+                            {% if profile and profile.profile_picture %}
+                                <img
+                                    src="{{ profile.profile_picture.url }}"
+                                    class="profile-card-avatar"
+                                    alt="{{ user.get_full_name }}"
+                                >
+                            {% else %}
+                                <div class="profile-card-avatar-placeholder">
+                                    {{ user.first_name|slice:":1"|upper|default:"?" }}
+                                </div>
+                            {% endif %}
+
+                            <div class="profile-card-name">
+                                {{ user.get_full_name|default:user.email }}
+                            </div>
+                            <div class="profile-card-email">{{ user.email }}</div>
+
+                            <div class="profile-card-stats">
+                                <div class="profile-stat">
+                                    <span class="profile-stat-num">{{ recent_orders|length }}</span>
+                                    <span class="profile-stat-label">Orders</span>
+                                </div>
+                                <div class="profile-stat">
+                                    <span class="profile-stat-num">{{ wishlist_count|default:"0" }}</span>
+                                    <span class="profile-stat-label">Wishlist</span>
+                                </div>
+                                <div class="profile-stat">
+                                    <span class="profile-stat-num">{{ addresses_count|default:"0" }}</span>
+                                    <span class="profile-stat-label">Addresses</span>
+                                </div>
+                            </div>
+
+                            <a href="{% url 'users:profile_edit' %}" class="profile-card-edit">
+                                <i class="fas fa-edit"></i>
+                                Edit Profile
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="dash-card">
+                        <div class="dash-card-header">
+                            <div class="dash-card-title">
+                                <i class="fas fa-bolt"></i>
+                                Quick Actions
+                            </div>
+                        </div>
+                        <div class="quick-actions">
+                            <a href="{% url 'payment:order_history' %}" class="quick-action-item">
+                                <div class="quick-action-icon blue">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="quick-action-text">
+                                    <h5>Track My Orders</h5>
+                                    <p>See order status & updates</p>
+                                </div>
+                                <i class="fas fa-chevron-right quick-action-arrow"></i>
+                            </a>
+
+                            <a href="{% url 'users:address_list' %}" class="quick-action-item">
+                                <div class="quick-action-icon green">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="quick-action-text">
+                                    <h5>Manage Addresses</h5>
+                                    <p>Add or update delivery addresses</p>
+                                </div>
+                                <i class="fas fa-chevron-right quick-action-arrow"></i>
+                            </a>
+
+                            <a href="{% url 'cart:wishlist' %}" class="quick-action-item">
+                                <div class="quick-action-icon orange">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div class="quick-action-text">
+                                    <h5>My Wishlist</h5>
+                                    <p>{{ wishlist_count|default:"0" }} saved item{{ wishlist_count|pluralize }}</p>
+                                </div>
+                                <i class="fas fa-chevron-right quick-action-arrow"></i>
+                            </a>
+
+                            <a href="{% url 'users:change_password' %}" class="quick-action-item">
+                                <div class="quick-action-icon purple">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                <div class="quick-action-text">
+                                    <h5>Change Password</h5>
+                                    <p>Keep your account secure</p>
+                                </div>
+                                <i class="fas fa-chevron-right quick-action-arrow"></i>
+                            </a>
+
+                            <a href="{% url 'users:account_settings' %}" class="quick-action-item">
+                                <div class="quick-action-icon red">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="quick-action-text">
+                                    <h5>Notifications</h5>
+                                    <p>Manage your preferences</p>
+                                </div>
+                                <i class="fas fa-chevron-right quick-action-arrow"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // ── Sidebar toggle (mobile) ──
+        const sidebar        = document.getElementById('sidebar');
+        const sidebarToggle  = document.getElementById('sidebarToggle');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        sidebarToggle.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // ── Profile completion calculator ──
+        (function () {
+            const fields = [
+                {{ user.first_name|yesno:"true,false" }},
+                {% if profile and profile.profile_picture %}true{% else %}false{% endif %},
+                {% if profile and profile.city %}true{% else %}false{% endif %},
+                {{ user.phone|yesno:"true,false" }},
+                {% if profile and profile.date_of_birth %}true{% else %}false{% endif %}
+            ];
+
+            const completed = fields.filter(Boolean).length;
+            const pct       = Math.round((completed / fields.length) * 100);
+
+            const fill  = document.getElementById('completionFill');
+            const label = document.getElementById('completionPct');
+
+            if (fill && label) {
+                setTimeout(() => {
+                    fill.style.width = pct + '%';
+                    if (pct < 50) {
+                        fill.style.background = '#ef4444';
+                    } else if (pct < 80) {
+                        fill.style.background = '#f59e0b';
+                    } else {
+                        fill.style.background = 'linear-gradient(90deg,#10b981,#059669)';
+                    }
+                    label.textContent = pct + '%';
+                }, 300);
+            }
+        })();
+
+        // ── Dark mode ──
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+</body>
+</html>

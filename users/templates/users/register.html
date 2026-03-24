@@ -1,0 +1,844 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - {{ request.tenant.name|default:"Homies" }}</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #2563eb;
+            --primary-blue-dark: #1d4ed8;
+            --accent-orange: #f59e0b;
+            --yellow: #ffd814;
+            --yellow-hover: #f7ca00;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+            --white-pure: #ffffff;
+            --white-soft: #f8fafc;
+            --white-muted: #f1f5f9;
+            --gray-light: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-medium: #94a3b8;
+            --gray-dark: #475569;
+            --gray-darker: #334155;
+            --black-soft: #1e293b;
+            --black-rich: #0f172a;
+            --border-radius-sm: 4px;
+            --border-radius-md: 6px;
+            --border-radius-lg: 12px;
+            --radius: 16px;
+            --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow: 0 10px 30px rgba(0,0,0,0.10);
+            --transition: all 0.3s ease-in-out;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--white-soft);
+            color: var(--gray-darker);
+            line-height: 1.5;
+            font-weight: 400;
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.dark-mode {
+            background: var(--black-rich);
+            color: var(--white-soft);
+        }
+
+        a { text-decoration: none; }
+
+        /* ── HEADER ── */
+        .auth-header {
+            background: var(--white-pure);
+            border-bottom: 1px solid var(--gray-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-soft);
+        }
+
+        body.dark-mode .auth-header {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-link {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            color: var(--black-soft);
+        }
+
+        body.dark-mode .logo-link { color: var(--white-pure); }
+
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white-pure);
+            font-size: 1rem;
+        }
+
+        .logo-text {
+            font-size: 1.375rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .header-link {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            transition: color 0.2s;
+        }
+
+        body.dark-mode .header-link { color: var(--gray-300); }
+        .header-link:hover { color: var(--primary-blue); }
+
+        .header-signin-btn {
+            padding: 0.5rem 1.25rem;
+            border: 1.5px solid var(--primary-blue);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            transition: all 0.2s;
+        }
+
+        .header-signin-btn:hover {
+            background: var(--primary-blue);
+            color: var(--white-pure);
+        }
+
+        /* ── MAIN ── */
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+        }
+
+        /* ── FORM CARD ── */
+        .form-card {
+            background: var(--white-pure);
+            border-radius: var(--radius);
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-light);
+            width: 100%;
+            max-width: 480px;
+        }
+
+        body.dark-mode .form-card {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        /* Card top */
+        .card-top {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .brand-mark {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            color: var(--white-pure);
+            font-size: 1.5rem;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+        }
+
+        .card-top h2 {
+            font-size: 1.625rem;
+            font-weight: 800;
+            color: var(--black-soft);
+            margin-bottom: 0.375rem;
+        }
+
+        body.dark-mode .card-top h2 { color: var(--white-pure); }
+
+        .card-top p {
+            font-size: 0.9375rem;
+            color: var(--gray-medium);
+        }
+
+        /* Messages */
+        .messages { margin-bottom: 1.25rem; }
+
+        .alert {
+            padding: 0.875rem 1rem;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 0.625rem;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            animation: fadeDown 0.3s ease;
+        }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-error {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: #dc2626;
+        }
+
+        .alert-success {
+            background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.2);
+            color: #059669;
+        }
+
+        /* ── FORM FIELDS ── */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.875rem;
+        }
+
+        .form-group { margin-bottom: 1.125rem; }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--gray-darker);
+            margin-bottom: 0.4rem;
+        }
+
+        body.dark-mode .form-label { color: var(--gray-300); }
+
+        .form-label i {
+            color: var(--primary-blue);
+            font-size: 0.75rem;
+        }
+
+        .optional-tag {
+            color: var(--gray-medium);
+            font-weight: 400;
+            font-size: 0.75rem;
+            margin-left: 0.25rem;
+        }
+
+        .input-wrap { position: relative; }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8125rem 1rem;
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            font-size: 0.9375rem;
+            font-family: inherit;
+            background: var(--white-pure);
+            color: var(--gray-darker);
+            transition: all 0.2s ease;
+        }
+
+        body.dark-mode .form-input {
+            background: var(--black-rich);
+            border-color: var(--gray-dark);
+            color: var(--white-soft);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        .form-input::placeholder { color: var(--gray-medium); }
+
+        /* Phone prefix */
+        .phone-wrap {
+            display: flex;
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .phone-wrap:focus-within {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        body.dark-mode .phone-wrap { border-color: var(--gray-dark); }
+
+        .phone-prefix {
+            padding: 0.8125rem 0.875rem;
+            background: var(--white-muted);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-dark);
+            border-right: 1.5px solid var(--gray-300);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        body.dark-mode .phone-prefix {
+            background: var(--gray-darker);
+            border-color: var(--gray-dark);
+            color: var(--gray-300);
+        }
+
+        .phone-wrap .form-input {
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .phone-wrap .form-input:focus { box-shadow: none; }
+
+        /* Password toggle */
+        .toggle-pw {
+            position: absolute;
+            right: 0.875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-medium);
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            padding: 0.25rem;
+            transition: color 0.2s;
+        }
+
+        .toggle-pw:hover { color: var(--primary-blue); }
+
+        /* Password strength */
+        .pw-strength-bar {
+            height: 3px;
+            background: var(--gray-light);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        body.dark-mode .pw-strength-bar { background: var(--gray-dark); }
+
+        .pw-strength-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: all 0.35s ease;
+        }
+
+        .pw-strength-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.3rem;
+        }
+
+        /* Terms */
+        .terms-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.625rem;
+            margin: 1.25rem 0 1.5rem;
+        }
+
+        .terms-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: var(--primary-blue);
+            flex-shrink: 0;
+        }
+
+        .terms-row label {
+            font-size: 0.8125rem;
+            color: var(--gray-dark);
+            cursor: pointer;
+            line-height: 1.55;
+        }
+
+        body.dark-mode .terms-row label { color: var(--gray-300); }
+
+        .terms-row a {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .terms-row a:hover { text-decoration: underline; }
+
+        /* ── SUBMIT BUTTON ── */
+        .register-btn {
+            width: 100%;
+            background: var(--primary-blue);
+            color: var(--white-pure);
+            border: none;
+            padding: 0.9375rem 1rem;
+            border-radius: var(--border-radius-md);
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .register-btn:hover {
+            background: var(--primary-blue-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+        }
+
+        .register-btn:active { transform: translateY(0); }
+
+        .register-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        .spin { animation: spin 0.9s linear infinite; }
+
+        /* ── DIVIDER ── */
+        .or-divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            color: var(--gray-medium);
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--gray-light);
+        }
+
+        body.dark-mode .or-divider::before,
+        body.dark-mode .or-divider::after { background: var(--gray-darker); }
+
+        /* ── SOCIAL BUTTONS ── */
+        .social-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.625rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-btn {
+            padding: 0.6875rem;
+            background: var(--white-pure);
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--gray-darker);
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        body.dark-mode .social-btn {
+            background: var(--black-rich);
+            border-color: var(--gray-dark);
+            color: var(--white-soft);
+        }
+
+        .social-btn:hover {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+            background: rgba(37,99,235,0.04);
+            transform: translateY(-1px);
+        }
+
+        .social-btn .fab { font-size: 1rem; }
+        .fa-google { color: #ea4335; }
+        .fa-facebook-f { color: #1877f2; }
+
+        /* ── SIGN IN PROMPT ── */
+        .signin-link {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--gray-dark);
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        body.dark-mode .signin-link {
+            border-color: var(--gray-darker);
+            color: var(--gray-300);
+        }
+
+        .signin-link a {
+            color: var(--primary-blue);
+            font-weight: 700;
+        }
+
+        .signin-link a:hover { text-decoration: underline; }
+
+        /* ── FOOTER ── */
+        .auth-footer {
+            text-align: center;
+            padding: 1.25rem 1rem;
+            font-size: 0.8125rem;
+            color: var(--gray-medium);
+            border-top: 1px solid var(--gray-light);
+            background: var(--white-muted);
+        }
+
+        body.dark-mode .auth-footer {
+            background: var(--black-soft);
+            border-color: var(--gray-darker);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.25rem 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .footer-links a {
+            color: var(--gray-medium);
+            font-size: 0.8125rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--primary-blue); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 540px) {
+            .main-content { padding: 1.5rem 1rem; }
+
+            .form-card { padding: 2rem 1.25rem; }
+
+            .form-row { grid-template-columns: 1fr; }
+
+            .social-row { grid-template-columns: 1fr; }
+
+            .header-inner { padding: 0 1rem; }
+
+            .header-link { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── HEADER ── -->
+    <header class="auth-header">
+        <div class="header-inner">
+            <a href="{% url 'eccommence:home' %}" class="logo-link">
+                <div class="logo-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <span class="logo-text">{{ request.tenant.name|upper|default:"HOMIES" }}</span>
+            </a>
+            <div class="header-right">
+                <a href="#" class="header-link">
+                    <i class="fas fa-question-circle"></i> Help
+                </a>
+                <a href="{% url 'users:login' %}" class="header-signin-btn">Sign In</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── MAIN ── -->
+    <main class="main-content">
+        <div class="form-card">
+
+            <!-- Card Header -->
+            <div class="card-top">
+                <div class="brand-mark">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h2>Create your account</h2>
+                <p>Free to join — takes less than a minute</p>
+            </div>
+
+            <!-- Django Messages -->
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Form -->
+            <form method="POST" action="{% url 'users:register' %}" id="registerForm" novalidate>
+                {% csrf_token %}
+
+                <!-- Name Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name" class="form-label">
+                            <i class="fas fa-user"></i> First Name
+                        </label>
+                        <input type="text" name="first_name" id="first_name"
+                               class="form-input" placeholder="John"
+                               required autocomplete="given-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name" class="form-label">
+                            <i class="fas fa-user"></i> Last Name
+                        </label>
+                        <input type="text" name="last_name" id="last_name"
+                               class="form-input" placeholder="Doe"
+                               required autocomplete="family-name">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" name="email" id="email"
+                           class="form-input" placeholder="name@example.com"
+                           required autocomplete="email">
+                </div>
+
+                <!-- Phone -->
+                <div class="form-group">
+                    <label for="phone" class="form-label">
+                        <i class="fas fa-phone"></i> Phone Number
+                        <span class="optional-tag">(Optional)</span>
+                    </label>
+                    <div class="phone-wrap">
+                        <div class="phone-prefix">🇺🇬 +256</div>
+                        <input type="tel" name="phone" id="phone"
+                               class="form-input" placeholder="700 000 000"
+                               autocomplete="tel">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password1" class="form-label">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <div class="input-wrap">
+                        <input type="password" name="password1" id="password1"
+                               class="form-input" placeholder="Create a strong password"
+                               required autocomplete="new-password"
+                               style="padding-right: 2.75rem;">
+                        <button type="button" class="toggle-pw" onclick="togglePw('password1','pwicon1')">
+                            <i class="fas fa-eye" id="pwicon1"></i>
+                        </button>
+                    </div>
+                    <div class="pw-strength-bar">
+                        <div class="pw-strength-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="pw-strength-label" id="strengthLabel"></div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="password2" class="form-label">
+                        <i class="fas fa-lock"></i> Confirm Password
+                    </label>
+                    <div class="input-wrap">
+                        <input type="password" name="password2" id="password2"
+                               class="form-input" placeholder="Repeat your password"
+                               required autocomplete="new-password"
+                               style="padding-right: 2.75rem;">
+                        <button type="button" class="toggle-pw" onclick="togglePw('password2','pwicon2')">
+                            <i class="fas fa-eye" id="pwicon2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Terms -->
+                <div class="terms-row">
+                    <input type="checkbox" name="terms_accepted" id="terms" required>
+                    <label for="terms">
+                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="register-btn" id="registerBtn">
+                    <i class="fas fa-spinner spin" id="btnSpinner" style="display:none;"></i>
+                    <span id="btnText">Create Account</span>
+                    <i class="fas fa-arrow-right" id="btnArrow"></i>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="or-divider">or sign up with</div>
+
+            <!-- Social -->
+            <div class="social-row">
+                <button type="button" class="social-btn" onclick="alert('Google coming soon!')">
+                    <i class="fab fa-google"></i> Google
+                </button>
+                <button type="button" class="social-btn" onclick="alert('Facebook coming soon!')">
+                    <i class="fab fa-facebook-f"></i> Facebook
+                </button>
+                <button type="button" class="social-btn" onclick="alert('Apple coming soon!')">
+                    <i class="fab fa-apple"></i> Apple
+                </button>
+            </div>
+
+            <!-- Sign In -->
+            <div class="signin-link">
+                Already have an account? <a href="{% url 'users:login' %}">Sign in</a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ── FOOTER ── -->
+    <footer class="auth-footer">
+        <p>&copy; 2025 {{ request.tenant.name|default:"Homies" }}. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Help Center</a>
+            <a href="#">Contact Us</a>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle password visibility
+        function togglePw(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon  = document.getElementById(iconId);
+            const hidden = input.type === 'password';
+            input.type    = hidden ? 'text' : 'password';
+            icon.className = hidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+        }
+
+        // Password strength meter
+        const pw1          = document.getElementById('password1');
+        const strengthFill = document.getElementById('strengthFill');
+        const strengthLabel= document.getElementById('strengthLabel');
+
+        pw1.addEventListener('input', function () {
+            const v = this.value;
+            if (!v) {
+                strengthFill.style.width = '0';
+                strengthLabel.textContent = '';
+                return;
+            }
+            let score = 0;
+            if (v.length >= 8)                        score++;
+            if (/[a-z]/.test(v) && /[A-Z]/.test(v))  score++;
+            if (/[0-9]/.test(v))                      score++;
+            if (/[^a-zA-Z0-9]/.test(v))               score++;
+
+            const levels = [
+                { pct: '25%',  color: '#ef4444', label: 'Weak'   },
+                { pct: '50%',  color: '#f59e0b', label: 'Fair'   },
+                { pct: '75%',  color: '#3b82f6', label: 'Good'   },
+                { pct: '100%', color: '#10b981', label: 'Strong' },
+            ];
+            const lvl = levels[score - 1] || levels[0];
+            strengthFill.style.width      = lvl.pct;
+            strengthFill.style.background = lvl.color;
+            strengthLabel.textContent     = lvl.label;
+            strengthLabel.style.color     = lvl.color;
+        });
+
+        // Loading state on submit
+        document.getElementById('registerForm').addEventListener('submit', function () {
+            const btn     = document.getElementById('registerBtn');
+            const spinner = document.getElementById('btnSpinner');
+            const txt     = document.getElementById('btnText');
+            const arrow   = document.getElementById('btnArrow');
+            btn.disabled          = true;
+            spinner.style.display = 'inline-block';
+            arrow.style.display   = 'none';
+            txt.textContent       = 'Creating account…';
+        });
+
+        // Auto-dismiss alerts after 5s
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(el => {
+                el.style.transition = 'opacity 0.4s';
+                el.style.opacity    = '0';
+                setTimeout(() => el.remove(), 400);
+            });
+        }, 5000);
+
+        // Restore dark mode preference
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+</body>
+</html>

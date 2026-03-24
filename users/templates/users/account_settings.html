@@ -1,0 +1,1701 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+
+{% block title %}Account Settings — {{ request.tenant.name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+    /* ══════════════════════════════════════════
+       DESIGN TOKENS  (mirrors change_password)
+    ══════════════════════════════════════════ */
+    :root {
+        --primary:          #2563eb;
+        --primary-dark:     #1d4ed8;
+        --primary-light:    #eff6ff;
+        --primary-ring:     rgba(37, 99, 235, 0.15);
+        --success:          #10b981;
+        --success-light:    #ecfdf5;
+        --success-border:   #a7f3d0;
+        --error:            #ef4444;
+        --error-light:      #fef2f2;
+        --error-border:     #fecaca;
+        --warning:          #f59e0b;
+        --warning-light:    #fffbeb;
+        --warning-border:   #fde68a;
+        --purple:           #7c3aed;
+        --purple-light:     #ede9fe;
+
+        --white:            #ffffff;
+        --surface:          #f8fafc;
+        --surface-2:        #f1f5f9;
+        --border:           #e2e8f0;
+        --border-strong:    #cbd5e1;
+
+        --text-primary:     #0f172a;
+        --text-secondary:   #475569;
+        --text-muted:       #94a3b8;
+        --text-placeholder: #cbd5e1;
+
+        --radius-sm:   6px;
+        --radius-md:   10px;
+        --radius-lg:   16px;
+        --radius-xl:   20px;
+        --radius-full: 9999px;
+
+        --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.04);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.07);
+        --shadow-xl: 0 20px 25px -5px rgba(0,0,0,.08);
+
+        --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Breadcrumb ── */
+    .bc-bar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    .bc-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+    .bc-inner a { color: var(--primary); text-decoration: none; font-weight: 500; }
+    .bc-inner a:hover { text-decoration: underline; }
+    .bc-sep { color: var(--text-placeholder); }
+    .bc-inner span { color: var(--text-secondary); font-weight: 600; }
+
+    /* ── Page Shell ── */
+    .cp-page {
+        background: var(--surface);
+        min-height: calc(100vh - 44px);
+        padding: 32px 24px 60px;
+    }
+    .cp-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 28px;
+        align-items: start;
+    }
+
+    /* ══════════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════════ */
+    .cp-sidebar {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        position: sticky;
+        top: 24px;
+    }
+
+    .cp-avatar-block {
+        background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 55%, #60a5fa 100%);
+        padding: 32px 20px 24px;
+        text-align: center;
+        position: relative;
+    }
+    .cp-avatar-block::after {
+        content: '';
+        position: absolute;
+        bottom: -1px; left: 0; right: 0;
+        height: 26px;
+        background: var(--white);
+        border-radius: 50% 50% 0 0 / 26px 26px 0 0;
+    }
+    .cp-avatar, .cp-avatar-ph {
+        width: 90px; height: 90px;
+        border-radius: 50%;
+        border: 4px solid var(--white);
+        box-shadow: var(--shadow-lg);
+        margin: 0 auto 12px;
+        display: block;
+        position: relative; z-index: 1;
+        object-fit: cover;
+    }
+    .cp-avatar-ph {
+        background: rgba(255,255,255,.2);
+        backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--white);
+        font-size: 30px; font-weight: 700;
+    }
+    /* Clickable overlay for avatar */
+    .cp-avatar-wrap {
+        width: 90px; height: 90px;
+        border-radius: 50%;
+        margin: 0 auto 12px;
+        position: relative; z-index: 1;
+        cursor: pointer;
+    }
+    .cp-avatar-wrap:hover .cp-av-overlay { opacity: 1; }
+    .cp-av-overlay {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        background: rgba(0,0,0,.45);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--white); font-size: 18px;
+        opacity: 0;
+        transition: opacity .18s;
+    }
+    .cp-avatar-inner {
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        border: 4px solid var(--white);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+    .cp-avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+    .cp-avatar-inner .cp-avatar-ph {
+        width: 100%; height: 100%;
+        border-radius: 0; border: none; box-shadow: none; margin: 0;
+    }
+
+    .cp-user-name  { font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 3px; text-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .cp-user-email { font-size: 12px; color: rgba(255,255,255,.72); margin-bottom: 10px; }
+    .cp-user-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 12px;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        border-radius: var(--radius-full);
+        font-size: 11px; font-weight: 700;
+        color: var(--white);
+        text-transform: uppercase; letter-spacing: .5px;
+        position: relative; z-index: 1;
+    }
+    .cp-user-badge i { font-size: 9px; color: #fbbf24; }
+
+    /* Completion bar */
+    .cp-completion {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(to right, var(--surface), var(--white));
+    }
+    .cpc-head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+    .cpc-label { font-weight: 600; color: var(--text-secondary); }
+    .cpc-pct   { font-weight: 800; color: var(--primary); }
+    .cpc-track {
+        height: 5px; background: var(--border);
+        border-radius: var(--radius-full); overflow: hidden;
+    }
+    .cpc-fill {
+        height: 100%;
+        border-radius: var(--radius-full);
+        background: linear-gradient(90deg, var(--primary), #60a5fa);
+        transition: width .8s ease;
+    }
+
+    /* Nav */
+    .cp-nav { padding: 8px 10px 14px; }
+    .cp-nav-section {
+        font-size: 10px; font-weight: 800;
+        color: var(--text-placeholder);
+        text-transform: uppercase; letter-spacing: 1px;
+        padding: 10px 14px 4px;
+    }
+    .cp-nav-item { margin-bottom: 2px; }
+    .cp-nav-item a, .cp-nav-item button {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 14px;
+        border-radius: var(--radius-md);
+        font-size: 13.5px; font-weight: 500;
+        color: var(--text-secondary);
+        text-decoration: none; background: transparent;
+        border: none; cursor: pointer;
+        transition: var(--transition);
+        width: 100%; text-align: left; font-family: inherit;
+    }
+    .cp-nav-item a .ni, .cp-nav-item button .ni {
+        width: 34px; height: 34px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; color: var(--text-muted);
+        transition: var(--transition); flex-shrink: 0;
+    }
+    .cp-nav-item a:hover, .cp-nav-item button:hover {
+        background: var(--surface); color: var(--primary);
+    }
+    .cp-nav-item a:hover .ni, .cp-nav-item button:hover .ni {
+        background: var(--primary-light); color: var(--primary);
+    }
+    .cp-nav-item a.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+    .cp-nav-item a.active .ni { background: var(--primary); color: var(--white); }
+    .cp-nav-item.danger a, .cp-nav-item.danger button { color: var(--error); }
+    .cp-nav-item.danger a:hover, .cp-nav-item.danger button:hover { background: var(--error-light); }
+    .cp-nav-item.danger a .ni, .cp-nav-item.danger button .ni { background: var(--error-light); color: var(--error); }
+    .cp-nav-divider { height: 1px; background: var(--border); margin: 6px 14px; }
+
+    /* ══════════════════════════════════════════
+       CONTENT AREA
+    ══════════════════════════════════════════ */
+    .cp-content { display: flex; flex-direction: column; gap: 24px; }
+
+    /* Tab visibility */
+    .as-tab { display: none; flex-direction: column; gap: 24px; }
+    .as-tab.active { display: flex; }
+
+    .tab-header { margin-bottom: 4px; }
+    .tab-eyebrow {
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px;
+        color: var(--primary); margin-bottom: 5px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .tab-eyebrow::before {
+        content: ''; width: 16px; height: 2px;
+        background: var(--primary); border-radius: 2px;
+    }
+    .tab-title { font-size: 22px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+    .tab-sub   { font-size: 14px; color: var(--text-muted); }
+
+    /* ── Cards ── */
+    .cp-card {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: box-shadow .18s;
+    }
+    .cp-card:focus-within { box-shadow: var(--shadow-md); }
+
+    .cp-card-head {
+        padding: 20px 26px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 14px;
+        background: linear-gradient(to bottom, var(--surface), var(--white));
+    }
+    .cp-card-icon {
+        width: 42px; height: 42px;
+        border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 17px; flex-shrink: 0;
+        transition: transform .18s;
+    }
+    .cp-card:hover .cp-card-icon { transform: scale(1.07); }
+    .cp-card-icon.blue   { background: var(--primary-light);  color: var(--primary); }
+    .cp-card-icon.green  { background: var(--success-light);  color: var(--success); }
+    .cp-card-icon.amber  { background: var(--warning-light);  color: var(--warning); }
+    .cp-card-icon.red    { background: var(--error-light);    color: var(--error);   }
+    .cp-card-icon.purple { background: var(--purple-light);   color: var(--purple);  }
+    .cp-card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .cp-card-sub   { font-size: 12.5px; color: var(--text-muted); margin-top: 1px; }
+    .cp-card-head-right { margin-left: auto; }
+
+    .cp-card-body { padding: 26px; }
+    .cp-card-body.tight { padding: 18px 26px; }
+
+    .cp-card-foot {
+        padding: 16px 26px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    }
+    .cp-card-foot.between { justify-content: space-between; }
+
+    /* ── Toggle Switch ── */
+    .toggle-rows { display: flex; flex-direction: column; }
+    .toggle-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 0; border-bottom: 1px solid var(--surface); gap: 20px;
+    }
+    .toggle-row:last-child  { border-bottom: none; padding-bottom: 0; }
+    .toggle-row:first-child { padding-top: 0; }
+    .tr-info { flex: 1; }
+    .tr-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .tr-desc  { font-size: 12.5px; color: var(--text-muted); line-height: 1.4; }
+
+    .ts { flex-shrink: 0; }
+    .ts input { display: none; }
+    .ts input + label {
+        display: block; width: 44px; height: 24px;
+        background: var(--border-strong, #cbd5e1);
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        transition: background .18s;
+        position: relative;
+    }
+    .ts input + label::after {
+        content: '';
+        position: absolute;
+        top: 3px; left: 3px;
+        width: 18px; height: 18px;
+        background: var(--white);
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+    }
+    .ts input:checked + label { background: var(--primary); }
+    .ts input:checked + label::after { transform: translateX(20px); }
+
+    /* ── Form fields ── */
+    .fg   { display: flex; flex-direction: column; margin-bottom: 20px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fg-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .fg-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+
+    .f-label {
+        font-size: 12px; font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase; letter-spacing: .55px;
+        margin-bottom: 7px;
+        display: flex; align-items: center; gap: 4px;
+    }
+    .f-label .req { color: var(--error); }
+
+    .f-wrap { position: relative; }
+    .f-icon {
+        position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+        color: var(--text-placeholder); font-size: 13px;
+        pointer-events: none; transition: var(--transition); z-index: 1;
+    }
+    .f-wrap:focus-within .f-icon { color: var(--primary); }
+    .f-wrap.ico input, .f-wrap.ico select { padding-left: 40px; }
+
+    .f-input, .f-select, .f-textarea {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        color: var(--text-primary);
+        background: var(--white);
+        transition: var(--transition);
+        -webkit-appearance: none; appearance: none;
+        font-family: inherit; line-height: 1.5;
+    }
+    .f-input::placeholder { color: var(--text-placeholder); }
+    .f-input:hover, .f-select:hover, .f-textarea:hover { border-color: var(--border-strong); }
+    .f-input:focus, .f-select:focus, .f-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px var(--primary-ring);
+        background: #fafcff;
+    }
+    .f-textarea { resize: vertical; min-height: 80px; }
+
+    .sel-wrap { position: relative; }
+    .sel-wrap::after {
+        content: '\f078'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+        position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+        color: var(--text-muted); font-size: 10px; pointer-events: none;
+    }
+    .f-select { padding-right: 36px; cursor: pointer; }
+
+    .f-hint  { font-size: 12px; color: var(--text-muted); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+    .f-error { font-size: 12px; color: var(--error); margin-top: 5px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+
+    /* Status pill */
+    .status-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 12px; border-radius: var(--radius-full);
+        font-size: 12px; font-weight: 600; margin-top: 7px;
+        border: 1px solid transparent;
+    }
+    .status-pill.verified   { background: var(--success-light); color: var(--success); border-color: var(--success-border); }
+    .status-pill.unverified { background: var(--warning-light); color: var(--warning); border-color: var(--warning-border); }
+
+    /* ── Security items ── */
+    .sec-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 18px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        gap: 16px;
+        transition: border-color .18s;
+    }
+    .sec-item:hover { border-color: var(--border-strong); }
+    .sec-item + .sec-item { margin-top: 10px; }
+    .si-left { display: flex; align-items: center; gap: 14px; }
+    .si-icon {
+        width: 46px; height: 46px;
+        border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 19px; flex-shrink: 0;
+    }
+    .si-icon.blue  { background: linear-gradient(135deg,#dbeafe,#bfdbfe); color: var(--primary); }
+    .si-icon.green { background: linear-gradient(135deg,#d1fae5,#a7f3d0); color: var(--success); }
+    .si-icon.amber { background: linear-gradient(135deg,#fef3c7,#fde68a); color: var(--warning); }
+    .si-icon.red   { background: linear-gradient(135deg,#fee2e2,#fecaca); color: var(--error);   }
+    .si-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .si-desc  { font-size: 12px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+    .si-right { display: flex; align-items: center; gap: 10px; }
+    .status-dot {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .4px;
+        padding: 4px 10px; border-radius: var(--radius-full);
+    }
+    .status-dot i { font-size: 7px; }
+    .status-dot.on  { background: var(--success-light); color: var(--success); }
+    .status-dot.off { background: var(--surface-2);     color: var(--text-muted); }
+
+    /* ── Activity Feed ── */
+    .activity-feed { display: flex; flex-direction: column; }
+    .af-item {
+        display: flex; align-items: center; gap: 14px;
+        padding: 13px 0; border-bottom: 1px solid var(--surface);
+    }
+    .af-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .af-icon {
+        width: 38px; height: 38px;
+        border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; flex-shrink: 0;
+    }
+    .af-icon.login  { background: var(--primary-light);  color: var(--primary); }
+    .af-icon.pw     { background: var(--warning-light);  color: var(--warning); }
+    .af-icon.device { background: var(--success-light);  color: var(--success); }
+    .af-icon.alert  { background: var(--error-light);    color: var(--error);   }
+    .af-body  { flex: 1; min-width: 0; }
+    .af-action { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .af-meta   { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .af-time   { font-size: 11.5px; color: var(--text-placeholder); white-space: nowrap; }
+
+    /* ── Sessions ── */
+    .session-list { display: flex; flex-direction: column; gap: 10px; }
+    .sl-item {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 14px; padding: 14px 16px;
+        border: 1.5px solid var(--border); border-radius: var(--radius-lg);
+        transition: var(--transition);
+    }
+    .sl-item.current { border-color: var(--primary); background: var(--primary-light); }
+    .sl-left  { display: flex; align-items: center; gap: 12px; }
+    .sl-icon  {
+        width: 40px; height: 40px; border-radius: var(--radius-md);
+        background: var(--surface-2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 17px; color: var(--text-secondary); flex-shrink: 0;
+    }
+    .sl-item.current .sl-icon { background: var(--white); color: var(--primary); }
+    .sl-device { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .sl-loc    { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .sl-badge  {
+        font-size: 11px; font-weight: 700;
+        padding: 3px 10px; border-radius: var(--radius-full); white-space: nowrap;
+    }
+    .sl-badge.now  { background: var(--success-light); color: var(--success); }
+    .sl-badge.idle { background: var(--surface-2);     color: var(--text-muted); }
+
+    /* ── Connected Accounts ── */
+    .ca-list { display: flex; flex-direction: column; gap: 10px; }
+    .ca-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 18px; border: 1.5px solid var(--border); border-radius: var(--radius-lg);
+        transition: var(--transition);
+    }
+    .ca-item:hover { border-color: var(--border-strong); }
+    .ca-item.connected { border-color: var(--success-border); background: var(--success-light); }
+    .ca-left { display: flex; align-items: center; gap: 14px; }
+    .ca-logo {
+        width: 46px; height: 46px; border-radius: var(--radius-md);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0; border: 1px solid var(--border);
+    }
+    .ca-logo.google   { background: #fef3f2; color: #ea4335; border-color: #fecaca; }
+    .ca-logo.facebook { background: #eff6ff; color: #1877f2; border-color: #bfdbfe; }
+    .ca-logo.apple    { background: var(--surface-2); color: var(--text-primary); }
+    .ca-name   { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+    .ca-status { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .ca-status.on  { color: var(--success); }
+    .ca-status.off { color: var(--text-muted); }
+
+    /* ── Preference Tiles ── */
+    .pref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pref-tile {
+        border: 2px solid var(--border); border-radius: var(--radius-lg);
+        padding: 18px; cursor: pointer;
+        transition: var(--transition);
+        display: flex; align-items: flex-start; gap: 14px;
+        position: relative; overflow: hidden;
+    }
+    .pref-tile:hover { border-color: #93c5fd; background: var(--primary-light); }
+    .pref-tile.selected { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 4px var(--primary-ring); }
+    .pref-tile.selected .pt-icon { background: var(--primary); color: var(--white); }
+    .pref-tile.selected::after {
+        content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+        position: absolute; top: 10px; right: 12px;
+        font-size: 10px; color: var(--primary);
+    }
+    .pref-tile input { display: none; }
+    .pt-icon {
+        width: 38px; height: 38px; border-radius: var(--radius-md);
+        background: var(--surface-2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; color: var(--text-secondary); flex-shrink: 0;
+        transition: var(--transition);
+    }
+    .pt-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .pt-desc  { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── Danger Zone ── */
+    .danger-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 18px 20px;
+        border: 1.5px solid var(--error-border);
+        border-radius: var(--radius-lg);
+        background: var(--error-light); gap: 16px;
+    }
+    .danger-item + .danger-item { margin-top: 10px; }
+    .di-left { display: flex; align-items: center; gap: 14px; }
+    .di-icon {
+        width: 42px; height: 42px; border-radius: var(--radius-md);
+        background: rgba(239,68,68,.12);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--error); font-size: 17px; flex-shrink: 0;
+    }
+    .di-title { font-size: 14px; font-weight: 700; color: #991b1b; }
+    .di-desc  { font-size: 12px; color: #b91c1c; margin-top: 2px; line-height: 1.4; }
+
+    /* ── Avatar upload area ── */
+    .avatar-upload-area { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .avatar-preview {
+        width: 92px; height: 92px; border-radius: 50%;
+        border: 3px solid var(--border); overflow: hidden; flex-shrink: 0;
+        cursor: pointer; position: relative; transition: border-color .18s;
+    }
+    .avatar-preview:hover { border-color: var(--primary); }
+    .avatar-preview:hover .av-overlay { opacity: 1; }
+    .avatar-preview img, .av-init {
+        width: 100%; height: 100%; object-fit: cover;
+    }
+    .av-init {
+        background: linear-gradient(135deg, var(--primary), #60a5fa);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--white); font-size: 28px; font-weight: 800;
+    }
+    .av-overlay {
+        position: absolute; inset: 0;
+        background: rgba(0,0,0,.45);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--white); font-size: 18px;
+        opacity: 0; transition: opacity .18s;
+    }
+    .av-actions { flex: 1; }
+    .av-actions-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .av-hint { font-size: 12px; color: var(--text-muted); }
+
+    /* ══════════════════════════════════════════
+       BUTTONS
+    ══════════════════════════════════════════ */
+    .btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 22px; border-radius: var(--radius-md);
+        font-size: 13.5px; font-weight: 600;
+        cursor: pointer; border: none;
+        text-decoration: none; transition: var(--transition);
+        font-family: inherit; white-space: nowrap;
+        position: relative; overflow: hidden;
+    }
+    .btn-primary { background: var(--primary); color: var(--white); box-shadow: 0 1px 3px rgba(37,99,235,.35); }
+    .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 4px 12px rgba(37,99,235,.4); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .btn-ghost  {
+        background: transparent; color: var(--text-secondary);
+        border: 1.5px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--text-primary); }
+    .btn-danger { background: var(--error); color: var(--white); box-shadow: 0 1px 3px rgba(239,68,68,.35); }
+    .btn-danger:hover { background: #dc2626; box-shadow: 0 4px 12px rgba(239,68,68,.4); transform: translateY(-1px); }
+    .btn-sm { padding: 7px 14px; font-size: 12.5px; }
+
+    .btn-spin {
+        display: none; width: 14px; height: 14px;
+        border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+        border-radius: 50%; animation: bspin .6s linear infinite;
+    }
+    .btn.loading .btn-spin { display: block; }
+    .btn.loading .btn-ico  { display: none; }
+    @keyframes bspin { to { transform: rotate(360deg); } }
+
+    /* ══════════════════════════════════════════
+       TOAST
+    ══════════════════════════════════════════ */
+    .t-stack {
+        position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+        display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+    }
+    .t-item {
+        background: var(--white); border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl); padding: 14px 18px;
+        min-width: 270px; max-width: 340px;
+        display: flex; align-items: flex-start; gap: 12px;
+        pointer-events: all; border: 1px solid var(--border);
+        position: relative; overflow: hidden;
+        animation: tIn .35s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    .t-item::before {
+        content: ''; position: absolute;
+        left: 0; top: 0; bottom: 0; width: 4px;
+    }
+    .t-item.success::before { background: var(--success); }
+    .t-item.error::before   { background: var(--error);   }
+    .t-item.info::before    { background: var(--primary);  }
+    .t-item.warning::before { background: var(--warning);  }
+    .t-item.out { animation: tOut .25s ease forwards; }
+    @keyframes tIn  { from { transform: translateX(120%) scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes tOut { to   { transform: translateX(120%) scale(.9);  opacity: 0; } }
+    .t-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .t-item.success .t-dot { background: var(--success); }
+    .t-item.error   .t-dot { background: var(--error);   }
+    .t-item.info    .t-dot { background: var(--primary);  }
+    .t-item.warning .t-dot { background: var(--warning);  }
+    .t-body  { flex: 1; }
+    .t-title { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+    .t-msg   { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+    .t-close { cursor: pointer; color: var(--text-muted); font-size: 11px; transition: var(--transition); }
+    .t-close:hover { color: var(--text-primary); }
+    .t-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: rgba(0,0,0,.06); animation: tProg 5s linear forwards; }
+    @keyframes tProg { from { width:100%; } to { width:0; } }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════ */
+    @media (max-width: 1024px) { .cp-inner { grid-template-columns: 260px 1fr; } }
+    @media (max-width: 768px) {
+        .cp-inner   { grid-template-columns: 1fr; }
+        .cp-sidebar { position: static; }
+        .fg-2, .fg-3 { grid-template-columns: 1fr; }
+        .pref-grid   { grid-template-columns: 1fr; }
+        .cp-card-body { padding: 18px; }
+        .cp-card-foot { flex-wrap: wrap; }
+        .cp-nav {
+            display: flex; flex-direction: row; flex-wrap: nowrap;
+            overflow-x: auto; white-space: nowrap; gap: 4px;
+        }
+        .cp-nav-section, .cp-nav-divider { display: none; }
+        .cp-nav-item { flex-shrink: 0; margin-bottom: 0; }
+        .cp-completion { display: none; }
+    }
+    @media (max-width: 600px) {
+        .cp-page { padding: 16px 12px 50px; }
+        .bc-bar  { padding: 0 14px; }
+        .t-stack { bottom: 12px; right: 10px; left: 10px; }
+        .t-item  { min-width: auto; max-width: 100%; }
+    }
+</style>
+
+<!-- ── Breadcrumb ── -->
+<div class="bc-bar">
+    <nav class="bc-inner" aria-label="Breadcrumb">
+        <a href="{% url 'eccommence:home' %}"><i class="fas fa-home" style="font-size:11px;"></i> Home</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'users:profile_view' %}">Your Account</a>
+        <span class="bc-sep">›</span>
+        <span>Account Settings</span>
+    </nav>
+</div>
+
+<!-- Toast Stack -->
+<div class="t-stack" id="tStack" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Hidden file input for avatar -->
+<input type="file" id="ppFile" accept="image/*" style="display:none;">
+
+<div class="cp-page">
+    <div class="cp-inner">
+
+        <!-- ══════════════════════════
+             SIDEBAR
+        ══════════════════════════ -->
+        <aside class="cp-sidebar" aria-label="Account navigation">
+
+            <!-- Avatar Hero -->
+            <div class="cp-avatar-block">
+                <div class="cp-avatar-wrap"
+                     onclick="document.getElementById('ppFile').click()"
+                     role="button" tabindex="0"
+                     aria-label="Change profile photo">
+                    <div class="cp-avatar-inner">
+                        {% if customer.profile_picture %}
+                            <img src="{{ customer.profile_picture.url }}"
+                                 alt="{{ user.get_full_name }}" id="sidebarAvatarImg">
+                        {% else %}
+                            <div class="cp-avatar-ph" id="sidebarAvatarImg">
+                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="cp-av-overlay"><i class="fas fa-camera"></i></div>
+                </div>
+                <p class="cp-user-name">{{ user.get_full_name|default:user.email }}</p>
+                <p class="cp-user-email">{{ user.email }}</p>
+                <span class="cp-user-badge">
+                    <i class="fas fa-circle-check"></i>
+                    {{ user.user_type|title }}
+                </span>
+            </div>
+
+            <!-- Profile completion bar -->
+            <div class="cp-completion">
+                <div class="cpc-head">
+                    <span class="cpc-label">Profile Completeness</span>
+                    <span class="cpc-pct" id="cpcPct">–</span>
+                </div>
+                <div class="cpc-track">
+                    <div class="cpc-fill" id="cpcFill" style="width:0%"></div>
+                </div>
+            </div>
+
+            <!-- Nav -->
+            <nav class="cp-nav">
+                <div class="cp-nav-section">Account</div>
+                <div class="cp-nav-item">
+                    <a href="{% url 'users:profile_view' %}">
+                        <span class="ni"><i class="fas fa-user"></i></span> Profile Overview
+                    </a>
+                </div>
+                <div class="cp-nav-item">
+                    <a href="{% url 'users:profile_edit' %}">
+                        <span class="ni"><i class="fas fa-pen"></i></span> Edit Profile
+                    </a>
+                </div>
+                <div class="cp-nav-item">
+                    <a href="{% url 'users:address_list' %}">
+                        <span class="ni"><i class="fas fa-map-marker-alt"></i></span> Address Book
+                    </a>
+                </div>
+
+                <div class="cp-nav-divider"></div>
+                <div class="cp-nav-section">Settings</div>
+
+                <div class="cp-nav-item">
+                    <a href="#" class="active" id="nav-notifications" data-tab="notifications">
+                        <span class="ni"><i class="fas fa-bell"></i></span> Notifications
+                    </a>
+                </div>
+                <div class="cp-nav-item">
+                    <a href="#" id="nav-preferences" data-tab="preferences">
+                        <span class="ni"><i class="fas fa-sliders"></i></span> Preferences
+                    </a>
+                </div>
+                <div class="cp-nav-item">
+                    <a href="#" id="nav-security" data-tab="security">
+                        <span class="ni"><i class="fas fa-shield-halved"></i></span> Security
+                    </a>
+                </div>
+                <div class="cp-nav-item">
+                    <a href="#" id="nav-privacy" data-tab="privacy">
+                        <span class="ni"><i class="fas fa-lock"></i></span> Privacy
+                    </a>
+                </div>
+
+                <div class="cp-nav-divider"></div>
+                <div class="cp-nav-section">Quick Links</div>
+
+                <div class="cp-nav-item">
+                    <a href="{% url 'users:change_password' %}">
+                        <span class="ni"><i class="fas fa-key"></i></span> Change Password
+                    </a>
+                </div>
+                <div class="cp-nav-item">
+                    <a href="{% url 'payment:order_history' %}">
+                        <span class="ni"><i class="fas fa-box"></i></span> Orders
+                    </a>
+                </div>
+
+                <div class="cp-nav-divider"></div>
+                <div class="cp-nav-item danger">
+                    <a href="{% url 'users:logout' %}">
+                        <span class="ni"><i class="fas fa-arrow-right-from-bracket"></i></span> Sign Out
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- ══════════════════════════
+             TAB CONTENT
+        ══════════════════════════ -->
+        <div class="cp-content">
+
+            <!-- ════════════════════════
+                 NOTIFICATIONS TAB
+            ════════════════════════ -->
+            <div class="as-tab active" id="tab-notifications">
+
+                <div class="tab-header">
+                    <div class="tab-eyebrow">Alerts</div>
+                    <h1 class="tab-title">Notifications</h1>
+                    <p class="tab-sub">Choose what you hear about and how you receive it</p>
+                </div>
+
+                <form method="POST" action="{% url 'users:account_settings' %}" id="notifForm">
+                    {% csrf_token %}
+
+                    <!-- Email notifications -->
+                    <div class="cp-card">
+                        <div class="cp-card-head">
+                            <div class="cp-card-icon blue"><i class="fas fa-envelope"></i></div>
+                            <div>
+                                <div class="cp-card-title">Email Notifications</div>
+                                <div class="cp-card-sub">Sent to {{ user.email }}</div>
+                            </div>
+                        </div>
+                        <div class="cp-card-body">
+                            <div class="toggle-rows">
+                                <div class="toggle-row">
+                                    <div class="tr-info">
+                                        <div class="tr-title">Order Updates</div>
+                                        <div class="tr-desc">Confirmation, dispatch, and delivery notifications</div>
+                                    </div>
+                                    <div class="ts">
+                                        <input type="checkbox" id="tn-orders" name="email_notifications"
+                                               {% if customer.email_notifications %}checked{% endif %}>
+                                        <label for="tn-orders"></label>
+                                    </div>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="tr-info">
+                                        <div class="tr-title">Promotions &amp; Offers</div>
+                                        <div class="tr-desc">Flash sales, discounts, and featured products</div>
+                                    </div>
+                                    <div class="ts">
+                                        <input type="checkbox" id="tn-promo" name="promotional_emails"
+                                               {% if customer.promotional_emails %}checked{% endif %}>
+                                        <label for="tn-promo"></label>
+                                    </div>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="tr-info">
+                                        <div class="tr-title">Weekly Newsletter</div>
+                                        <div class="tr-desc">Tips, new arrivals, and platform updates</div>
+                                    </div>
+                                    <div class="ts">
+                                        <input type="checkbox" id="tn-newsletter" name="newsletter_subscription"
+                                               {% if customer.newsletter_subscription %}checked{% endif %}>
+                                        <label for="tn-newsletter"></label>
+                                    </div>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="tr-info">
+                                        <div class="tr-title">Price Drop Alerts</div>
+                                        <div class="tr-desc">Get notified when items in your wishlist go on sale</div>
+                                    </div>
+                                    <div class="ts">
+                                        <input type="checkbox" id="tn-price" name="price_alerts"
+                                               {% if customer.price_alerts %}checked{% endif %}>
+                                        <label for="tn-price"></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SMS notifications -->
+                    <div class="cp-card">
+                        <div class="cp-card-head">
+                            <div class="cp-card-icon amber"><i class="fas fa-comment-sms"></i></div>
+                            <div>
+                                <div class="cp-card-title">SMS Notifications</div>
+                                <div class="cp-card-sub">Sent to {{ user.phone|default:"No phone added" }}</div>
+                            </div>
+                        </div>
+                        <div class="cp-card-body">
+                            <div class="toggle-rows">
+                                <div class="toggle-row">
+                                    <div class="tr-info">
+                                        <div class="tr-title">Order Status SMS</div>
+                                        <div class="tr-desc">Real-time updates for order confirmation and delivery</div>
+                                    </div>
+                                    <div class="ts">
+                                        <input type="checkbox" id="tn-sms-orders" name="sms_notifications"
+                                               {% if customer.sms_notifications %}checked{% endif %}>
+                                        <label for="tn-sms-orders"></label>
+                                    </div>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="tr-info">
+                                        <div class="tr-title">Promotional SMS</div>
+                                        <div class="tr-desc">Exclusive deals and offers via text message</div>
+                                    </div>
+                                    <div class="ts">
+                                        <input type="checkbox" id="tn-sms-promo" name="sms_promotional"
+                                               {% if customer.sms_promotional %}checked{% endif %}>
+                                        <label for="tn-sms-promo"></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cp-card-foot">
+                            <div style="font-size:12.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+                                <i class="fas fa-info-circle" style="font-size:11px;"></i>
+                                Changes take effect immediately
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="notifSaveBtn">
+                                <i class="fas fa-floppy-disk btn-ico"></i>
+                                <div class="btn-spin"></div>
+                                Save Preferences
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ════════════════════════
+                 PREFERENCES TAB
+            ════════════════════════ -->
+            <div class="as-tab" id="tab-preferences">
+
+                <div class="tab-header">
+                    <div class="tab-eyebrow">Personalise</div>
+                    <h1 class="tab-title">Preferences</h1>
+                    <p class="tab-sub">Customise your shopping experience</p>
+                </div>
+
+                <!-- Profile photo -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon blue"><i class="fas fa-camera"></i></div>
+                        <div>
+                            <div class="cp-card-title">Profile Photo</div>
+                            <div class="cp-card-sub">Upload a clear photo so others can recognise you</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="avatar-upload-area">
+                            <div class="avatar-preview"
+                                 onclick="document.getElementById('ppFile').click()"
+                                 role="button" tabindex="0" aria-label="Change photo">
+                                {% if customer.profile_picture %}
+                                    <img src="{{ customer.profile_picture.url }}"
+                                         alt="Profile photo" id="previewImg">
+                                {% else %}
+                                    <div class="av-init" id="previewImg">
+                                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                                    </div>
+                                {% endif %}
+                                <div class="av-overlay"><i class="fas fa-camera"></i></div>
+                            </div>
+                            <div class="av-actions">
+                                <div class="av-actions-row">
+                                    <button type="button" class="btn btn-ghost btn-sm"
+                                            onclick="document.getElementById('ppFile').click()">
+                                        <i class="fas fa-upload"></i> Upload Photo
+                                    </button>
+                                    <button type="button" class="btn btn-ghost btn-sm" id="removeAvatarBtn">
+                                        <i class="fas fa-trash"></i> Remove
+                                    </button>
+                                </div>
+                                <p class="av-hint">JPG, PNG or WebP · Maximum 5 MB · Square images work best</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Language & Region -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon blue"><i class="fas fa-language"></i></div>
+                        <div>
+                            <div class="cp-card-title">Language &amp; Region</div>
+                            <div class="cp-card-sub">Your preferred language, currency, and timezone</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="fg-3">
+                            <div class="fg">
+                                <label class="f-label">Language</label>
+                                <div class="sel-wrap">
+                                    <select class="f-select" name="language">
+                                        <option value="en">🇬🇧 English</option>
+                                        <option value="sw">🇰🇪 Kiswahili</option>
+                                        <option value="lg">🇺🇬 Luganda</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="fg">
+                                <label class="f-label">Currency</label>
+                                <div class="sel-wrap">
+                                    <select class="f-select" name="currency">
+                                        <option value="UGX" selected>UGX – Ugandan Shilling</option>
+                                        <option value="KES">KES – Kenyan Shilling</option>
+                                        <option value="TZS">TZS – Tanzanian Shilling</option>
+                                        <option value="USD">USD – US Dollar</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="fg">
+                                <label class="f-label">Timezone</label>
+                                <div class="sel-wrap">
+                                    <select class="f-select" name="timezone">
+                                        <option value="Africa/Kampala">Kampala (UTC+3)</option>
+                                        <option value="Africa/Nairobi">Nairobi (UTC+3)</option>
+                                        <option value="Africa/Dar_es_Salaam">Dar es Salaam (UTC+3)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Display -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon purple"><i class="fas fa-palette"></i></div>
+                        <div>
+                            <div class="cp-card-title">Display</div>
+                            <div class="cp-card-sub">Control how the site looks and behaves</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="toggle-rows">
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Dark Mode</div>
+                                    <div class="tr-desc">Switch to a darker colour scheme to reduce eye strain</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="pref-dark" name="dark_mode">
+                                    <label for="pref-dark"></label>
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Compact View</div>
+                                    <div class="tr-desc">Show more product listings per page with smaller cards</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="pref-compact" name="compact_view">
+                                    <label for="pref-compact"></label>
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Animations</div>
+                                    <div class="tr-desc">Enable smooth transitions and micro-interactions</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="pref-anim" name="animations" checked>
+                                    <label for="pref-anim"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shopping -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon green"><i class="fas fa-bag-shopping"></i></div>
+                        <div>
+                            <div class="cp-card-title">Shopping</div>
+                            <div class="cp-card-sub">Cart and browsing preferences</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="toggle-rows">
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Persist Cart Between Sessions</div>
+                                    <div class="tr-desc">Keep your cart items when you close the browser</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="pref-cart" name="save_cart" checked>
+                                    <label for="pref-cart"></label>
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Show Recently Viewed</div>
+                                    <div class="tr-desc">Display products you've recently browsed</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="pref-recent" name="show_recent" checked>
+                                    <label for="pref-recent"></label>
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Personalised Recommendations</div>
+                                    <div class="tr-desc">Show products tailored to your browsing history</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="pref-reco" name="recommendations" checked>
+                                    <label for="pref-reco"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cp-card-foot">
+                        <div style="font-size:12.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-info-circle" style="font-size:11px;"></i>
+                            Some changes require a page refresh
+                        </div>
+                        <button type="button" class="btn btn-primary" id="prefSaveBtn" onclick="savePreferences(event)">
+                            <i class="fas fa-floppy-disk btn-ico"></i>
+                            <div class="btn-spin"></div>
+                            Save Preferences
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════
+                 SECURITY TAB
+            ════════════════════════ -->
+            <div class="as-tab" id="tab-security">
+
+                <div class="tab-header">
+                    <div class="tab-eyebrow">Protection</div>
+                    <h1 class="tab-title">Security</h1>
+                    <p class="tab-sub">Manage your account security settings and active sessions</p>
+                </div>
+
+                <!-- Security overview -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon green"><i class="fas fa-shield-halved"></i></div>
+                        <div>
+                            <div class="cp-card-title">Security Overview</div>
+                            <div class="cp-card-sub">Current protection status for your account</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="sec-item">
+                            <div class="si-left">
+                                <div class="si-icon blue"><i class="fas fa-key"></i></div>
+                                <div>
+                                    <div class="si-title">Password</div>
+                                    <div class="si-desc">Last changed — update regularly for best security</div>
+                                </div>
+                            </div>
+                            <div class="si-right">
+                                <a href="{% url 'users:change_password' %}" class="btn btn-ghost btn-sm">
+                                    <i class="fas fa-pen"></i> Change
+                                </a>
+                            </div>
+                        </div>
+                        <div class="sec-item">
+                            <div class="si-left">
+                                <div class="si-icon amber"><i class="fas fa-mobile-screen-button"></i></div>
+                                <div>
+                                    <div class="si-title">Two-Factor Authentication</div>
+                                    <div class="si-desc">Add a second verification step at login</div>
+                                </div>
+                            </div>
+                            <div class="si-right">
+                                <span class="status-dot off"><i class="fas fa-circle"></i> Off</span>
+                                <button class="btn btn-ghost btn-sm" onclick="toast('Coming soon','2FA setup is on our roadmap','info')">
+                                    <i class="fas fa-plus"></i> Enable
+                                </button>
+                            </div>
+                        </div>
+                        <div class="sec-item">
+                            <div class="si-left">
+                                <div class="si-icon green"><i class="fas fa-envelope-circle-check"></i></div>
+                                <div>
+                                    <div class="si-title">Email Verified</div>
+                                    <div class="si-desc">{{ user.email }}</div>
+                                </div>
+                            </div>
+                            <div class="si-right">
+                                {% if user.email_verified %}
+                                    <span class="status-dot on"><i class="fas fa-circle"></i> Verified</span>
+                                {% else %}
+                                    <span class="status-dot off"><i class="fas fa-circle"></i> Unverified</span>
+                                    <button class="btn btn-ghost btn-sm"
+                                            onclick="toast('Email sent','Check your inbox to verify your address','info')">
+                                        Resend
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="sec-item">
+                            <div class="si-left">
+                                <div class="si-icon blue"><i class="fas fa-phone"></i></div>
+                                <div>
+                                    <div class="si-title">Phone Number</div>
+                                    <div class="si-desc">{{ user.phone|default:"Not added — used for SMS recovery" }}</div>
+                                </div>
+                            </div>
+                            <div class="si-right">
+                                <a href="{% url 'users:profile_edit' %}" class="btn btn-ghost btn-sm">
+                                    <i class="fas fa-pen"></i> {% if user.phone %}Edit{% else %}Add{% endif %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active sessions -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon blue"><i class="fas fa-desktop"></i></div>
+                        <div>
+                            <div class="cp-card-title">Active Sessions</div>
+                            <div class="cp-card-sub">Devices currently signed in to your account</div>
+                        </div>
+                        <div class="cp-card-head-right">
+                            <button class="btn btn-ghost btn-sm"
+                                    onclick="toast('Sessions cleared','All other devices have been signed out','success')">
+                                <i class="fas fa-right-from-bracket"></i> Sign out all others
+                            </button>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="session-list">
+                            <div class="sl-item current">
+                                <div class="sl-left">
+                                    <div class="sl-icon"><i class="fas fa-laptop"></i></div>
+                                    <div>
+                                        <div class="sl-device">This device — Chrome on Windows</div>
+                                        <div class="sl-loc"><i class="fas fa-map-pin" style="font-size:10px;"></i> Kampala, UG · Active now</div>
+                                    </div>
+                                </div>
+                                <span class="sl-badge now">Current</span>
+                            </div>
+                            <div class="sl-item">
+                                <div class="sl-left">
+                                    <div class="sl-icon"><i class="fas fa-mobile-screen"></i></div>
+                                    <div>
+                                        <div class="sl-device">Android App</div>
+                                        <div class="sl-loc"><i class="fas fa-map-pin" style="font-size:10px;"></i> Kampala, UG · 2 hours ago</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span class="sl-badge idle">Idle</span>
+                                    <button class="btn btn-ghost btn-sm"
+                                            onclick="toast('Device removed','That session has been signed out','success')">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Login activity -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon amber"><i class="fas fa-clock-rotate-left"></i></div>
+                        <div>
+                            <div class="cp-card-title">Recent Login Activity</div>
+                            <div class="cp-card-sub">Last 5 sign-in events on your account</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body tight">
+                        <div class="activity-feed">
+                            <div class="af-item">
+                                <div class="af-icon login"><i class="fas fa-arrow-right-to-bracket"></i></div>
+                                <div class="af-body">
+                                    <div class="af-action">Signed in — Chrome on Windows</div>
+                                    <div class="af-meta">Kampala, UG · 41.220.xxx.xxx</div>
+                                </div>
+                                <div class="af-time">Just now</div>
+                            </div>
+                            <div class="af-item">
+                                <div class="af-icon device"><i class="fas fa-mobile-screen"></i></div>
+                                <div class="af-body">
+                                    <div class="af-action">Signed in — Android App</div>
+                                    <div class="af-meta">Kampala, UG · Mobile</div>
+                                </div>
+                                <div class="af-time">2 h ago</div>
+                            </div>
+                            <div class="af-item">
+                                <div class="af-icon pw"><i class="fas fa-key"></i></div>
+                                <div class="af-body">
+                                    <div class="af-action">Password changed</div>
+                                    <div class="af-meta">Via account settings</div>
+                                </div>
+                                <div class="af-time">3 days ago</div>
+                            </div>
+                            <div class="af-item">
+                                <div class="af-icon login"><i class="fas fa-arrow-right-to-bracket"></i></div>
+                                <div class="af-body">
+                                    <div class="af-action">Signed in — Firefox on Ubuntu</div>
+                                    <div class="af-meta">Entebbe, UG · 197.155.xxx.xxx</div>
+                                </div>
+                                <div class="af-time">5 days ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════
+                 PRIVACY TAB
+            ════════════════════════ -->
+            <div class="as-tab" id="tab-privacy">
+
+                <div class="tab-header">
+                    <div class="tab-eyebrow">Data &amp; Visibility</div>
+                    <h1 class="tab-title">Privacy</h1>
+                    <p class="tab-sub">Control your data, visibility, and connected applications</p>
+                </div>
+
+                <!-- Data sharing -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon blue"><i class="fas fa-database"></i></div>
+                        <div>
+                            <div class="cp-card-title">Data &amp; Personalisation</div>
+                            <div class="cp-card-sub">Manage how your data is used to personalise your experience</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="toggle-rows">
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Personalised Ads</div>
+                                    <div class="tr-desc">Allow us to show ads based on your browsing and purchase history</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="priv-ads" name="personalised_ads" checked>
+                                    <label for="priv-ads"></label>
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Analytics Tracking</div>
+                                    <div class="tr-desc">Help us improve the platform by sharing anonymised usage data</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="priv-analytics" name="analytics" checked>
+                                    <label for="priv-analytics"></label>
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="tr-info">
+                                    <div class="tr-title">Share Data with Partners</div>
+                                    <div class="tr-desc">Allow trusted partners to use your data for relevant offers</div>
+                                </div>
+                                <div class="ts">
+                                    <input type="checkbox" id="priv-partners" name="share_partners">
+                                    <label for="priv-partners"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connected accounts -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon purple"><i class="fas fa-plug"></i></div>
+                        <div>
+                            <div class="cp-card-title">Connected Accounts</div>
+                            <div class="cp-card-sub">Link social accounts for faster sign-in</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="ca-list">
+                            <div class="ca-item connected">
+                                <div class="ca-left">
+                                    <div class="ca-logo google"><i class="fab fa-google"></i></div>
+                                    <div>
+                                        <div class="ca-name">Google</div>
+                                        <div class="ca-status on">
+                                            <i class="fas fa-circle-check"></i> Connected as {{ user.email }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-ghost btn-sm"
+                                        onclick="toast('Account disconnected','Your Google account has been unlinked','info')">
+                                    <i class="fas fa-unlink"></i> Disconnect
+                                </button>
+                            </div>
+                            <div class="ca-item">
+                                <div class="ca-left">
+                                    <div class="ca-logo facebook"><i class="fab fa-facebook-f"></i></div>
+                                    <div>
+                                        <div class="ca-name">Facebook</div>
+                                        <div class="ca-status off">
+                                            <i class="fas fa-circle-xmark"></i> Not connected
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-ghost btn-sm"
+                                        onclick="toast('Redirecting…','You will be taken to Facebook to authorise','info')">
+                                    <i class="fas fa-link"></i> Connect
+                                </button>
+                            </div>
+                            <div class="ca-item">
+                                <div class="ca-left">
+                                    <div class="ca-logo apple"><i class="fab fa-apple"></i></div>
+                                    <div>
+                                        <div class="ca-name">Apple</div>
+                                        <div class="ca-status off">
+                                            <i class="fas fa-circle-xmark"></i> Not connected
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-ghost btn-sm"
+                                        onclick="toast('Redirecting…','You will be taken to Apple to authorise','info')">
+                                    <i class="fas fa-link"></i> Connect
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger zone -->
+                <div class="cp-card">
+                    <div class="cp-card-head">
+                        <div class="cp-card-icon red"><i class="fas fa-triangle-exclamation"></i></div>
+                        <div>
+                            <div class="cp-card-title">Danger Zone</div>
+                            <div class="cp-card-sub">Irreversible actions — please read before proceeding</div>
+                        </div>
+                    </div>
+                    <div class="cp-card-body">
+                        <div class="danger-item">
+                            <div class="di-left">
+                                <div class="di-icon"><i class="fas fa-eraser"></i></div>
+                                <div>
+                                    <div class="di-title">Clear All Data</div>
+                                    <div class="di-desc">Remove your order history, saved addresses, and preferences. Your account will remain active.</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="confirmAction('Clear all data? This cannot be undone.', () => toast('Data cleared','Your data has been removed','success'))">
+                                <i class="fas fa-eraser"></i> Clear Data
+                            </button>
+                        </div>
+                        <div class="danger-item">
+                            <div class="di-left">
+                                <div class="di-icon"><i class="fas fa-user-slash"></i></div>
+                                <div>
+                                    <div class="di-title">Delete Account</div>
+                                    <div class="di-desc">Permanently delete your account and all associated data. This action is irreversible and you will lose access immediately.</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="confirmAction('Permanently delete your account? This cannot be undone.', () => window.location.href=''>
+                                <i class="fas fa-trash"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.cp-content -->
+    </div>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    /* ══════════════════════
+       TOAST SYSTEM
+    ══════════════════════ */
+    const tStack = document.getElementById('tStack');
+
+    window.toast = function (title, msg, type = 'info') {
+        const el = document.createElement('div');
+        el.className = `t-item ${type}`;
+        el.setAttribute('role', 'alert');
+        el.innerHTML = `
+            <div class="t-dot"></div>
+            <div class="t-body">
+                <div class="t-title">${title}</div>
+                ${msg ? `<div class="t-msg">${msg}</div>` : ''}
+            </div>
+            <div class="t-close" onclick="killToast(this.parentElement)">
+                <i class="fas fa-xmark"></i>
+            </div>
+            <div class="t-progress"></div>`;
+        tStack.appendChild(el);
+        setTimeout(() => killToast(el), 5000);
+    };
+
+    window.killToast = function (el) {
+        el.classList.add('out');
+        setTimeout(() => el.remove(), 260);
+    };
+
+    /* ══════════════════════
+       TAB NAVIGATION
+    ══════════════════════ */
+    const navLinks = document.querySelectorAll('.cp-nav a[data-tab]');
+    const tabs     = document.querySelectorAll('.as-tab');
+
+    function switchTab(id) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        tabs.forEach(t => t.classList.remove('active'));
+
+        const link = document.querySelector(`[data-tab="${id}"]`);
+        const tab  = document.getElementById('tab-' + id);
+        if (link) link.classList.add('active');
+        if (tab)  tab.classList.add('active');
+
+        history.replaceState(null, '', '#' + id);
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            switchTab(link.dataset.tab);
+        });
+    });
+
+    /* Handle URL hash on load */
+    const hash = location.hash.replace('#', '');
+    if (hash && document.getElementById('tab-' + hash)) {
+        switchTab(hash);
+    }
+
+    /* ══════════════════════
+       AVATAR UPLOAD
+    ══════════════════════ */
+    const ppFile = document.getElementById('ppFile');
+    ppFile.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast('Invalid file', 'Please choose an image file', 'error'); return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast('File too large', 'Maximum size is 5 MB', 'error'); return;
+        }
+
+        /* Local preview across both avatar instances */
+        const reader = new FileReader();
+        reader.onload = ev => {
+            ['previewImg', 'sidebarAvatarImg'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (el.tagName === 'IMG') {
+                    el.src = ev.target.result;
+                } else {
+                    const img = document.createElement('img');
+                    img.id  = id;
+                    img.src = ev.target.result;
+                    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+                    el.replaceWith(img);
+                }
+            });
+        };
+        reader.readAsDataURL(file);
+
+        /* Server upload */
+        const fd = new FormData();
+        fd.append('profile_picture', file);
+        fetch("{% url 'users:upload_profile_picture' %}", {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+        })
+        .then(r => r.json())
+        .then(d => d.success
+            ? toast('Photo updated', 'Your profile picture has been saved', 'success')
+            : toast('Upload failed', d.message || 'Please try again', 'error'))
+        .catch(() => toast('Network error', 'Could not upload the photo', 'error'));
+    });
+
+    const removeBtn = document.getElementById('removeAvatarBtn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            if (!confirm('Remove your profile photo?')) return;
+            toast('Photo removed', 'Your profile photo has been cleared', 'info');
+        });
+    }
+
+    /* ══════════════════════
+       PROFILE COMPLETION
+    ══════════════════════ */
+    function calcCompletion() {
+        const checks = [
+            () => '{{ user.first_name }}' !== '',
+            () => '{{ user.last_name }}'  !== '',
+            () => '{{ user.email }}'      !== '',
+            () => '{{ user.phone }}'      !== '',
+            () => {% if customer.profile_picture %}true{% else %}false{% endif %},
+            () => '{{ customer.date_of_birth }}' !== 'None' && '{{ customer.date_of_birth }}' !== '',
+            () => '{{ customer.gender }}' !== '',
+            () => '{{ customer.city }}'   !== '',
+        ];
+        const met = checks.filter(fn => fn()).length;
+        const pct = Math.round((met / checks.length) * 100);
+        const fill = document.getElementById('cpcFill');
+        const pctEl = document.getElementById('cpcPct');
+        if (fill)  fill.style.width  = pct + '%';
+        if (pctEl) pctEl.textContent = pct + '%';
+    }
+    calcCompletion();
+
+    /* ══════════════════════
+       DARK MODE PERSISTENCE
+    ══════════════════════ */
+    const darkToggle = document.getElementById('pref-dark');
+    if (darkToggle) {
+        if (localStorage.getItem('darkMode') === 'true') {
+            darkToggle.checked = true;
+            document.body.classList.add('dark-mode');
+        }
+        darkToggle.addEventListener('change', function () {
+            document.body.classList.toggle('dark-mode', this.checked);
+            localStorage.setItem('darkMode', this.checked);
+            toast(this.checked ? 'Dark mode on' : 'Dark mode off', '', 'info');
+        });
+    }
+
+    /* ══════════════════════
+       FORM SUBMIT SPINNER
+    ══════════════════════ */
+    const notifForm = document.getElementById('notifForm');
+    if (notifForm) {
+        notifForm.addEventListener('submit', function () {
+            const btn = document.getElementById('notifSaveBtn');
+            if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+        });
+    }
+
+    /* ══════════════════════
+       DJANGO MESSAGES
+    ══════════════════════ */
+    {% if messages %}
+        {% for message in messages %}
+        toast(
+            "{{ message.tags|capfirst|default:'Notice' }}",
+            "{{ message|escapejs }}",
+            "{{ message.tags|default:'info' }}"
+        );
+        {% endfor %}
+    {% endif %}
+
+})();
+
+/* ══════════════════════
+   PREFERENCES SAVE
+══════════════════════ */
+function savePreferences(e) {
+    const btn = e.currentTarget;
+    btn.classList.add('loading'); btn.disabled = true;
+    setTimeout(() => {
+        btn.classList.remove('loading'); btn.disabled = false;
+        window.toast('Preferences saved', 'Your display settings have been updated', 'success');
+    }, 800);
+}
+
+/* ══════════════════════
+   CONFIRM HELPER
+══════════════════════ */
+function confirmAction(message, onConfirm) {
+    if (confirm(message)) onConfirm();
+}
+</script>
+{% endblock %}

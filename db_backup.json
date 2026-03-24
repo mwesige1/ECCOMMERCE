@@ -1,0 +1,1738 @@
+[
+{
+    "model": "tenants.client",
+    "pk": 1,
+    "fields": {
+        "schema_name": "public",
+        "name": "Main Platform",
+        "description": "",
+        "owner_email": "",
+        "owner_phone": "",
+        "owner_name": "",
+        "subscription_plan": "free",
+        "subscription_status": "active",
+        "paid_until": "2030-12-31",
+        "on_trial": false,
+        "trial_end_date": null,
+        "max_products": 100,
+        "max_storage_mb": 1000,
+        "max_orders_per_month": 1000,
+        "can_use_custom_domain": false,
+        "can_use_analytics": true,
+        "can_export_data": true,
+        "can_use_api": false,
+        "max_staff_accounts": 3,
+        "business_address": "",
+        "business_phone": "",
+        "business_email": "",
+        "business_registration_number": "",
+        "tax_id": "",
+        "logo": "",
+        "primary_color": "#007bff",
+        "secondary_color": "#6c757d",
+        "is_active": true,
+        "is_verified": false,
+        "total_products": 0,
+        "total_orders": 0,
+        "total_revenue": "0.00",
+        "storage_used_mb": 0,
+        "currency": "UGX",
+        "timezone": "Africa/Kampala",
+        "language": "en",
+        "email_notifications_enabled": true,
+        "sms_notifications_enabled": false,
+        "created_at": "2026-02-10T08:20:55.443Z",
+        "updated_at": "2026-02-10T08:20:55.443Z",
+        "last_payment_date": null
+    }
+},
+{
+    "model": "tenants.client",
+    "pk": 2,
+    "fields": {
+        "schema_name": "shop1",
+        "name": "shop1",
+        "description": "",
+        "owner_email": "",
+        "owner_phone": "",
+        "owner_name": "",
+        "subscription_plan": "free",
+        "subscription_status": "active",
+        "paid_until": "2030-12-31",
+        "on_trial": false,
+        "trial_end_date": null,
+        "max_products": 100,
+        "max_storage_mb": 1000,
+        "max_orders_per_month": 1000,
+        "can_use_custom_domain": false,
+        "can_use_analytics": true,
+        "can_export_data": true,
+        "can_use_api": false,
+        "max_staff_accounts": 3,
+        "business_address": "",
+        "business_phone": "",
+        "business_email": "",
+        "business_registration_number": "",
+        "tax_id": "",
+        "logo": "",
+        "primary_color": "#007bff",
+        "secondary_color": "#6c757d",
+        "is_active": true,
+        "is_verified": false,
+        "total_products": 0,
+        "total_orders": 0,
+        "total_revenue": "0.00",
+        "storage_used_mb": 0,
+        "currency": "UGX",
+        "timezone": "Africa/Kampala",
+        "language": "en",
+        "email_notifications_enabled": true,
+        "sms_notifications_enabled": false,
+        "created_at": "2026-02-10T09:01:01.154Z",
+        "updated_at": "2026-02-23T12:09:31.499Z",
+        "last_payment_date": null
+    }
+},
+{
+    "model": "tenants.domain",
+    "pk": 1,
+    "fields": {
+        "domain": "localhost",
+        "tenant": 1,
+        "is_primary": true,
+        "is_verified": false,
+        "verification_code": "",
+        "verified_at": null,
+        "ssl_enabled": false,
+        "ssl_certificate": "",
+        "ssl_expires_at": null,
+        "created_at": "2026-02-10T08:21:20.195Z",
+        "updated_at": "2026-02-10T08:21:20.195Z"
+    }
+},
+{
+    "model": "tenants.domain",
+    "pk": 2,
+    "fields": {
+        "domain": "shop1.localhost",
+        "tenant": 2,
+        "is_primary": true,
+        "is_verified": true,
+        "verification_code": "",
+        "verified_at": null,
+        "ssl_enabled": false,
+        "ssl_certificate": "",
+        "ssl_expires_at": null,
+        "created_at": "2026-02-10T09:01:27.587Z",
+        "updated_at": "2026-02-24T07:07:54.936Z"
+    }
+},
+{
+    "model": "auth.group",
+    "fields": {
+        "name": "staff",
+        "permissions": [
+            [
+                "view_logentry",
+                "admin",
+                "logentry"
+            ],
+            [
+                "add_cart",
+                "cart",
+                "cart"
+            ],
+            [
+                "change_cart",
+                "cart",
+                "cart"
+            ],
+            [
+                "delete_cart",
+                "cart",
+                "cart"
+            ],
+            [
+                "view_cart",
+                "cart",
+                "cart"
+            ],
+            [
+                "add_cartitem",
+                "cart",
+                "cartitem"
+            ],
+            [
+                "change_cartitem",
+                "cart",
+                "cartitem"
+            ],
+            [
+                "delete_cartitem",
+                "cart",
+                "cartitem"
+            ],
+            [
+                "view_cartitem",
+                "cart",
+                "cartitem"
+            ],
+            [
+                "add_savedforlater",
+                "cart",
+                "savedforlater"
+            ],
+            [
+                "change_savedforlater",
+                "cart",
+                "savedforlater"
+            ],
+            [
+                "delete_savedforlater",
+                "cart",
+                "savedforlater"
+            ],
+            [
+                "view_savedforlater",
+                "cart",
+                "savedforlater"
+            ],
+            [
+                "add_address",
+                "eccommence",
+                "address"
+            ],
+            [
+                "change_address",
+                "eccommence",
+                "address"
+            ],
+            [
+                "delete_address",
+                "eccommence",
+                "address"
+            ],
+            [
+                "view_address",
+                "eccommence",
+                "address"
+            ],
+            [
+                "view_category",
+                "eccommence",
+                "category"
+            ],
+            [
+                "add_coupon",
+                "eccommence",
+                "coupon"
+            ],
+            [
+                "change_coupon",
+                "eccommence",
+                "coupon"
+            ],
+            [
+                "add_customer",
+                "eccommence",
+                "customer"
+            ],
+            [
+                "change_customer",
+                "eccommence",
+                "customer"
+            ],
+            [
+                "view_customer",
+                "eccommence",
+                "customer"
+            ],
+            [
+                "add_product",
+                "eccommence",
+                "product"
+            ],
+            [
+                "change_product",
+                "eccommence",
+                "product"
+            ],
+            [
+                "view_product",
+                "eccommence",
+                "product"
+            ],
+            [
+                "add_productimage",
+                "eccommence",
+                "productimage"
+            ],
+            [
+                "change_productimage",
+                "eccommence",
+                "productimage"
+            ],
+            [
+                "delete_productimage",
+                "eccommence",
+                "productimage"
+            ],
+            [
+                "view_productimage",
+                "eccommence",
+                "productimage"
+            ],
+            [
+                "add_productvariant",
+                "eccommence",
+                "productvariant"
+            ],
+            [
+                "change_productvariant",
+                "eccommence",
+                "productvariant"
+            ],
+            [
+                "delete_productvariant",
+                "eccommence",
+                "productvariant"
+            ],
+            [
+                "view_productvariant",
+                "eccommence",
+                "productvariant"
+            ],
+            [
+                "view_review",
+                "eccommence",
+                "review"
+            ],
+            [
+                "change_vendor",
+                "eccommence",
+                "vendor"
+            ],
+            [
+                "change_wishlist",
+                "eccommence",
+                "wishlist"
+            ],
+            [
+                "delete_wishlist",
+                "eccommence",
+                "wishlist"
+            ],
+            [
+                "view_wishlist",
+                "eccommence",
+                "wishlist"
+            ],
+            [
+                "change_order",
+                "payment",
+                "order"
+            ],
+            [
+                "delete_order",
+                "payment",
+                "order"
+            ],
+            [
+                "view_order",
+                "payment",
+                "order"
+            ],
+            [
+                "change_orderitem",
+                "payment",
+                "orderitem"
+            ],
+            [
+                "delete_orderitem",
+                "payment",
+                "orderitem"
+            ],
+            [
+                "view_orderitem",
+                "payment",
+                "orderitem"
+            ],
+            [
+                "view_paymentmethod",
+                "payment",
+                "paymentmethod"
+            ],
+            [
+                "change_paymenttransaction",
+                "payment",
+                "paymenttransaction"
+            ],
+            [
+                "view_paymenttransaction",
+                "payment",
+                "paymenttransaction"
+            ],
+            [
+                "view_refund",
+                "payment",
+                "refund"
+            ],
+            [
+                "add_shippingaddress",
+                "payment",
+                "shippingaddress"
+            ],
+            [
+                "change_shippingaddress",
+                "payment",
+                "shippingaddress"
+            ],
+            [
+                "delete_shippingaddress",
+                "payment",
+                "shippingaddress"
+            ],
+            [
+                "view_shippingaddress",
+                "payment",
+                "shippingaddress"
+            ],
+            [
+                "add_address",
+                "users",
+                "address"
+            ],
+            [
+                "change_address",
+                "users",
+                "address"
+            ],
+            [
+                "delete_address",
+                "users",
+                "address"
+            ],
+            [
+                "view_address",
+                "users",
+                "address"
+            ],
+            [
+                "add_profile",
+                "users",
+                "profile"
+            ],
+            [
+                "change_profile",
+                "users",
+                "profile"
+            ],
+            [
+                "delete_profile",
+                "users",
+                "profile"
+            ],
+            [
+                "view_profile",
+                "users",
+                "profile"
+            ],
+            [
+                "add_shop",
+                "users",
+                "shop"
+            ],
+            [
+                "change_shop",
+                "users",
+                "shop"
+            ],
+            [
+                "view_shop",
+                "users",
+                "shop"
+            ],
+            [
+                "add_user",
+                "users",
+                "user"
+            ],
+            [
+                "change_user",
+                "users",
+                "user"
+            ],
+            [
+                "delete_user",
+                "users",
+                "user"
+            ],
+            [
+                "view_user",
+                "users",
+                "user"
+            ],
+            [
+                "add_vendorprofile",
+                "users",
+                "vendorprofile"
+            ],
+            [
+                "change_vendorprofile",
+                "users",
+                "vendorprofile"
+            ],
+            [
+                "delete_vendorprofile",
+                "users",
+                "vendorprofile"
+            ],
+            [
+                "view_vendorprofile",
+                "users",
+                "vendorprofile"
+            ]
+        ]
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "7r8dr0rv8dn553yiq2reun1m7g65vfae",
+    "fields": {
+        "session_data": ".eJxVjs0OwiAQhN-Fc9Ms_QHao3efgSywWvyBplBjY3x3aeJBM7edb2fmxTSuedJrokV7x0bGWfV7M2ivFHbDXTCcY21jyIs39Y7UXzfVx-jodviyfwETpql8NwMoFA0pydFC3zkgaBXJhhcZoUCiEXxoO8C2PZHhTg4CTjTIzvZcwR6aKCUfg6bn7JeNjVAxi0tm4-tdsRm3O4Ws75SnuO-1pVgXugzzDyr8-wPXEU6W:1vvWzx:U0UEbU671Ev-cyiy9Jx4P_p5vFQsSr-7QAYAvdcF358",
+        "expire_date": "2026-03-12T08:45:29.040Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "e8qmkq1tdsttuw6uap9qat9b2lu719pe",
+    "fields": {
+        "session_data": "e30:1vqCXn:VkwuE1ETSlRvByoqrZ2TeqAVG85EZQcJDzHCT5BmXZk",
+        "expire_date": "2026-02-25T15:54:23.538Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "hnb80osh5pvi7mnguonbpyrcpy8ct8nw",
+    "fields": {
+        "session_data": "eyJfcGFzc3dvcmRfcmVzZXRfdG9rZW4iOiJkNHFiaXctM2MyZWZlOWQ1YTA3Y2Y3YTFjOGIzNDM4ZGQyZWNmMTkifQ:1vwP2q:-oq5zMXe-2PvhePJcJowAEdR4F16Aa_Z8UPvrlja7l4",
+        "expire_date": "2026-03-14T18:28:04.883Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "iusatsxjcnbprtnaxymonshse0a8h1d6",
+    "fields": {
+        "session_data": "e30:1vsbQt:kvDOhzm1fILlTfgqrz2BRsgLYZiIKfyuthvvR3CtwjU",
+        "expire_date": "2026-03-04T06:53:11.830Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "mus8azk1fwbizr99t32xs7nh3fbonlnf",
+    "fields": {
+        "session_data": "eyJoYXNfZ3Vlc3RfY2FydCI6dHJ1ZX0:1vvXXD:KUjRtBZce9kGsBRbvNBOMkRa2-sJJFadNdJBCuxHgKA",
+        "expire_date": "2026-03-12T09:19:51.498Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "nawh6te53x52xs2x2pmgj5simzoqlfqm",
+    "fields": {
+        "session_data": "eyJoYXNfZ3Vlc3RfY2FydCI6dHJ1ZSwicmVzZXRfZW1haWwiOiJtd2VzaWdlZGV2ZWxvcGVyQGdtYWlsLmNvbSJ9:1vwQKu:RfNBU7DCEfx1ddmbhF33EvhtkCTIF62Jlg3T-91ITFg",
+        "expire_date": "2026-03-14T19:50:48.859Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "pfvzs2zh1wnyrr57hjdx3dkc5spbwb5n",
+    "fields": {
+        "session_data": ".eJxVjDsOwyAQRO9CHaHlYz4p0_sMaIF1cBKBZOwqyt1jSy4STTfvzbxZwG0tYeu0hDmzKxPs8ttFTE-qB8gPrPfGU6vrMkd-KPyknY8t0-t2un8HBXvZ19KDQyPJWYEJBp2BQDmyUuyJxoHFaIRXGlCpiaLI1huYyFudBuGAfb60Jjaj:1vpj7K:hEnr1QCxdaIs7I_bz7_GYpiRKH3417XUzUBGSANUR_g",
+        "expire_date": "2026-02-24T08:29:06.124Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "q7wkt0ntclph688ao877mdwwwvfaei7k",
+    "fields": {
+        "session_data": ".eJxVjMEOgyAQBf-Fc0OQBQWPvfcbyMJCsW00ATwZ_72aeGivb-bNxhyuLbu1xuImYiMDdvvdPIZ3nE9AL5yfCw_L3Mrk-anwi1b-WCh-7pf7F8hY8_HuiYxMqMBQsFogdAmQpBLSd0Z1BIOSXpOOViawSluvtMbeDgg2iWSOaMDS2Ljt-xcQ0jqZ:1vsbO2:pp9IsX9JnT5c1HFrGHIETzJ06vRlfIryvjKOaNAIzzY",
+        "expire_date": "2026-03-04T06:50:14.033Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "rbbpe2or35fpdb1756czz5g8j7ebr034",
+    "fields": {
+        "session_data": ".eJxVjMEOwiAQBf-FsyG0CJQevfsNBHa3FjVgoE00xn-XJj3o9c3MezPn12V2a6XiIrKRaXb43YKHG6UN4NWnS-aQ01Ji4JvCd1r5OSPdT7v7dzD7OrdaSAkGjFBKYYcGrFVkUaBFnLrBG22FQOykDspMBpox6aGn_qhlK2HYTivVGnNy9HzE8mKj-HwBge4--w:1vwdhn:8ozevgcblGsEMojaOC-XCrXVNSRUm3JnSCbmwt049Z8",
+        "expire_date": "2026-03-15T10:07:19.403Z"
+    }
+},
+{
+    "model": "sessions.session",
+    "pk": "za0exfp1x8i03br428594f8pupamx5el",
+    "fields": {
+        "session_data": "e30:1vsbQl:rQquavTF9w7ukBtwYFjlQAOByUH8YHt0hVNAo1Gk1gE",
+        "expire_date": "2026-03-04T06:53:03.475Z"
+    }
+},
+{
+    "model": "sites.site",
+    "fields": {
+        "domain": "shop1.localhost:8000",
+        "name": "Homies"
+    }
+},
+{
+    "model": "sites.site",
+    "fields": {
+        "domain": "shop1.localhost",
+        "name": "Shop 1 - Electronics Store"
+    }
+},
+{
+    "model": "users.user",
+    "fields": {
+        "password": "pbkdf2_sha256$870000$LAQ06okJ591JPIHBSOI6A4$rxyP4Wg2X2nutzPR1So9OcDS9BzoNKe16cBkXKYG3H4=",
+        "is_superuser": true,
+        "email": "mwesigedeveloper@gmail.com",
+        "first_name": "mwesige",
+        "last_name": "patrick",
+        "phone": "0702002442",
+        "user_type": "admin",
+        "is_active": true,
+        "is_staff": true,
+        "is_verified": false,
+        "verification_token": "",
+        "verification_token_created": null,
+        "date_joined": "2026-02-09T14:52:32.684Z",
+        "last_login": "2026-03-01T10:06:32.107Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "users.user",
+    "fields": {
+        "password": "pbkdf2_sha256$870000$8bUhUmznqjvTzWDMlebkkk$knobaqla6VHA/7wtdbaF7yZ6q1ylVSkxUEncOvSiP78=",
+        "is_superuser": true,
+        "email": "shop1@gmail.com",
+        "first_name": "Shop1",
+        "last_name": "Shop1",
+        "phone": "",
+        "user_type": "admin",
+        "is_active": true,
+        "is_staff": true,
+        "is_verified": false,
+        "verification_token": "",
+        "verification_token_created": null,
+        "date_joined": "2026-02-11T15:53:51.824Z",
+        "last_login": "2026-03-01T08:23:00.907Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "users.user",
+    "fields": {
+        "password": "pbkdf2_sha256$870000$IS22SAhIGZObr0m4XsJlXx$twtuQsm05GNdULZKndjUUmLdpEQ3cmZwSiUfd7D58kU=",
+        "is_superuser": false,
+        "email": "alice@gmail.com",
+        "first_name": "alice",
+        "last_name": "alzik",
+        "phone": "+256777610817",
+        "user_type": "customer",
+        "is_active": true,
+        "is_staff": false,
+        "is_verified": false,
+        "verification_token": "",
+        "verification_token_created": null,
+        "date_joined": "2026-02-24T07:47:34.895Z",
+        "last_login": "2026-03-01T10:07:19.359Z",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "users.profile",
+    "pk": 1,
+    "fields": {
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "profile_picture": "profile_pictures/home1.jpg",
+        "date_of_birth": null,
+        "gender": "male",
+        "address1": "",
+        "address2": "",
+        "city": "",
+        "state": "",
+        "zipcode": "",
+        "country": "",
+        "district": "",
+        "cart_info": "",
+        "newsletter_subscription": true,
+        "sms_notifications": true,
+        "email_notifications": true,
+        "created_at": "2026-02-23T13:07:36.797Z",
+        "updated_at": "2026-02-26T09:33:18.930Z"
+    }
+},
+{
+    "model": "users.profile",
+    "pk": 4,
+    "fields": {
+        "user": [
+            "alice@gmail.com"
+        ],
+        "profile_picture": "profile_pictures/ISSA_xGJUeNj.jpg",
+        "date_of_birth": "2000-02-19",
+        "gender": "female",
+        "address1": "kireka",
+        "address2": "kampala",
+        "city": "kampala",
+        "state": "central",
+        "zipcode": "00000",
+        "country": "Uganda",
+        "district": "kampala",
+        "cart_info": "",
+        "newsletter_subscription": false,
+        "sms_notifications": false,
+        "email_notifications": true,
+        "created_at": "2026-02-24T07:47:35.620Z",
+        "updated_at": "2026-02-28T20:51:51.418Z"
+    }
+},
+{
+    "model": "users.profile",
+    "pk": 5,
+    "fields": {
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "profile_picture": "profile_pictures/globah.jpg",
+        "date_of_birth": "2019-04-11",
+        "gender": "prefer_not_to_say",
+        "address1": "kireka",
+        "address2": "kampala",
+        "city": "kampala",
+        "state": "uganda",
+        "zipcode": "0012",
+        "country": "Uganda",
+        "district": "wakiso",
+        "cart_info": "",
+        "newsletter_subscription": true,
+        "sms_notifications": true,
+        "email_notifications": true,
+        "created_at": "2026-02-24T18:17:07.414Z",
+        "updated_at": "2026-02-24T21:12:17.958Z"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 1,
+    "fields": {
+        "action_time": "2026-02-10T08:41:30.905Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "sites",
+            "site"
+        ],
+        "object_id": "1",
+        "object_repr": "example.com",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 2,
+    "fields": {
+        "action_time": "2026-02-10T08:45:35.962Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "sites",
+            "site"
+        ],
+        "object_id": "2",
+        "object_repr": "amazon.com",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 3,
+    "fields": {
+        "action_time": "2026-02-10T09:16:18.876Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "category"
+        ],
+        "object_id": "1",
+        "object_repr": "HOME APPLIANCES",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 4,
+    "fields": {
+        "action_time": "2026-02-10T09:17:58.518Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "vendor"
+        ],
+        "object_id": "1",
+        "object_repr": "shop1 store",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 5,
+    "fields": {
+        "action_time": "2026-02-10T09:19:52.418Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "1",
+        "object_repr": "Global Star GS-PRO4 Bluetooth 4.1 Subwoofer - Black (1YR WRTY)",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}, {\"added\": {\"name\": \"product image\", \"object\": \"Global Star GS-PRO4 Bluetooth 4.1 Subwoofer - Black (1YR WRTY) - Image 0\"}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 6,
+    "fields": {
+        "action_time": "2026-02-11T15:49:02.405Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "2",
+        "object_repr": "Hisense 50 Inch LED 4K Utra HD VIDAA Smart TV - 50A6QS (3YRS WRNTY)",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}, {\"added\": {\"name\": \"product image\", \"object\": \"Hisense 50 Inch LED 4K Utra HD VIDAA Smart TV - 50A6QS (3YRS WRNTY) - Image 0\"}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 7,
+    "fields": {
+        "action_time": "2026-02-11T17:46:59.346Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "2",
+        "object_repr": "Hisense 50 Inch LED 4K Utra HD VIDAA Smart TV - 50A6QS (3YRS WRNTY)",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is featured\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 8,
+    "fields": {
+        "action_time": "2026-02-11T17:46:59.350Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "1",
+        "object_repr": "Global Star GS-PRO4 Bluetooth 4.1 Subwoofer - Black (1YR WRTY)",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is featured\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 9,
+    "fields": {
+        "action_time": "2026-02-11T18:03:40.854Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "2",
+        "object_repr": "Hisense 50 Inch LED 4K Utra HD VIDAA Smart TV - 50A6QS (3YRS WRNTY)",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 10,
+    "fields": {
+        "action_time": "2026-02-11T18:03:40.854Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "1",
+        "object_repr": "Global Star GS-PRO4 Bluetooth 4.1 Subwoofer - Black (1YR WRTY)",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 11,
+    "fields": {
+        "action_time": "2026-02-11T18:04:50.101Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "vendor"
+        ],
+        "object_id": "2",
+        "object_repr": "shop10 store",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 12,
+    "fields": {
+        "action_time": "2026-02-11T18:05:07.823Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "vendor"
+        ],
+        "object_id": "2",
+        "object_repr": "shop10 store",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 13,
+    "fields": {
+        "action_time": "2026-02-11T18:05:07.823Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "vendor"
+        ],
+        "object_id": "1",
+        "object_repr": "shop1 store",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 14,
+    "fields": {
+        "action_time": "2026-02-11T18:05:38.400Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "vendor"
+        ],
+        "object_id": "3",
+        "object_repr": "shop1 store",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 15,
+    "fields": {
+        "action_time": "2026-02-11T18:08:19.292Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "3",
+        "object_repr": "HOME APPLIANCES",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}, {\"added\": {\"name\": \"product image\", \"object\": \"HOME APPLIANCES - Image 0\"}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 16,
+    "fields": {
+        "action_time": "2026-02-12T09:33:03.241Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "4",
+        "object_repr": "Hisense 50 Inch LED 4K Utra HD VIDAA Smart TV - 50A6QS (3YRS WRNTY)",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 17,
+    "fields": {
+        "action_time": "2026-02-12T09:57:55.679Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "5",
+        "object_repr": "Global Star Bluetooth Speaker Home Speakers GS-9115 5.1 100watts 8\" Multispeaker System",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 18,
+    "fields": {
+        "action_time": "2026-02-12T09:58:26.561Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "5",
+        "object_repr": "Global Star Bluetooth Speaker Home Speakers GS-9115 5.1 100watts 8\" Multispeaker System",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is featured\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 19,
+    "fields": {
+        "action_time": "2026-02-12T10:19:19.475Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "6",
+        "object_repr": "Enhance writing and speech with precise vocabulary categorized by intent, such as positive adjectives (e.g., brilliant, tenacious), analytical verbs (e.g., evaluate, synthesize), or descriptive, elega",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}, {\"added\": {\"name\": \"product image\", \"object\": \"Enhance writing and speech with precise vocabulary categorized by intent, such as positive adjectives (e.g., brilliant, tenacious), analytical verbs (e.g., evaluate, synthesize), or descriptive, elega - Image 0\"}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 20,
+    "fields": {
+        "action_time": "2026-02-12T10:42:48.241Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "6",
+        "object_repr": "Enhance writing and speech with precise vocabulary categorized by intent, such as positive adjectives (e.g., brilliant, tenacious), analytical verbs (e.g., evaluate, synthesize), or descriptive, elega",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"name\": \"product image\", \"object\": \"Enhance writing and speech with precise vocabulary categorized by intent, such as positive adjectives (e.g., brilliant, tenacious), analytical verbs (e.g., evaluate, synthesize), or descriptive, elega - Image 0\", \"fields\": [\"Is primary\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 21,
+    "fields": {
+        "action_time": "2026-02-12T10:43:51.761Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "5",
+        "object_repr": "Global Star Bluetooth Speaker Home Speakers GS-9115 5.1 100watts 8\" Multispeaker System",
+        "action_flag": 2,
+        "change_message": "[{\"added\": {\"name\": \"product image\", \"object\": \"Global Star Bluetooth Speaker Home Speakers GS-9115 5.1 100watts 8\\\" Multispeaker System - Image 0\"}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 22,
+    "fields": {
+        "action_time": "2026-02-12T10:44:07.960Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "4",
+        "object_repr": "Hisense 50 Inch LED 4K Utra HD VIDAA Smart TV - 50A6QS (3YRS WRNTY)",
+        "action_flag": 2,
+        "change_message": "[{\"added\": {\"name\": \"product image\", \"object\": \"Hisense 50 Inch LED 4K Utra HD VIDAA Smart TV - 50A6QS (3YRS WRNTY) - Image 0\"}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 23,
+    "fields": {
+        "action_time": "2026-02-13T03:22:08.911Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "category"
+        ],
+        "object_id": "2",
+        "object_repr": "FURNITURE",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 24,
+    "fields": {
+        "action_time": "2026-02-13T03:26:14.848Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "7",
+        "object_repr": "Portable Collapsible 3 Column Frame Wardrobe - Multicolor",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 25,
+    "fields": {
+        "action_time": "2026-02-13T03:26:30.055Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "7",
+        "object_repr": "Portable Collapsible 3 Column Frame Wardrobe - Multicolor",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is featured\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 26,
+    "fields": {
+        "action_time": "2026-02-13T03:27:01.881Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "7",
+        "object_repr": "Portable Collapsible 3 Column Frame Wardrobe - Multicolor",
+        "action_flag": 2,
+        "change_message": "[{\"added\": {\"name\": \"product image\", \"object\": \"Portable Collapsible 3 Column Frame Wardrobe - Multicolor - Image 0\"}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 27,
+    "fields": {
+        "action_time": "2026-02-13T03:27:40.716Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "eccommence",
+            "product"
+        ],
+        "object_id": "7",
+        "object_repr": "Portable Collapsible 3 Column Frame Wardrobe - Multicolor",
+        "action_flag": 2,
+        "change_message": "[{\"added\": {\"name\": \"product image\", \"object\": \"Portable Collapsible 3 Column Frame Wardrobe - Multicolor - Image 0\"}}, {\"added\": {\"name\": \"product image\", \"object\": \"Portable Collapsible 3 Column Frame Wardrobe - Multicolor - Image 0\"}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 28,
+    "fields": {
+        "action_time": "2026-02-23T08:51:20.626Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "2",
+        "object_repr": "Order #ORD-20260223084404-8D5160",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 29,
+    "fields": {
+        "action_time": "2026-02-23T08:51:20.626Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "1",
+        "object_repr": "Order #ORD-20260223061403-B289C0",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 30,
+    "fields": {
+        "action_time": "2026-02-23T11:19:10.463Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "6",
+        "object_repr": "Order #ORD-20260223105742-6C6A5B",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 31,
+    "fields": {
+        "action_time": "2026-02-23T11:19:10.463Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "5",
+        "object_repr": "Order #ORD-20260223104802-7922A3",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 32,
+    "fields": {
+        "action_time": "2026-02-23T11:19:10.463Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "4",
+        "object_repr": "Order #ORD-20260223104313-1F1EF2",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 33,
+    "fields": {
+        "action_time": "2026-02-23T11:19:10.463Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "3",
+        "object_repr": "Order #ORD-20260223085347-A37DBC",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 34,
+    "fields": {
+        "action_time": "2026-02-23T12:09:31.506Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "tenants",
+            "client"
+        ],
+        "object_id": "2",
+        "object_repr": "shop1 (shop1)",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Name\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 35,
+    "fields": {
+        "action_time": "2026-02-24T07:06:56.066Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "tenants",
+            "domain"
+        ],
+        "object_id": "2",
+        "object_repr": "shop1.localhost (Primary) - shop1",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is primary\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 36,
+    "fields": {
+        "action_time": "2026-02-24T07:07:09.291Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "tenants",
+            "domain"
+        ],
+        "object_id": "2",
+        "object_repr": "shop1.localhost (Primary) - shop1",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is primary\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 37,
+    "fields": {
+        "action_time": "2026-02-24T07:07:22.924Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "tenants",
+            "domain"
+        ],
+        "object_id": "2",
+        "object_repr": "shop1.localhost (Primary) - shop1",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is primary\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 38,
+    "fields": {
+        "action_time": "2026-02-24T07:07:54.938Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "tenants",
+            "domain"
+        ],
+        "object_id": "2",
+        "object_repr": "shop1.localhost (Primary) - shop1",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is primary\", \"Is verified\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 39,
+    "fields": {
+        "action_time": "2026-02-24T07:14:23.137Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "auth",
+            "group"
+        ],
+        "object_id": "1",
+        "object_repr": "staff",
+        "action_flag": 1,
+        "change_message": "[{\"added\": {}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 40,
+    "fields": {
+        "action_time": "2026-02-24T07:14:33.107Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "auth",
+            "group"
+        ],
+        "object_id": "1",
+        "object_repr": "staff",
+        "action_flag": 2,
+        "change_message": "[]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 41,
+    "fields": {
+        "action_time": "2026-02-24T07:46:06.181Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "users",
+            "user"
+        ],
+        "object_id": "5",
+        "object_repr": "alice@gmail.com",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 42,
+    "fields": {
+        "action_time": "2026-02-24T07:46:06.181Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "users",
+            "user"
+        ],
+        "object_id": "4",
+        "object_repr": "messiahpatrick6@gmail.com",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 43,
+    "fields": {
+        "action_time": "2026-02-24T07:46:06.181Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "users",
+            "user"
+        ],
+        "object_id": "2",
+        "object_repr": "1@gmail.com",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 44,
+    "fields": {
+        "action_time": "2026-02-24T18:14:52.776Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "10",
+        "object_repr": "Order #ORD-20260224181245-C860FE",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 45,
+    "fields": {
+        "action_time": "2026-02-24T18:14:52.776Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "9",
+        "object_repr": "Order #ORD-20260223120130-87042F",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 46,
+    "fields": {
+        "action_time": "2026-02-24T18:14:52.776Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "8",
+        "object_repr": "Order #ORD-20260223112222-62BF76",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 47,
+    "fields": {
+        "action_time": "2026-02-24T18:14:52.776Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "7",
+        "object_repr": "Order #ORD-20260223112011-4B3066",
+        "action_flag": 3,
+        "change_message": ""
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 48,
+    "fields": {
+        "action_time": "2026-02-24T20:53:51.754Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "users",
+            "user"
+        ],
+        "object_id": "1",
+        "object_repr": "mwesigedeveloper@gmail.com",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Phone\"]}}, {\"changed\": {\"name\": \"profile\", \"object\": \"Profile of mwesige patrick\", \"fields\": [\"Profile picture\", \"Date of birth\", \"Gender\", \"Address Line 1\", \"Address Line 2\", \"City\", \"State\", \"Zip Code\", \"Country\", \"District\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 49,
+    "fields": {
+        "action_time": "2026-02-24T21:12:17.961Z",
+        "user": [
+            "mwesigedeveloper@gmail.com"
+        ],
+        "content_type": [
+            "users",
+            "user"
+        ],
+        "object_id": "1",
+        "object_repr": "mwesigedeveloper@gmail.com",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Email\", \"First name\", \"Last name\"]}}, {\"changed\": {\"name\": \"profile\", \"object\": \"Profile of mwesige patrick\", \"fields\": [\"Address Line 1\", \"Address Line 2\", \"City\", \"State\", \"Country\", \"District\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 50,
+    "fields": {
+        "action_time": "2026-03-01T09:11:11.591Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "11",
+        "object_repr": "Order #ORD-20260226092339-36EEFE",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Is paid\", \"Paid at\", \"Tracking number\", \"Shipped at\", \"Delivered at\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 51,
+    "fields": {
+        "action_time": "2026-03-01T09:11:29.750Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "11",
+        "object_repr": "Order #ORD-20260226092339-36EEFE",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Status\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 52,
+    "fields": {
+        "action_time": "2026-03-01T09:11:48.351Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "12",
+        "object_repr": "Order #ORD-20260228195444-486951",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Status\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 53,
+    "fields": {
+        "action_time": "2026-03-01T09:12:00.091Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "13",
+        "object_repr": "Order #ORD-20260228205252-83091D",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Status\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 54,
+    "fields": {
+        "action_time": "2026-03-01T09:12:24.312Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "order"
+        ],
+        "object_id": "14",
+        "object_repr": "Order #ORD-20260301082519-63497F",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Status\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 55,
+    "fields": {
+        "action_time": "2026-03-01T10:05:29.669Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "shippingaddress"
+        ],
+        "object_id": "2",
+        "object_repr": "mwesige patrick - Kampala",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Address Line 1\", \"Address Line 2\", \"Shipping state\", \"Shipping zipcode\"]}}]"
+    }
+},
+{
+    "model": "admin.logentry",
+    "pk": 56,
+    "fields": {
+        "action_time": "2026-03-01T10:05:41.795Z",
+        "user": [
+            "shop1@gmail.com"
+        ],
+        "content_type": [
+            "payment",
+            "shippingaddress"
+        ],
+        "object_id": "1",
+        "object_repr": "MWESIGE PATRICK - Kampala",
+        "action_flag": 2,
+        "change_message": "[{\"changed\": {\"fields\": [\"Shipping state\", \"Shipping zipcode\"]}}]"
+    }
+}
+]

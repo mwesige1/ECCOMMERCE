@@ -1,0 +1,422 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+
+{% block title %}Mobile Money Payment - {{ request.tenant.name }}{% endblock %}
+
+{% block content %}
+<div class="payment-container">
+    <div class="payment-card">
+        <div class="payment-header">
+            <div class="payment-icon-large">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h1>Complete Your Payment</h1>
+            <p class="payment-subtitle">
+                {% if order.payment_method == 'mtn_mobile_money' %}
+                MTN Mobile Money
+                {% else %}
+                Airtel Money
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="order-info">
+            <div class="info-row">
+                <span>Order Number:</span>
+                <strong>{{ order.order_number }}</strong>
+            </div>
+            <div class="info-row">
+                <span>Amount to Pay:</span>
+                <strong class="amount">UGX {{ order.total|floatformat:0 }}</strong>
+            </div>
+        </div>
+
+        <form id="mobileMoneyForm" class="payment-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="phoneNumber">
+                    <i class="fas fa-phone"></i> Mobile Money Number
+                </label>
+                <input type="tel" 
+                       id="phoneNumber" 
+                       name="phone_number" 
+                       class="form-input" 
+                       placeholder="07XXXXXXXX"
+                       value="{{ order.phone }}"
+                       pattern="[0-9]{10}"
+                       required>
+                <small class="help-text">Enter your 10-digit mobile money number</small>
+            </div>
+
+            <button type="submit" class="btn-pay" id="payBtn">
+                <i class="fas fa-lock"></i> Pay UGX {{ order.total|floatformat:0 }}
+            </button>
+        </form>
+
+        <div class="payment-instructions">
+            <h3><i class="fas fa-info-circle"></i> Payment Instructions</h3>
+            <ol>
+                <li>Enter your mobile money number above</li>
+                <li>Click "Pay" button</li>
+                <li>You'll receive a prompt on your phone</li>
+                <li>Enter your PIN to complete payment</li>
+            </ol>
+        </div>
+
+        <div class="payment-security">
+            <i class="fas fa-shield-alt"></i>
+            <span>Secure payment powered by Flutterwave</span>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Processing Modal -->
+<div id="processingModal" class="modal">
+    <div class="modal-content">
+        <div class="spinner"></div>
+        <h2>Processing Payment</h2>
+        <p id="processingMessage">Please wait...</p>
+    </div>
+</div>
+
+<style>
+.payment-container {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 0 1.5rem;
+}
+
+.payment-card {
+    background: white;
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+body.dark-mode .payment-card {
+    background: var(--black-soft);
+}
+
+.payment-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.payment-icon-large {
+    width: 80px;
+    height: 80px;
+    background: var(--primary-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 2.5rem;
+}
+
+.payment-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.payment-subtitle {
+    color: var(--gray-600);
+    font-size: 1.125rem;
+}
+
+.order-info {
+    background: var(--gray-50);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+body.dark-mode .order-info {
+    background: rgba(255,255,255,0.05);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+body.dark-mode .info-row {
+    border-bottom-color: var(--gray-darker);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.amount {
+    color: var(--primary-blue);
+    font-size: 1.25rem;
+}
+
+.payment-form {
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid var(--gray-300);
+    border-radius: 12px;
+    font-size: 1.125rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+body.dark-mode .form-input {
+    background: var(--black-rich);
+    border-color: var(--gray-darker);
+    color: var(--white-soft);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.help-text {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--gray-600);
+    font-size: 0.875rem;
+}
+
+.btn-pay {
+    width: 100%;
+    background: var(--primary-blue);
+    color: white;
+    padding: 1.25rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.125rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.btn-pay:hover {
+    background: var(--primary-blue-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.payment-instructions {
+    background: #dbeafe;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+body.dark-mode .payment-instructions {
+    background: rgba(37, 99, 235, 0.1);
+}
+
+.payment-instructions h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #1e40af;
+}
+
+body.dark-mode .payment-instructions h3 {
+    color: var(--primary-blue);
+}
+
+.payment-instructions ol {
+    margin-left: 1.25rem;
+    color: #1e40af;
+}
+
+body.dark-mode .payment-instructions ol {
+    color: var(--gray-300);
+}
+
+.payment-instructions li {
+    margin-bottom: 0.5rem;
+}
+
+.payment-security {
+    text-align: center;
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.payment-security i {
+    color: var(--success-green);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    background: white;
+    margin: 15% auto;
+    padding: 3rem;
+    width: 90%;
+    max-width: 400px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+body.dark-mode .modal-content {
+    background: var(--black-soft);
+}
+
+.spinner {
+    border: 4px solid var(--gray-200);
+    border-top: 4px solid var(--primary-blue);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#processingMessage {
+    color: var(--gray-600);
+    margin-top: 1rem;
+}
+
+body.dark-mode #processingMessage {
+    color: var(--gray-400);
+}
+</style>
+
+<script>
+document.getElementById('mobileMoneyForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const phoneNumber = document.getElementById('phoneNumber').value;
+    const modal = document.getElementById('processingModal');
+    const processingMessage = document.getElementById('processingMessage');
+    const payBtn = document.getElementById('payBtn');
+    
+    // Validate phone number
+    if (!/^[0-9]{10}$/.test(phoneNumber)) {
+        alert('Please enter a valid 10-digit phone number');
+        return;
+    }
+    
+    // Show processing modal
+    modal.style.display = 'block';
+    payBtn.disabled = true;
+    
+    try {
+        // Initiate payment
+        const response = await fetch('{% url "payment:initiate_mobile_money" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                order_number: '{{ order.order_number }}',
+                phone_number: phoneNumber
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            processingMessage.textContent = data.message;
+            
+            // Poll for payment verification
+            const transactionId = data.transaction_id;
+            let attempts = 0;
+            const maxAttempts = 60; // 2 minutes (60 * 2 seconds)
+            
+            const checkPayment = setInterval(async () => {
+                attempts++;
+                
+                if (attempts > maxAttempts) {
+                    clearInterval(checkPayment);
+                    processingMessage.textContent = 'Payment verification timeout. Please contact support.';
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        payBtn.disabled = false;
+                    }, 3000);
+                    return;
+                }
+                
+                try {
+                    const verifyResponse = await fetch('{% url "payment:verify_mobile_money" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            transaction_id: transactionId
+                        })
+                    });
+                    
+                    const verifyData = await verifyResponse.json();
+                    
+                    if (verifyData.status === 'successful') {
+                        clearInterval(checkPayment);
+                        processingMessage.textContent = 'Payment successful! Redirecting...';
+                        setTimeout(() => {
+                            window.location.href = verifyData.redirect_url;
+                        }, 1500);
+                    }
+                } catch (error) {
+                    console.error('Verification error:', error);
+                }
+            }, 2000); // Check every 2 seconds
+            
+        } else {
+            modal.style.display = 'none';
+            payBtn.disabled = false;
+            alert(data.error || 'Payment failed. Please try again.');
+        }
+        
+    } catch (error) {
+        console.error('Payment error:', error);
+        modal.style.display = 'none';
+        payBtn.disabled = false;
+        alert('An error occurred. Please try again.');
+    }
+});
+</script>
+{% endblock %}

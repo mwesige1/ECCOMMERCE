@@ -1,0 +1,382 @@
+<header class="amazon-header">
+    <div class="header-container">
+        <!-- Logo Section -->
+        <a href="{% url 'eccommence:home' %}" class="logo-section">
+            <i class="fas fa-box-open logo-icon"></i>
+            <span class="logo-text">{{ request.tenant.name|upper|default:"HOMIES" }}</span>
+        </a>
+        
+        <!-- Delivery Info -->
+  <div class="delivery-info">
+    <i class="fas fa-map-marker-alt"></i>
+    <div>
+        <div class="delivery-location">Deliver to</div>
+        <div class="delivery-text">
+            {% if user.is_authenticated and user.customer_profile %}
+                {% with default_address=user.customer_profile.addresses.all %}
+                    {% if default_address %}
+                        {% with first_addr=default_address.0 %}
+                            {{ first_addr.address_line1|truncatechars:20 }}{% if first_addr.city %}, {{ first_addr.city }}{% endif %}
+                        {% endwith %}
+                    {% else %}
+                        <a href="{% url 'users:address_add' %}" style="color: var(--primary-blue); text-decoration: none;">+ Add address</a>
+                    {% endif %}
+                {% endwith %}
+            {% else %}
+                <a href="{% url 'users:login' %}?next={{ request.path }}" style="color: var(--primary-blue); text-decoration: none;">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+     <!-- Search Section -->
+<div class="search-section">
+    <form action="{% url 'eccommence:home' %}" method="get" id="searchForm">
+        
+        <!-- Custom Category Dropdown -->
+        <div class="cat-drop-wrap" id="catDropWrap">
+            <button type="button" class="cat-drop-btn" id="catDropBtn">
+                <span id="catDropLabel">All Categories</span>
+                <i class="fas fa-chevron-down" id="catDropArrow"></i>
+            </button>
+            <input type="hidden" name="category" id="categoryInput" value="{{ request.GET.category }}">
+
+            <div class="cat-drop-menu" id="catDropMenu">
+                <!-- All Categories link at top -->
+                <a href="{% url 'eccommence:category_list' %}" class="cat-drop-all">
+                    <i class="fas fa-th-large"></i> All Categories
+                </a>
+                <div class="cat-drop-divider"></div>
+                <!-- Individual categories -->
+                {% for category in all_categories %}
+                    {% if category.slug %}
+                    <div class="cat-drop-item" 
+                         data-slug="{{ category.slug }}"
+                         data-name="{{ category.name }}">
+                        {% if category.icon %}<i class="{{ category.icon }}"></i>{% endif %}
+                        {{ category.name }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <input type="text" 
+               name="q" 
+               class="search-input" 
+               placeholder="Search products..." 
+               value="{{ request.GET.q }}">
+        <button type="submit" class="search-button">
+            <i class="fas fa-search"></i>
+        </button>
+    </form>
+</div>
+        <!-- Navigation Items -->
+        <div class="header-nav">
+            
+            
+            {% if user.is_authenticated %}
+                <!-- Account Dropdown -->
+                <div class="account-dropdown">
+                    <div class="account-trigger" id="accountTrigger">
+                        <div class="nav-item-primary">
+                            <span>Hello, {{ user.first_name|default:"User" }}</span>
+                        </div>
+                        <div class="nav-item-secondary">
+                            <i class="fas fa-user"></i>&nbsp;Account & Lists
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="dropdown-content" id="dropdownContent">
+                        <div class="dropdown-header">
+                            <div class="dropdown-avatar">
+                                 {% if user.profile.profile_picture %}
+                                    <img src="{{ user.profile.profile_picture.url }}" 
+                                         alt="{{ user.get_full_name }}"
+                                         class="avatar-img">
+                                {% else %}
+                                    <div class="avatar-placeholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="user-info">
+                                <h3>{{ user.get_full_name|default:user.email }}</h3>
+                                <p>{{ user.email }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-links">
+                            <a href="{% url 'users:profile_view' %}" class="dropdown-link">
+                                <i class="fas fa-user"></i>
+                                My Profile
+                            </a>
+                            <a href="{% url 'payment:order_history' %}" class="dropdown-link">
+                                <i class="fas fa-shopping-bag"></i>
+                                My Orders
+                            </a>
+                            <a href="{% url 'cart:wishlist' %}" class="dropdown-link">
+                                <i class="fas fa-heart"></i>
+                                My Wishlist
+                                {% if wishlist_count > 0 %}
+                                <span class="badge-count">{{ wishlist_count }}</span>
+                                {% endif %}
+                            </a>
+                            <a href="{% url 'users:address_list' %}" class="dropdown-link">
+                                <i class="fas fa-map-marker-alt"></i>
+                                My Addresses
+                            </a>
+                            <a href="{% url 'payment:payment_method' %}" class="dropdown-link">
+                                <i class="fas fa-credit-card"></i>
+                                Payment Methods
+                            </a>
+                            
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="{% url 'users:account_settings' %}" class="dropdown-link">
+                                <i class="fas fa-cog"></i>
+                                Account Settings
+                            </a>
+                            
+                            {% if user.is_vendor %}
+                                <a href="" class="dropdown-link">
+                                    <i class="fas fa-store"></i>
+                                    Vendor Dashboard
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="dropdown-footer">
+                            <a href="{% url 'users:logout' %}" class="sign-out-btn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Sign Out
+                            </a>
+                        </div>
+                    </div>
+                </div>
+           {% else %}
+    <!-- Login Link for Guest Users -->
+    <a href="{% url 'users:login' %}" class="nav-item account-link">
+        <i class="fas fa-user-circle"></i>
+        <div class="nav-item-primary">Account</div>
+        <div class="nav-item-secondary">Sign in</div>
+    </a>
+{% endif %}
+            <!-- Returns & Orders Dropdown -->
+            {% if user.is_authenticated %}
+            <div class="orders-dropdown">
+                <div class="orders-trigger" id="ordersTrigger">
+                    <div class="nav-item-primary">Returns</div>
+                    <div class="nav-item-secondary">
+                        <i class="fas fa-box"></i>&nbsp;& Orders
+                    </div>
+                </div>
+                
+                <!-- Orders Dropdown Menu -->
+                <div class="dropdown-content orders-dropdown-content" id="ordersDropdownContent">
+                    <div class="dropdown-header orders-header">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Your Orders</span>
+                    </div>
+                    
+                    <div class="dropdown-links">
+                        <a href="{% url 'payment:order_history' %}" class="dropdown-link">
+                            <i class="fas fa-list"></i>
+                            <div>
+                                <strong>All Orders</strong>
+                                <span class="link-subtitle">View your complete order history</span>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'payment:order_history' %}?status=pending" class="dropdown-link">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <strong>Pending Orders</strong>
+                                <span class="link-subtitle">Orders awaiting processing</span>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'payment:order_history' %}?status=shipped" class="dropdown-link">
+                            <i class="fas fa-shipping-fast"></i>
+                            <div>
+                                <strong>In Transit</strong>
+                                <span class="link-subtitle">Orders being delivered</span>
+                            </div>
+                        </a>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <a href="{% url 'payment:order_history' %}?status=delivered" class="dropdown-link">
+                            <i class="fas fa-check-circle"></i>
+                            <div>
+                                <strong>Delivered</strong>
+                                <span class="link-subtitle">Successfully delivered orders</span>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'payment:order_history' %}?status=cancelled" class="dropdown-link">
+                            <i class="fas fa-times-circle"></i>
+                            <div>
+                                <strong>Cancelled Orders</strong>
+                                <span class="link-subtitle">View cancelled orders</span>
+                            </div>
+                        </a>
+                        
+                        
+                       
+                        
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Guest Users - Simple Link -->
+            <a href="{% url 'users:login' %}" class="nav-item">
+                <div class="nav-item-primary">Returns</div>
+                <div class="nav-item-secondary">& Orders</div>
+            </a>
+            {% endif %}
+            
+            <!-- Wishlist (Visible Link) -->
+            {% if user.is_authenticated %}
+            <a href="{% url 'cart:wishlist' %}" class="wishlist-section">
+                <i class="fas fa-heart"></i>
+                <div class="wishlist-count" {% if wishlist_count == 0 %}style="display: none;"{% endif %}>{{ wishlist_count }}</div>
+                <div class="wishlist-text">Wishlist</div>
+            </a>
+            {% endif %}
+                    
+            <!-- Shopping Cart -->
+            <a href="{% url 'cart:cart_detail' %}" class="cart-section">
+                <i class="fas fa-shopping-cart"></i>
+                <div class="cart-count">{{ cart_total_items|default:0 }}</div>
+                <div class="cart-text">Cart</div>
+            </a>
+               <!-- Theme Toggle -->
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </div>
+</header>
+
+<script>
+// Account dropdown toggle
+const accountTrigger = document.getElementById('accountTrigger');
+const dropdownContent = document.getElementById('dropdownContent');
+
+if (accountTrigger && dropdownContent) {
+    accountTrigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        // Close orders dropdown if open
+        if (ordersDropdownContent) {
+            ordersDropdownContent.classList.remove('show');
+        }
+        dropdownContent.classList.toggle('show');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!accountTrigger.contains(e.target) && !dropdownContent.contains(e.target)) {
+            dropdownContent.classList.remove('show');
+        }
+    });
+}
+
+// Orders dropdown toggle
+const ordersTrigger = document.getElementById('ordersTrigger');
+const ordersDropdownContent = document.getElementById('ordersDropdownContent');
+
+if (ordersTrigger && ordersDropdownContent) {
+    ordersTrigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        // Close account dropdown if open
+        if (dropdownContent) {
+            dropdownContent.classList.remove('show');
+        }
+        ordersDropdownContent.classList.toggle('show');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!ordersTrigger.contains(e.target) && !ordersDropdownContent.contains(e.target)) {
+            ordersDropdownContent.classList.remove('show');
+        }
+    });
+}
+
+// ── Custom Category Dropdown ──
+const catDropWrap = document.getElementById('catDropWrap');
+const catDropBtn  = document.getElementById('catDropBtn');
+const catDropMenu = document.getElementById('catDropMenu');
+const catDropLabel= document.getElementById('catDropLabel');
+const categoryInput = document.getElementById('categoryInput');
+
+if (catDropBtn) {
+    // Toggle open/close
+    catDropBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        catDropWrap.classList.toggle('open');
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!catDropWrap.contains(e.target)) {
+            catDropWrap.classList.remove('open');
+        }
+    });
+
+    // Click on a category item — filter search
+    document.querySelectorAll('.cat-drop-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+            const slug = this.dataset.slug;
+            const name = this.dataset.name;
+
+            // Update label and hidden input
+            catDropLabel.textContent = name;
+            categoryInput.value = slug;
+
+            // Mark selected
+            document.querySelectorAll('.cat-drop-item').forEach(i => i.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Close and submit
+            catDropWrap.classList.remove('open');
+            document.getElementById('searchForm').submit();
+        });
+    });
+
+    // Restore selected label on page load
+    const currentCat = categoryInput.value;
+    if (currentCat) {
+        const match = document.querySelector(`.cat-drop-item[data-slug="${currentCat}"]`);
+        if (match) {
+            catDropLabel.textContent = match.dataset.name;
+            match.classList.add('selected');
+        }
+    }
+}
+// Theme toggle
+const themeToggle = document.getElementById('themeToggle');
+if (themeToggle) {
+    themeToggle.addEventListener('click', function() {
+        document.body.classList.toggle('dark-mode');
+        const icon = this.querySelector('i');
+        if (document.body.classList.contains('dark-mode')) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+    }
+}
+</script>

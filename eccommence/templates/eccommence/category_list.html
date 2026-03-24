@@ -1,0 +1,876 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+
+{% block title %}All Categories — {{ request.tenant.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/variables.css' %}">
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<style>
+    /* ============================================
+       HERO CAROUSEL WITH PRODUCT IMAGES - FIXED
+    ============================================ */
+    .category-hero {
+        position: relative;
+        width: 100%;
+        height: 600px;
+        overflow: hidden;
+        background: var(--black-rich);
+    }
+
+    .hero-carousel {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    .hero-slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
+    }
+
+    .hero-slide.active {
+        opacity: 1;
+        visibility: visible;
+        z-index: 2;
+    }
+
+    .slide-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        filter: brightness(0.5);
+        /* Removed transform scale - images now fit properly */
+    }
+
+    /* Color overlay based on category */
+    .slide-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(105deg, 
+            rgba(15, 23, 42, 0.9) 0%,
+            rgba(15, 23, 42, 0.6) 40%,
+            rgba(15, 23, 42, 0.3) 80%,
+            transparent 100%
+        );
+        z-index: 1;
+    }
+
+    .slide-content {
+        position: relative;
+        z-index: 3;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 4rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        color: var(--white-pure);
+    }
+
+    .slide-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1.25rem;
+        border-radius: 100px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        width: fit-content;
+        color: var(--white-pure);
+    }
+
+    .slide-tag i {
+        color: var(--yellow);
+    }
+
+    .slide-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+        max-width: 700px;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .slide-title span {
+        color: var(--yellow);
+        display: block;
+        font-size: 0.7em;
+        margin-top: 0.5rem;
+    }
+
+    .slide-description {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        max-width: 550px;
+        line-height: 1.6;
+    }
+
+    .slide-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        background: var(--yellow);
+        color: var(--black-rich);
+        padding: 1rem 2.5rem;
+        border-radius: var(--border-radius-md);
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: var(--transition);
+        width: fit-content;
+        box-shadow: 0 10px 20px rgba(255, 216, 20, 0.2);
+    }
+
+    .slide-cta:hover {
+        background: var(--yellow-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(255, 216, 20, 0.3);
+    }
+
+    .slide-cta i {
+        transition: transform 0.3s ease;
+    }
+
+    .slide-cta:hover i {
+        transform: translateX(5px);
+    }
+
+    /* Carousel Controls */
+    .carousel-controls {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 1rem;
+        z-index: 10;
+    }
+
+    .carousel-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: var(--transition);
+        padding: 0;
+    }
+
+    .carousel-dot.active {
+        background: var(--yellow);
+        transform: scale(1.3);
+        box-shadow: 0 0 20px var(--yellow);
+    }
+
+    .carousel-dot:hover {
+        background: var(--white-pure);
+    }
+
+    .carousel-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--white-pure);
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: var(--transition);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .carousel-arrow:hover {
+        background: var(--yellow);
+        color: var(--black-rich);
+        border-color: var(--yellow);
+    }
+
+    .carousel-arrow.prev {
+        left: 2rem;
+    }
+
+    .carousel-arrow.next {
+        right: 2rem;
+    }
+
+    /* Progress Bar */
+    .carousel-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        z-index: 10;
+    }
+
+    .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--yellow);
+        transition: width 5s linear;
+    }
+
+    /* ============================================
+       CATEGORIES SECTION - SIMPLIFIED
+    ============================================ */
+    .categories-section {
+        padding: 4rem 2rem;
+        background: var(--white-soft);
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 2.5rem;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .section-title h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--black-rich);
+        margin-bottom: 0.5rem;
+    }
+
+    .section-title p {
+        color: var(--gray-medium);
+        font-size: 1rem;
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        background: var(--white-pure);
+        padding: 0.5rem;
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--gray-light);
+    }
+
+    .view-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: transparent;
+        color: var(--gray-medium);
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .view-btn:hover {
+        color: var(--primary-blue);
+    }
+
+    .view-btn.active {
+        background: var(--primary-blue);
+        color: var(--white-pure);
+    }
+
+    /* Grid View - Simplified Cards */
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .category-card {
+        background: var(--white-pure);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+        transition: var(--transition);
+        text-decoration: none;
+        border: 1px solid var(--gray-light);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-large);
+        border-color: var(--primary-blue);
+    }
+
+    .card-image {
+        height: 220px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+
+    .category-card:hover .card-image img {
+        transform: scale(1.1);
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to top, rgba(0,0,0,0.3), transparent);
+    }
+
+    .card-content {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--black-rich);
+        margin-bottom: 0.5rem;
+    }
+
+    .card-description {
+        color: var(--gray-dark);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        flex: 1;
+    }
+
+    /* Simplified - Only Shop Now Button */
+    .shop-now-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        background: var(--primary-blue);
+        color: var(--white-pure);
+        padding: 0.9rem 1.5rem;
+        border-radius: var(--border-radius-md);
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        margin-top: auto;
+    }
+
+    .shop-now-btn:hover {
+        background: var(--primary-blue-dark);
+        gap: 1rem;
+    }
+
+    .shop-now-btn i {
+        transition: transform 0.3s ease;
+    }
+
+    .shop-now-btn:hover i {
+        transform: translateX(5px);
+    }
+
+    /* List View - Simplified */
+    .categories-list {
+        display: none;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 3rem;
+    }
+
+    .list-item {
+        background: var(--white-pure);
+        border: 1px solid var(--gray-light);
+        border-radius: var(--border-radius-md);
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+    .list-item:hover {
+        border-color: var(--primary-blue);
+        box-shadow: var(--shadow-medium);
+        transform: translateX(5px);
+    }
+
+    .list-image {
+        width: 80px;
+        height: 80px;
+        border-radius: var(--border-radius-sm);
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .list-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .list-content {
+        flex: 1;
+    }
+
+    .list-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--black-rich);
+        margin-bottom: 0.25rem;
+    }
+
+    .list-description {
+        color: var(--gray-dark);
+        font-size: 0.9rem;
+    }
+
+    .list-arrow {
+        color: var(--primary-blue);
+        font-size: 1.2rem;
+        opacity: 0;
+        transition: var(--transition);
+    }
+
+    .list-item:hover .list-arrow {
+        opacity: 1;
+        transform: translateX(5px);
+    }
+
+    /* Empty State */
+    .empty-state {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--white-pure);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--gray-light);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--gray-light);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: var(--gray-darker);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--gray-medium);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .hero-slide .slide-title {
+            font-size: 3rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .category-hero {
+            height: 500px;
+        }
+
+        .slide-content {
+            padding: 0 2rem;
+        }
+
+        .slide-title {
+            font-size: 2.5rem;
+        }
+
+        .carousel-arrow {
+            width: 40px;
+            height: 40px;
+        }
+
+        .carousel-arrow.prev {
+            left: 1rem;
+        }
+
+        .carousel-arrow.next {
+            right: 1rem;
+        }
+
+        .categories-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .category-hero {
+            height: 400px;
+        }
+
+        .slide-title {
+            font-size: 2rem;
+        }
+
+        .slide-description {
+            font-size: 1rem;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .categories-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ============================================
+     HERO CAROUSEL WITH PRODUCT IMAGES - FIXED
+============================================ -->
+<div class="category-hero">
+    <div class="hero-carousel" id="heroCarousel">
+        {% for category in categories|slice:":5" %}
+        <div class="hero-slide {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}">
+            <!-- Background Image (first product from category) - Now properly fitted -->
+            <div class="slide-background" style="background-image: 
+                {% with category.products.first as product %}
+                    {% if product and product.images.first %}
+                        url('{{ product.images.first.image.url }}')
+                    {% else %}
+                        linear-gradient(135deg, var(--primary-blue), var(--accent-orange))
+                    {% endif %}
+                {% endwith %};">
+            </div>
+            <div class="slide-overlay"></div>
+            
+            <div class="slide-content">
+                <div class="slide-tag">
+                    <i class="fas fa-{% cycle 'bolt' 'fire' 'crown' 'gem' 'star' %}"></i>
+                    {% cycle 'Limited Time' 'Best Seller' 'New Arrivals' 'Special Offer' 'Featured' %}
+                </div>
+                
+                <h1 class="slide-title">
+                    {{ category.name }}
+                    <span>{% cycle 'Up to 50% Off' 'Starting at UGX 10k' 'Fresh Stock' 'Daily Deals' 'Top Rated' %}</span>
+                </h1>
+                
+                <p class="slide-description">
+                    {{ category.description|default:"Discover amazing products at unbeatable prices. Shop now and save big!"|truncatewords:20 }}
+                </p>
+                
+                <a href="{% url 'eccommence:category_view' category.slug %}" class="slide-cta">
+                    <span>Shop {{ category.name }}</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Fallback slide -->
+        <div class="hero-slide active">
+            <div class="slide-background" style="background: linear-gradient(135deg, var(--primary-blue), var(--accent-orange));"></div>
+            <div class="slide-overlay"></div>
+            <div class="slide-content">
+                <div class="slide-tag">
+                    <i class="fas fa-store"></i>
+                    Welcome
+                </div>
+                <h1 class="slide-title">
+                    Discover Our Categories
+                    <span>Shop Everything You Need</span>
+                </h1>
+                <p class="slide-description">
+                    Browse through our wide range of products across multiple categories.
+                    Quality products at factory prices.
+                </p>
+                <a href="{% url 'eccommence:home' %}" class="slide-cta">
+                    <span>Start Shopping</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Carousel Controls -->
+    <button class="carousel-arrow prev" id="prevSlide">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="carousel-arrow next" id="nextSlide">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+
+    <div class="carousel-controls" id="carouselDots">
+        {% for category in categories|slice:":5" %}
+        <button class="carousel-dot {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}"></button>
+        {% endfor %}
+    </div>
+
+    <div class="carousel-progress">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+</div>
+
+<!-- ============================================
+     CATEGORIES SECTION - SIMPLIFIED
+============================================ -->
+<section class="categories-section">
+    <div class="section-header">
+        <div class="section-title">
+            <h2>All Categories</h2>
+            <p>{{ categories.count }} categories to explore</p>
+        </div>
+        
+        <div class="view-toggle">
+            <button class="view-btn active" id="gridView" onclick="setView('grid')" title="Grid View">
+                <i class="fas fa-th"></i>
+            </button>
+            <button class="view-btn" id="listView" onclick="setView('list')" title="List View">
+                <i class="fas fa-list"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid View - Simplified -->
+    <div class="categories-grid" id="gridContainer">
+        {% for category in categories %}
+        <div class="category-card">
+            <div class="card-image">
+                {% with category.products.first as product %}
+                    {% if product and product.images.first %}
+                        <img src="{{ product.images.first.image.url }}" alt="{{ category.name }}" loading="lazy">
+                    {% else %}
+                        <img src="{% static 'images/category-placeholder.jpg' %}" alt="{{ category.name }}" loading="lazy">
+                    {% endif %}
+                {% endwith %}
+                <div class="image-overlay"></div>
+            </div>
+            
+            <div class="card-content">
+                <h3 class="card-title">{{ category.name }}</h3>
+                
+                <p class="card-description">
+                    {{ category.description|default:"Browse our collection of quality products at factory prices."|truncatewords:15 }}
+                </p>
+                
+                <!-- Only Shop Now Button - No product counts -->
+                <a href="{% url 'eccommence:category_view' category.slug %}" class="shop-now-btn">
+                    <span>Shop Now</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <h3>No Categories Found</h3>
+            <p>We're adding new categories soon. Check back later!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- List View - Simplified -->
+    <div class="categories-list" id="listContainer" style="display: none;">
+        {% for category in categories %}
+        <a href="{% url 'eccommence:category_view' category.slug %}" class="list-item">
+            <div class="list-image">
+                {% with category.products.first as product %}
+                    {% if product and product.images.first %}
+                        <img src="{{ product.images.first.image.url }}" alt="{{ category.name }}" loading="lazy">
+                    {% else %}
+                        <img src="{% static 'images/category-placeholder.jpg' %}" alt="{{ category.name }}" loading="lazy">
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+            <div class="list-content">
+                <h4 class="list-title">{{ category.name }}</h4>
+                <p class="list-description">{{ category.description|default:"Shop now for the best deals"|truncatewords:10 }}</p>
+            </div>
+            
+            <i class="fas fa-chevron-right list-arrow"></i>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<script>
+(function() {
+    "use strict";
+
+    // ============================================
+    // HERO CAROUSEL
+    // ============================================
+    const slides = document.querySelectorAll('.hero-slide');
+    const dots = document.querySelectorAll('.carousel-dot');
+    const prevBtn = document.getElementById('prevSlide');
+    const nextBtn = document.getElementById('nextSlide');
+    const progressFill = document.getElementById('progressFill');
+    
+    let currentSlide = 0;
+    let slideInterval;
+    const slideDuration = 5000; // 5 seconds
+
+    function showSlide(index) {
+        // Remove active class from all slides and dots
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        // Calculate new index (wrap around)
+        currentSlide = (index + slides.length) % slides.length;
+        
+        // Add active class to current slide and dot
+        slides[currentSlide].classList.add('active');
+        if (dots[currentSlide]) dots[currentSlide].classList.add('active');
+        
+        // Reset progress bar
+        resetProgress();
+    }
+
+    function nextSlide() {
+        showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+        showSlide(currentSlide - 1);
+    }
+
+    function resetProgress() {
+        progressFill.style.transition = 'none';
+        progressFill.style.width = '0%';
+        
+        // Force reflow
+        progressFill.offsetHeight;
+        
+        // Start progress animation
+        progressFill.style.transition = 'width ' + slideDuration/1000 + 's linear';
+        progressFill.style.width = '100%';
+    }
+
+    function startAutoPlay() {
+        if (slideInterval) clearInterval(slideInterval);
+        slideInterval = setInterval(nextSlide, slideDuration);
+        resetProgress();
+    }
+
+    function stopAutoPlay() {
+        if (slideInterval) {
+            clearInterval(slideInterval);
+            slideInterval = null;
+        }
+    }
+
+    // Event listeners
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+        prevSlide();
+        stopAutoPlay();
+        startAutoPlay();
+    });
+
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+        nextSlide();
+        stopAutoPlay();
+        startAutoPlay();
+    });
+
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            showSlide(index);
+            stopAutoPlay();
+            startAutoPlay();
+        });
+    });
+
+    // Pause on hover
+    const heroCarousel = document.getElementById('heroCarousel');
+    if (heroCarousel) {
+        heroCarousel.addEventListener('mouseenter', stopAutoPlay);
+        heroCarousel.addEventListener('mouseleave', startAutoPlay);
+    }
+
+    // Start autoplay
+    if (slides.length > 0) {
+        startAutoPlay();
+    }
+
+    // ============================================
+    // VIEW TOGGLE (Grid/List)
+    // ============================================
+    window.setView = function(view) {
+        const gridContainer = document.getElementById('gridContainer');
+        const listContainer = document.getElementById('listContainer');
+        const gridBtn = document.getElementById('gridView');
+        const listBtn = document.getElementById('listView');
+        
+        if (view === 'grid') {
+            gridContainer.style.display = 'grid';
+            listContainer.style.display = 'none';
+            gridBtn.classList.add('active');
+            listBtn.classList.remove('active');
+        } else {
+            gridContainer.style.display = 'none';
+            listContainer.style.display = 'flex';
+            listBtn.classList.add('active');
+            gridBtn.classList.remove('active');
+        }
+        
+        // Save preference
+        localStorage.setItem('categoryView', view);
+    }
+
+    // Load saved preference
+    const savedView = localStorage.getItem('categoryView');
+    if (savedView) {
+        setView(savedView);
+    }
+
+})();
+</script>
+{% endblock %}

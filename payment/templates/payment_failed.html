@@ -1,0 +1,787 @@
+{% extends 'eccommence/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Payment Failed - {{ request.tenant.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/variables.css' %}">
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<style>
+    /* ============================================
+       PAYMENT FAILED PAGE - WORLD-CLASS DESIGN
+    ============================================ */
+    :root {
+        --primary:        #2563eb;
+        --primary-dark:   #1d4ed8;
+        --primary-light:  #eff6ff;
+        --primary-ring:   rgba(37, 99, 235, 0.15);
+        --accent:         #f59e0b;
+        --success:        #10b981;
+        --success-light:  #ecfdf5;
+        --error:          #ef4444;
+        --error-light:    #fef2f2;
+        --warning:        #f59e0b;
+        --warning-light:  #fffbeb;
+
+        --white:          #ffffff;
+        --surface:        #f8fafc;
+        --surface-2:      #f1f5f9;
+        --border:         #e2e8f0;
+        --border-focus:   #93c5fd;
+
+        --text-primary:   #0f172a;
+        --text-secondary: #475569;
+        --text-muted:     #94a3b8;
+        --text-placeholder: #cbd5e1;
+
+        --radius-sm:  6px;
+        --radius-md:  10px;
+        --radius-lg:  16px;
+        --radius-xl:  20px;
+        --radius-full: 9999px;
+
+        --shadow-xs:  0 1px 2px rgba(0,0,0,.05);
+        --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+        --shadow-md:  0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+        --shadow-lg:  0 10px 15px -3px rgba(0,0,0,.07), 0 4px 6px -2px rgba(0,0,0,.03);
+        --shadow-xl:  0 20px 25px -5px rgba(0,0,0,.08), 0 10px 10px -5px rgba(0,0,0,.02);
+
+        --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* ─── Breadcrumb ──────────────────────────────────── */
+    .bc-bar {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    .bc-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+        width: 100%;
+    }
+    .bc-inner a { color: var(--primary); text-decoration: none; font-weight: 500; }
+    .bc-inner a:hover { text-decoration: underline; }
+    .bc-sep { color: var(--text-placeholder); }
+    .bc-inner span { color: var(--text-secondary); font-weight: 600; }
+
+    /* ─── Page Wrapper ────────────────────────────────── */
+    .pf-page {
+        background: var(--surface);
+        min-height: calc(100vh - 44px);
+        padding: 32px 24px 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .pf-inner {
+        max-width: 800px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    /* ─── Failed Animation ────────────────────────────── */
+    .failed-animation {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+
+    .error-icon {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+        position: relative;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .error-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 4px solid var(--error);
+        position: absolute;
+        animation: scaleIn 0.4s ease-in-out;
+    }
+
+    .error-cross {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        z-index: 1;
+    }
+
+    .cross-line {
+        position: absolute;
+        height: 5px;
+        background-color: var(--error);
+        border-radius: 3px;
+        top: 50%;
+        left: 50%;
+    }
+
+    .cross-line.line-left {
+        width: 50px;
+        transform: translate(-50%, -50%) rotate(45deg);
+        animation: expandLeft 0.5s 0.2s ease-in-out forwards;
+        transform-origin: center;
+    }
+
+    .cross-line.line-right {
+        width: 50px;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        animation: expandRight 0.5s 0.4s ease-in-out forwards;
+        transform-origin: center;
+    }
+
+    @keyframes scaleIn {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes expandLeft {
+        0% { width: 0; }
+        100% { width: 50px; }
+    }
+
+    @keyframes expandRight {
+        0% { width: 0; }
+        100% { width: 50px; }
+    }
+
+    /* ─── Content Card ────────────────────────────────── */
+    .content-card {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-lg);
+        padding: 32px;
+    }
+
+    .failed-content {
+        text-align: center;
+    }
+
+    .failed-content h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--error);
+        margin-bottom: 8px;
+        letter-spacing: -0.5px;
+    }
+
+    .failed-subtitle {
+        font-size: 15px;
+        color: var(--text-muted);
+        margin-bottom: 24px;
+        line-height: 1.6;
+    }
+
+    /* ─── Error Details Card ──────────────────────────── */
+    .error-details-card {
+        background: var(--error-light);
+        border: 1px solid #fecaca;
+        border-radius: var(--radius-lg);
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 16px;
+        text-align: left;
+    }
+
+    .error-icon-small {
+        width: 48px;
+        height: 48px;
+        background: var(--error);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .error-info {
+        flex: 1;
+    }
+
+    .error-info h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--error);
+        margin-bottom: 4px;
+    }
+
+    .error-info p {
+        font-size: 13px;
+        color: #991b1b;
+        line-height: 1.5;
+    }
+
+    /* ─── Reasons Grid ────────────────────────────────── */
+    .reasons-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .reason-item {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        display: flex;
+        gap: 12px;
+        text-align: left;
+        transition: var(--transition);
+    }
+
+    .reason-item:hover {
+        border-color: var(--error);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .reason-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--error-light);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--error);
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .reason-content {
+        flex: 1;
+    }
+
+    .reason-content h4 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+    }
+
+    .reason-content p {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    /* ─── Next Steps Card ─────────────────────────────── */
+    .next-steps-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 24px;
+        text-align: left;
+    }
+
+    .next-steps-card h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .next-steps-card h3 i {
+        color: var(--warning);
+    }
+
+    .steps-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .steps-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .steps-list li i {
+        color: var(--success);
+        margin-top: 2px;
+        font-size: 12px;
+    }
+
+    /* ─── Action Buttons ──────────────────────────────── */
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-bottom: 24px;
+    }
+
+    .btn-primary, .btn-secondary {
+        padding: 12px 28px;
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: var(--transition);
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        background: var(--error);
+        color: var(--white);
+        box-shadow: 0 1px 3px rgba(239,68,68,.35);
+    }
+
+    .btn-primary:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239,68,68,.4);
+    }
+
+    .btn-secondary {
+        background: var(--white);
+        color: var(--text-secondary);
+        border: 2px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+        border-color: var(--error);
+        color: var(--error);
+    }
+
+    /* ─── Help Card ───────────────────────────────────── */
+    .help-card {
+        background: var(--primary-light);
+        border: 1px solid #bfdbfe;
+        border-radius: var(--radius-lg);
+        padding: 20px 24px;
+        display: flex;
+        gap: 20px;
+        text-align: left;
+    }
+
+    .help-icon {
+        width: 56px;
+        height: 56px;
+        background: var(--primary);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .help-content {
+        flex: 1;
+    }
+
+    .help-content h4 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .help-content p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+    }
+
+    .help-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .help-btn {
+        padding: 8px 16px;
+        background: var(--white);
+        border: 1px solid #bfdbfe;
+        border-radius: var(--radius-md);
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        transition: var(--transition);
+    }
+
+    .help-btn:hover {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* ─── Order Summary (if we want to show it) ───────── */
+    .order-summary-mini {
+        margin-top: 24px;
+        padding: 16px;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .summary-label {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .summary-value {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    /* ─── Toast Notifications ─────────────────────────── */
+    .toast-stack {
+        position: fixed;
+        bottom: 80px; right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+    .toast {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        padding: 14px 18px;
+        min-width: 280px;
+        max-width: 360px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        pointer-events: all;
+        animation: toastIn .3s cubic-bezier(0.34,1.56,0.64,1);
+        border: 1px solid var(--border);
+    }
+    .toast.exiting { animation: toastOut .25s ease forwards; }
+    @keyframes toastIn {
+        from { transform: translateX(120%) scale(.8); opacity: 0; }
+        to   { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes toastOut {
+        to   { transform: translateX(120%) scale(.9); opacity: 0; }
+    }
+    .toast-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        margin-top: 3px;
+        flex-shrink: 0;
+    }
+    .toast.success .toast-dot { background: var(--success); }
+    .toast.error   .toast-dot { background: var(--error); }
+    .toast.warning .toast-dot { background: var(--warning); }
+    .toast.info    .toast-dot { background: var(--primary); }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .toast-msg   { font-size: 13px; color: var(--text-secondary); margin-top: 1px; line-height: 1.4; }
+    .toast-close {
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 2px;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+    .toast-close:hover { color: var(--text-primary); }
+
+    /* ─── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+        .bc-bar { padding: 0 16px; }
+        .pf-page { padding: 24px 16px 40px; }
+
+        .content-card { padding: 24px; }
+
+        .failed-content h1 { font-size: 28px; }
+
+        .reasons-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .help-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .help-icon {
+            margin: 0 auto;
+        }
+
+        .help-actions {
+            justify-content: center;
+        }
+
+        .error-details-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .error-icon-small {
+            margin: 0 auto;
+        }
+
+        .toast-stack {
+            bottom: 70px;
+            right: 12px;
+            left: 12px;
+        }
+        .toast {
+            min-width: auto;
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="bc-bar">
+    <nav class="bc-inner" aria-label="Breadcrumb">
+        <a href="{% url 'eccommence:home' %}"><i class="fas fa-home" style="font-size:11px;"></i> Home</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'cart:cart_detail' %}">Cart</a>
+        <span class="bc-sep">›</span>
+        <a href="{% url 'payment:checkout' %}">Checkout</a>
+        <span class="bc-sep">›</span>
+        <span>Payment Failed</span>
+    </nav>
+</div>
+
+<!-- Toast Stack -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<div class="pf-page">
+    <div class="pf-inner">
+        <div class="content-card">
+            <!-- Failed Animation -->
+            <div class="failed-animation">
+                <div class="error-icon">
+                    <div class="error-cross">
+                        <span class="cross-line line-left"></span>
+                        <span class="cross-line line-right"></span>
+                    </div>
+                    <div class="error-circle"></div>
+                </div>
+            </div>
+
+            <!-- Failed Content -->
+            <div class="failed-content">
+                <h1>Payment Failed</h1>
+                <p class="failed-subtitle">We couldn't process your payment. Don't worry, your cart items are still saved!</p>
+
+                <!-- Error Details -->
+                <div class="error-details-card">
+                    <div class="error-icon-small">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="error-info">
+                        <h3>What went wrong?</h3>
+                        <p>Your payment could not be completed due to one of the following reasons:</p>
+                    </div>
+                </div>
+
+                <!-- Reasons List -->
+                <div class="reasons-grid">
+                    <div class="reason-item">
+                        <div class="reason-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="reason-content">
+                            <h4>Insufficient Funds</h4>
+                            <p>Your account may not have enough balance</p>
+                        </div>
+                    </div>
+
+                    <div class="reason-item">
+                        <div class="reason-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="reason-content">
+                            <h4>Incorrect PIN</h4>
+                            <p>The PIN you entered was incorrect</p>
+                        </div>
+                    </div>
+
+                    <div class="reason-item">
+                        <div class="reason-icon">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <div class="reason-content">
+                            <h4>Network Timeout</h4>
+                            <p>Connection issue during payment</p>
+                        </div>
+                    </div>
+
+                    <div class="reason-item">
+                        <div class="reason-icon">
+                            <i class="fas fa-ban"></i>
+                        </div>
+                        <div class="reason-content">
+                            <h4>Transaction Cancelled</h4>
+                            <p>Payment was cancelled or declined</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Steps -->
+                <div class="next-steps-card">
+                    <h3><i class="fas fa-lightbulb"></i> What should you do next?</h3>
+                    <ul class="steps-list">
+                        <li>
+                            <i class="fas fa-check"></i>
+                            <span>Check your account balance and ensure you have sufficient funds</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check"></i>
+                            <span>Verify your payment details are correct</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check"></i>
+                            <span>Try using a different payment method</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check"></i>
+                            <span>Contact your bank if the problem persists</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Order Summary Mini (optional) -->
+                {% if cart_total %}
+                <div class="order-summary-mini">
+                    <span class="summary-label">Your Cart Total</span>
+                    <span class="summary-value">UGX {{ cart_total|floatformat:0|intcomma }}</span>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <a href="{% url 'payment:checkout' %}" class="btn-primary">
+                        <i class="fas fa-redo"></i>
+                        Try Again
+                    </a>
+                    <a href="{% url 'cart:cart_detail' %}" class="btn-secondary">
+                        <i class="fas fa-shopping-cart"></i>
+                        View Cart
+                    </a>
+                </div>
+
+                <!-- Help Section -->
+                <div class="help-card">
+                    <div class="help-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <div class="help-content">
+                        <h4>Need Assistance?</h4>
+                        <p>Our support team is here to help you complete your order</p>
+                        <div class="help-actions">
+                            <a href="mailto:support@{{ request.tenant.domain }}" class="help-btn">
+                                <i class="fas fa-envelope"></i>
+                                Email Support
+                            </a>
+                            <a href="{% url 'eccommence:home' %}" class="help-btn">
+                                <i class="fas fa-home"></i>
+                                Back to Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    "use strict";
+
+    // Toast notification system
+    const toastStack = document.getElementById('toastStack');
+
+    window.showToast = function(title, message, type = 'success') {
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `
+            <div class="toast-dot"></div>
+            <div class="toast-body">
+                <div class="toast-title">${title}</div>
+                ${message ? `<div class="toast-msg">${message}</div>` : ''}
+            </div>
+            <div class="toast-close" onclick="dismissToast(this.parentElement)">
+                <i class="fas fa-xmark"></i>
+            </div>`;
+        toastStack.appendChild(el);
+        setTimeout(() => dismissToast(el), 5000);
+    };
+
+    window.dismissToast = function(el) {
+        el.classList.add('exiting');
+        setTimeout(() => el.remove(), 260);
+    };
+
+    // Show Django messages as toasts
+    {% if messages %}
+        {% for message in messages %}
+            showToast(
+                "{{ message.tags|capfirst }}",
+                "{{ message }}",
+                "{{ message.tags }}"
+            );
+        {% endfor %}
+    {% endif %}
+
+})();
+</script>
+{% endblock %}

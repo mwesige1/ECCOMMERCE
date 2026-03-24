@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Shop{% endblock %} - {{ request.tenant.name }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if messages %}  
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}" style="padding: 15px; margin: 10px; background: #d1ecf1; border-radius: 5px; text-align: center;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    {% include 'eccommence/navbar.html' %}
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    {% include 'eccommence/footer.html' %}
+    
+    <script>
+        // Dark Mode Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Apply saved theme on load
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            if (themeToggle) themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                isDarkMode = !isDarkMode;
+                document.body.classList.toggle('dark-mode');
+                themeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+                localStorage.setItem('darkMode', isDarkMode);
+            });
+        }
+        
+        // Account Dropdown Functionality
+        const accountTrigger = document.getElementById('accountTrigger');
+        const dropdownContent = document.getElementById('dropdownContent');
+        let dropdownOpen = false;
+        
+        if (accountTrigger && dropdownContent) {
+            accountTrigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownOpen = !dropdownOpen;
+                dropdownContent.classList.toggle('show', dropdownOpen);
+            });
+            
+            document.addEventListener('click', function(event) {
+                if (!accountTrigger.contains(event.target) && !dropdownContent.contains(event.target)) {
+                    dropdownContent.classList.remove('show');
+                    dropdownOpen = false;
+                }
+            });
+            
+            document.querySelectorAll('.dropdown-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    dropdownContent.classList.remove('show');
+                    dropdownOpen = false;
+                });
+            });
+            
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && dropdownOpen) {
+                    dropdownContent.classList.remove('show');
+                    dropdownOpen = false;
+                }
+            });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
