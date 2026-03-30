@@ -19,7 +19,8 @@ from .models import (
     PaymentTransaction, PaymentMethod, Refund
 )
 from .forms import ShippingForm, PaymentMethodForm, RefundRequestForm
-from eccommence.models import Product, ProductVariant, Address, Customer
+from eccommence.models import Product, ProductVariant, Customer
+from users.models import Address
 
 logger = logging.getLogger(__name__)
 
@@ -76,15 +77,9 @@ def checkout(request):
         messages.info(request, 'Please login to complete your order')
         return redirect('users:login')
     
-    # Get or create customer profile
-    try:
-        customer = request.user.customer_profile
-    except Customer.DoesNotExist:
-        customer = Customer.objects.create(user=request.user)
-    
-    # Get default shipping address from Address model
+    # Get default shipping address from Address model (users app)
     shipping_address = Address.objects.filter(
-        customer=customer,
+        user=request.user,
         address_type='shipping',
         is_default=True
     ).first()
@@ -92,7 +87,7 @@ def checkout(request):
     # If no default, get first shipping address
     if not shipping_address:
         shipping_address = Address.objects.filter(
-            customer=customer,
+            user=request.user,
             address_type='shipping'
         ).first()
     
@@ -107,11 +102,11 @@ def checkout(request):
             try:
                 # Save address to Address model
                 address = shipping_form.save(commit=False)
-                address.customer = customer
+                address.user = request.user  # Use user, not customer
                 address.address_type = 'shipping'
                 
                 # If this is the first address or user selected as default
-                if not Address.objects.filter(customer=customer).exists() or request.POST.get('set_as_default'):
+                if not Address.objects.filter(user=request.user).exists() or request.POST.get('set_as_default'):
                     address.is_default = True
                 
                 address.save()
@@ -127,7 +122,10 @@ def checkout(request):
                             'address_line1': address.address_line1,
                             'address_line2': address.address_line2 or '',
                             'city': address.city,
+                            'state': address.state,
+                            'postal_code': address.postal_code,
                             'country': address.country,
+                            'delivery_instructions': address.delivery_instructions,
                         }
                     })
                 else:
@@ -166,6 +164,7 @@ def checkout(request):
             'email': request.user.email,
             'phone': request.user.phone or '',
             'city': 'Kampala',
+            'state': 'Central',
             'country': 'Uganda',
         }
         shipping_form = ShippingForm(initial=initial_data)
@@ -301,21 +300,15 @@ def process_payment(request):
     tax = subtotal * tax_rate
     total = subtotal + shipping_cost + tax
     
-    # Get shipping information from Address model
-    try:
-        customer = request.user.customer_profile
-    except Customer.DoesNotExist:
-        messages.error(request, 'Customer profile not found')
-        return redirect('payment:checkout')
-    
-    # Get the shipping address (use default or first)
+    # Get shipping information from Address model (users app)
     shipping_address = Address.objects.filter(
-        customer=customer,
+        user=request.user,
         address_type='shipping'
     ).first()
     
+    # If no shipping address exists, redirect back to checkout to enter address
     if not shipping_address:
-        messages.error(request, 'Please provide shipping information')
+        messages.error(request, 'Please provide your shipping address')
         return redirect('payment:checkout')
     
     full_name = shipping_address.full_name
@@ -384,6 +377,9 @@ def process_payment(request):
                     product.stock_quantity -= quantity
                     product.save()
         
+        # Clear database cart
+        cart.items.all().delete()
+        
         # Process payment based on method
         if payment_method == 'cash_on_delivery':
             order.status = 'processing'
@@ -400,9 +396,6 @@ def process_payment(request):
                 ip_address=get_client_ip(request),
                 status='pending'
             )
-            
-            # Clear database cart
-            cart.items.all().delete()
             
             messages.success(request, f'Order {order.order_number} placed successfully!')
             return redirect('payment:payment_success', order_number=order.order_number)

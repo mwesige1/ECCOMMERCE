@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404,redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import (
     Sum, Count, Q, F, Avg, DecimalField,
@@ -15,17 +15,139 @@ from eccommence.models import Product, Vendor, Category, ProductVariant, Custome
 from payment.models import Order, OrderItem, PaymentTransaction
 from users.models import User, Address
 from cart.models import Cart as CartModel, CartItem
+from django.contrib import messages
+from django.db import transaction
+from eccommence.models import Category, Product, ProductImage, ProductVariant
+from django.urls import reverse
 
+
+from django.views.decorators.csrf import csrf_exempt
+import json
+    
 
 # ============= PRODUCTS ADD / EDIT =============
-
 @login_required
 @store_admin_required
 def product_add(request):
     """Add new product"""
     access = get_user_access_level(request.user)
-    # Placeholder — wire up your product form here
-    context = {'access': access}
+    
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Get the vendor for this user
+                vendor = request.user.vendor_profile
+                
+                # Create the product
+                product = Product()
+                product.vendor = vendor
+                product.name = request.POST.get('name')
+                product.slug = request.POST.get('slug') or product.name.lower().replace(' ', '-')
+                product.sku = request.POST.get('sku') or None
+                
+                # Get category
+                category_id = request.POST.get('category')
+                if category_id:
+                    product.category_id = category_id
+                
+                product.short_description = request.POST.get('short_description', '')
+                product.description = request.POST.get('description', '')
+                
+                # Pricing
+                product.price = Decimal(request.POST.get('price', 0))
+                product.compare_at_price = Decimal(request.POST.get('compare_at_price', 0)) if request.POST.get('compare_at_price') else None
+                product.cost_per_item = Decimal(request.POST.get('cost_per_item', 0)) if request.POST.get('cost_per_item') else None
+                
+                # Sale settings
+                product.is_on_sale = request.POST.get('is_on_sale') == 'on'
+                if product.is_on_sale and request.POST.get('sale_price'):
+                    product.sale_price = Decimal(request.POST.get('sale_price'))
+                if request.POST.get('sale_end_date'):
+                    product.sale_end_date = request.POST.get('sale_end_date')
+                
+                # Inventory
+                product.track_inventory = request.POST.get('track_inventory') == 'on'
+                product.stock_quantity = int(request.POST.get('stock_quantity', 0))
+                product.low_stock_threshold = int(request.POST.get('low_stock_threshold', 10))
+                product.allow_backorder = request.POST.get('allow_backorder') == 'on'
+                
+                # Physical properties
+                if request.POST.get('weight'):
+                    product.weight = Decimal(request.POST.get('weight'))
+                if request.POST.get('length'):
+                    product.length = Decimal(request.POST.get('length'))
+                if request.POST.get('width'):
+                    product.width = Decimal(request.POST.get('width'))
+                if request.POST.get('height'):
+                    product.height = Decimal(request.POST.get('height'))
+                
+                # Status
+                product.is_active = request.POST.get('is_active') == 'on'
+                product.is_featured = request.POST.get('is_featured') == 'on'
+                
+                # SEO
+                product.meta_title = request.POST.get('meta_title', '')
+                product.meta_description = request.POST.get('meta_description', '')
+                product.meta_keywords = request.POST.get('meta_keywords', '')
+                
+                # Save the product
+                product.save()
+                
+                # Handle images - Get images from request.FILES
+                images = request.FILES.getlist('images')
+                print(f"Number of images received: {len(images)}")  # Debug
+                
+                for i, image in enumerate(images):
+                    ProductImage.objects.create(
+                        product=product,
+                        image=image,
+                        is_primary=(i == 0),  # First image is primary
+                        order=i
+                    )
+                
+                # Handle variants
+                variant_names = request.POST.getlist('variant_name[]')
+                variant_values = request.POST.getlist('variant_value[]')
+                variant_skus = request.POST.getlist('variant_sku[]')
+                variant_price_adjustments = request.POST.getlist('variant_price_adjustment[]')
+                variant_stocks = request.POST.getlist('variant_stock[]')
+                
+                for i in range(len(variant_names)):
+                    if variant_names[i] and variant_values[i]:
+                        ProductVariant.objects.create(
+                            product=product,
+                            name=variant_names[i],
+                            value=variant_values[i],
+                            sku=variant_skus[i] if i < len(variant_skus) else '',
+                            price_adjustment=Decimal(variant_price_adjustments[i]) if i < len(variant_price_adjustments) else 0,
+                            stock_quantity=int(variant_stocks[i]) if i < len(variant_stocks) else 0,
+                            is_active=True
+                        )
+                
+                # ALWAYS return JSON for AJAX requests
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Product "{product.name}" has been added successfully!',
+                    'redirect_url': reverse('store_admin:products')
+                })
+                
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    
+    # GET request - show form
+    categories = Category.objects.filter(is_active=True)
+    context = {
+        'access': access,
+        'categories': categories,
+        'product': None,
+    }
     return render(request, 'store_admin/product_form.html', context)
 
 
@@ -33,7 +155,7 @@ def product_add(request):
 @store_admin_required
 def product_edit(request, pk):
     """Edit existing product"""
-    access  = get_user_access_level(request.user)
+    access = get_user_access_level(request.user)
     product = get_object_or_404(Product, pk=pk)
 
     # Vendors can only edit their own products
@@ -41,13 +163,160 @@ def product_edit(request, pk):
         request.user.user_type == 'vendor'
         and product.vendor.user != request.user
     ):
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden("You don't have permission to edit this product.")
+        messages.error(request, "You don't have permission to edit this product.")
+        return redirect('store_admin:products')
 
-    context = {'access': access, 'product': product}
+    from eccommence.models import Category, ProductImage, ProductVariant
+    from django.urls import reverse
+    
+    if request.method == 'POST':
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        try:
+            with transaction.atomic():
+                # Update product fields
+                product.name = request.POST.get('name')
+                if request.POST.get('slug'):
+                    product.slug = request.POST.get('slug')
+                
+                category_id = request.POST.get('category')
+                if category_id:
+                    product.category_id = category_id
+                
+                product.short_description = request.POST.get('short_description', '')
+                product.description = request.POST.get('description', '')
+                
+                # Pricing
+                product.price = Decimal(request.POST.get('price', 0))
+                product.compare_at_price = Decimal(request.POST.get('compare_at_price', 0)) if request.POST.get('compare_at_price') else None
+                product.cost_per_item = Decimal(request.POST.get('cost_per_item', 0)) if request.POST.get('cost_per_item') else None
+                
+                # Sale settings
+                product.is_on_sale = request.POST.get('is_on_sale') == 'on'
+                if product.is_on_sale and request.POST.get('sale_price'):
+                    product.sale_price = Decimal(request.POST.get('sale_price'))
+                else:
+                    product.sale_price = None
+                if request.POST.get('sale_end_date'):
+                    product.sale_end_date = request.POST.get('sale_end_date')
+                
+                # Inventory
+                product.track_inventory = request.POST.get('track_inventory') == 'on'
+                product.stock_quantity = int(request.POST.get('stock_quantity', 0))
+                product.low_stock_threshold = int(request.POST.get('low_stock_threshold', 10))
+                product.allow_backorder = request.POST.get('allow_backorder') == 'on'
+                
+                # Physical properties
+                if request.POST.get('weight'):
+                    product.weight = Decimal(request.POST.get('weight'))
+                if request.POST.get('length'):
+                    product.length = Decimal(request.POST.get('length'))
+                if request.POST.get('width'):
+                    product.width = Decimal(request.POST.get('width'))
+                if request.POST.get('height'):
+                    product.height = Decimal(request.POST.get('height'))
+                
+                # Status
+                product.is_active = request.POST.get('is_active') == 'on'
+                product.is_featured = request.POST.get('is_featured') == 'on'
+                
+                # SEO
+                product.meta_title = request.POST.get('meta_title', '')
+                product.meta_description = request.POST.get('meta_description', '')
+                product.meta_keywords = request.POST.get('meta_keywords', '')
+                
+                # Save the product
+                product.save()
+                
+                # Handle new images - ONLY add new images, don't delete existing
+                new_images = request.FILES.getlist('images')
+                for i, image in enumerate(new_images):
+                    ProductImage.objects.create(
+                        product=product,
+                        image=image,
+                        is_primary=False,  # Don't set as primary automatically
+                        order=product.images.count() + i
+                    )
+                
+                # ============================================
+                # PRIMARY IMAGE HANDLING - NEW CODE ADDED
+                # ============================================
+                primary_image_id = request.POST.get('primary_image_id')
+                if primary_image_id and primary_image_id != 'new':
+                    try:
+                        # First, ensure there's at least one image
+                        if product.images.exists():
+                            # Set all images to not primary first
+                            product.images.all().update(is_primary=False)
+                            # Set the selected image as primary
+                            primary_image = product.images.get(id=primary_image_id)
+                            primary_image.is_primary = True
+                            primary_image.save()
+                            print(f"Primary image set to: {primary_image_id}")
+                    except ProductImage.DoesNotExist:
+                        print(f"Primary image {primary_image_id} not found")
+                    except Exception as e:
+                        print(f"Error setting primary image: {e}")
+                elif not product.images.filter(is_primary=True).exists() and product.images.exists():
+                    # If no primary image is set and there are images, set the first as primary
+                    first_image = product.images.first()
+                    first_image.is_primary = True
+                    first_image.save()
+                    print(f"Auto-set first image as primary: {first_image.id}")
+                # ============================================
+                
+                # Handle variants - clear existing and recreate
+                product.variants.all().delete()
+                
+                variant_names = request.POST.getlist('variant_name[]')
+                variant_values = request.POST.getlist('variant_value[]')
+                variant_skus = request.POST.getlist('variant_sku[]')
+                variant_price_adjustments = request.POST.getlist('variant_price_adjustment[]')
+                variant_stocks = request.POST.getlist('variant_stock[]')
+                
+                for i in range(len(variant_names)):
+                    if variant_names[i] and variant_values[i]:
+                        ProductVariant.objects.create(
+                            product=product,
+                            name=variant_names[i],
+                            value=variant_values[i],
+                            sku=variant_skus[i] if i < len(variant_skus) else '',
+                            price_adjustment=Decimal(variant_price_adjustments[i]) if i < len(variant_price_adjustments) else 0,
+                            stock_quantity=int(variant_stocks[i]) if i < len(variant_stocks) else 0,
+                            is_active=True
+                        )
+                
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'Product "{product.name}" has been updated successfully!',
+                        'redirect_url': reverse('store_admin:products')
+                    })
+                else:
+                    messages.success(request, f'Product "{product.name}" has been updated successfully!')
+                    return redirect('store_admin:products')
+                
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            
+            if is_ajax:
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e)
+                }, status=400)
+            else:
+                messages.error(request, f'Error updating product: {str(e)}')
+                return redirect('store_admin:product_edit', pk=pk)
+    
+    # GET request - show form
+    categories = Category.objects.filter(is_active=True)
+    context = {
+        'access': access,
+        'product': product,
+        'categories': categories,
+    }
     return render(request, 'store_admin/product_form.html', context)
-
-
 # ============= PROMOTIONS =============
 
 @login_required
@@ -83,6 +352,8 @@ def refunds(request):
     access = get_user_access_level(request.user)
 
     from payment.models import Refund
+    from django.db.models import Sum
+    
     refunds_qs = Refund.objects.select_related(
         'order', 'order__user'
     ).order_by('-created_at')
@@ -98,14 +369,194 @@ def refunds(request):
             Q(order__order_number__icontains=search)
         )
 
+    # Calculate stats for the cards
+    total_count = Refund.objects.count()
+    pending_count = Refund.objects.filter(status='pending').count()
+    approved_count = Refund.objects.filter(status='approved').count()
+    rejected_count = Refund.objects.filter(status='rejected').count()
+    
+    # Calculate amounts
+    total_amount = Refund.objects.aggregate(total=Sum('refund_amount'))['total'] or 0
+    pending_amount = Refund.objects.filter(status='pending').aggregate(total=Sum('refund_amount'))['total'] or 0
+    approved_amount = Refund.objects.filter(status='approved').aggregate(total=Sum('refund_amount'))['total'] or 0
+    rejected_amount = Refund.objects.filter(status='rejected').aggregate(total=Sum('refund_amount'))['total'] or 0
+
     context = {
         'access': access,
         'refunds': refunds_qs,
         'status_filter': status or 'all',
         'search': search,
+        # Stats for cards
+        'total_count': total_count,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'total_amount': total_amount,
+        'pending_amount': pending_amount,
+        'approved_amount': approved_amount,
+        'rejected_amount': rejected_amount,
     }
     return render(request, 'store_admin/refunds.html', context)
+@login_required
+@admin_or_staff_required
+def get_refund_detail(request, refund_id):
+    """Get refund details via AJAX"""
+    from payment.models import Refund
+    from django.http import JsonResponse
+    
+    try:
+        refund = Refund.objects.select_related('order', 'order__user').get(id=refund_id)
+        
+        data = {
+            'id': refund.id,
+            'refund_id': refund.refund_id,
+            'order_number': refund.order.order_number,
+            'status': refund.status,
+            'status_display': refund.get_status_display(),
+            'reason': refund.reason,
+            'reason_display': refund.get_reason_display(),
+            'description': refund.description,
+            'refund_amount': float(refund.refund_amount),
+            'requested_at': refund.requested_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'processed_at': refund.processed_at.strftime('%Y-%m-%d %H:%M:%S') if refund.processed_at else None,
+            'admin_notes': refund.admin_notes,
+            'rejection_reason': refund.rejection_reason,
+            # Order info
+            'order_total': float(refund.order.total),
+            'payment_method': refund.order.get_payment_method_display(),
+            # Customer info
+            'customer_name': refund.order.full_name,
+            'customer_email': refund.order.email,
+            'customer_phone': refund.order.phone,
+            # Images
+            'images': []
+        }
+        
+        # Add images if they exist
+        if refund.image1:
+            data['images'].append({'url': refund.image1.url})
+        if refund.image2:
+            data['images'].append({'url': refund.image2.url})
+        if refund.image3:
+            data['images'].append({'url': refund.image3.url})
+        
+        return JsonResponse(data)
+        
+    except Refund.DoesNotExist:
+        return JsonResponse({'error': 'Refund not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
+@login_required
+@admin_or_staff_required
+def process_refund(request, refund_id):
+    """Process refund (approve/reject) via AJAX"""
+    from payment.models import Refund
+    from django.http import JsonResponse
+    import json
+    from django.utils import timezone
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        action = data.get('action')
+        rejection_reason = data.get('rejection_reason', '')
+        
+        refund = Refund.objects.get(id=refund_id)
+        
+        if action == 'approve':
+            refund.status = 'approved'
+            refund.processed_at = timezone.now()
+            refund.save()
+            
+            # Here you would also process the actual refund payment
+            # This would involve calling your payment gateway API
+            
+        elif action == 'reject':
+            refund.status = 'rejected'
+            refund.processed_at = timezone.now()
+            refund.rejection_reason = rejection_reason
+            refund.save()
+            
+        elif action == 'processing':
+            refund.status = 'processing'
+            refund.processed_at = timezone.now()
+            refund.save()
+            
+        else:
+            return JsonResponse({'error': 'Invalid action'}, status=400)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Refund {action}ed successfully'
+        })
+        
+    except Refund.DoesNotExist:
+        return JsonResponse({'error': 'Refund not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+@login_required
+@admin_or_staff_required
+def get_order_detail_json(request, order_id):
+    """Get order details via AJAX"""
+    from payment.models import Order
+    from django.http import JsonResponse
+    
+    try:
+        order = Order.objects.get(id=order_id)
+        
+        # Get order items
+        items = []
+        for item in order.items.all():
+            items.append({
+                'product_name': item.product_name,
+                'sku': item.product_sku,
+                'quantity': item.quantity,
+                'price': float(item.price),
+                'total': float(item.total),
+            })
+        
+        # Get payment method display - handle both possible method names
+        payment_method_display = order.payment_method
+        if hasattr(order, 'get_payment_method_display'):
+            payment_method_display = order.get_payment_method_display()
+        elif order.payment_method == 'mobile_money':
+            payment_method_display = 'Mobile Money'
+        elif order.payment_method == 'cash_on_delivery':
+            payment_method_display = 'Cash on Delivery'
+        elif order.payment_method == 'card':
+            payment_method_display = 'Card Payment'
+        
+        data = {
+            'success': True,
+            'order_number': order.order_number,
+            'created_at': order.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'status': order.status,
+            'status_display': order.get_status_display() if hasattr(order, 'get_status_display') else order.status,
+            'payment_method': payment_method_display,
+            'payment_status': 'Paid' if order.is_paid else 'Pending',
+            'customer_name': order.full_name,
+            'customer_email': order.email,
+            'customer_phone': order.phone or 'N/A',
+            'shipping_address': order.shipping_address,
+            'items': items,
+            'subtotal': float(order.subtotal),
+            'shipping_cost': float(order.shipping_cost),
+            'tax': float(order.tax),
+            'discount': float(order.discount),
+            'total': float(order.total),
+        }
+        
+        return JsonResponse(data)
+        
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Order not found'}, status=404)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # ============= DASHBOARD EXPORT =============
 
@@ -517,16 +968,16 @@ def dashboard(request):
         # Annotated to avoid N+1 on order_count and lifetime_value
         recent_customers = (
             User.objects.filter(user_type='customer')
-            .select_related('profile')
-            .annotate(
+                .select_related('customer_profile')  # ← CHANGE 'profile' TO 'customer_profile'
+                .annotate(
                 order_count=Count('orders', distinct=True),
                 lifetime_value=Coalesce(
                     Sum('orders__total', filter=Q(orders__status='delivered')),
-                    Decimal('0.00')
+                     Decimal('0.00')
                 )
-            )
-            .order_by('-date_joined')[:10]
         )
+    .order_by('-date_joined')[:10]
+)
     else:
         total_customers = new_customers_today = 0
         avg_customer_lifetime_value = Decimal('0.00')
@@ -750,6 +1201,8 @@ def dashboard(request):
         'orders_by_status':            orders_by_status,
         'on_time_delivery_rate':       on_time_delivery_rate,
         'late_deliveries_today':       late_deliveries_today,
+        'recent_orders':               recent_orders,  # ← ADD THIS LINE
+
 
         # Cart
         'cart_abandonment_rate':       cart_abandonment_rate,
@@ -787,7 +1240,6 @@ def dashboard(request):
 
 
 # ============= ORDERS MANAGEMENT =============
-
 @login_required
 @store_admin_required
 def orders(request):
@@ -807,7 +1259,7 @@ def orders(request):
         orders_list = orders_list.filter(status=status)
 
     date_from = request.GET.get('date_from')
-    date_to   = request.GET.get('date_to')
+    date_to = request.GET.get('date_to')
     if date_from:
         orders_list = orders_list.filter(created_at__date__gte=date_from)
     if date_to:
@@ -825,6 +1277,20 @@ def orders(request):
         )
 
     orders_list = orders_list.order_by('-created_at')
+    
+    # Calculate counts for stats cards
+    pending_count = orders_list.filter(status='pending').count()
+    processing_count = orders_list.filter(status='processing').count()
+    shipped_count = orders_list.filter(status='shipped').count()
+    delivered_count = orders_list.filter(status='delivered').count()
+    cancelled_count = orders_list.filter(status='cancelled').count()
+    
+    # Calculate amounts
+    pending_amount = orders_list.filter(status='pending').aggregate(Sum('total'))['total__sum'] or 0
+    processing_amount = orders_list.filter(status='processing').aggregate(Sum('total'))['total__sum'] or 0
+    shipped_amount = orders_list.filter(status='shipped').aggregate(Sum('total'))['total__sum'] or 0
+    delivered_amount = orders_list.filter(status='delivered').aggregate(Sum('total'))['total__sum'] or 0
+    cancelled_amount = orders_list.filter(status='cancelled').aggregate(Sum('total'))['total__sum'] or 0
 
     context = {
         'access': access,
@@ -834,6 +1300,16 @@ def orders(request):
         'date_to': date_to,
         'search': search,
         'order_statuses': ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+        'pending_count': pending_count,
+        'processing_count': processing_count,
+        'shipped_count': shipped_count,
+        'delivered_count': delivered_count,
+        'cancelled_count': cancelled_count,
+        'pending_amount': pending_amount,
+        'processing_amount': processing_amount,
+        'shipped_amount': shipped_amount,
+        'delivered_amount': delivered_amount,
+        'cancelled_amount': cancelled_amount,
     }
     return render(request, 'store_admin/orders.html', context)
 
@@ -865,7 +1341,6 @@ def order_detail(request, order_number):
 
 
 # ============= PRODUCTS MANAGEMENT =============
-
 @login_required
 @store_admin_required
 def products(request):
@@ -909,18 +1384,37 @@ def products(request):
         )
 
     products_list = products_list.order_by('-created_at')
-    categories    = Category.objects.filter(is_active=True)
+    
+    # Get all categories and vendors for filters
+    categories = Category.objects.filter(is_active=True)
+    vendors = Vendor.objects.filter(is_active=True)
+    
+    # Calculate stats
+    total_products = products_list.count()
+    active_products = products_list.filter(is_active=True).count()
+    inactive_products = products_list.filter(is_active=False).count()
+    low_stock_count = products_list.filter(
+        track_inventory=True, 
+        stock_quantity__gt=0,
+        stock_quantity__lte=F('low_stock_threshold')
+    ).count()
+    out_of_stock = products_list.filter(
+        track_inventory=True, 
+        stock_quantity=0
+    ).count()
 
     context = {
         'access': access,
         'products': products_list,
         'categories': categories,
-        'status_filter': status or 'all',
-        'category_filter': category_id,
-        'search': search,
+        'vendors': vendors,
+        'total_products': total_products,
+        'active_products': active_products,
+        'inactive_products': inactive_products,
+        'low_stock_count': low_stock_count,
+        'out_of_stock': out_of_stock,
     }
     return render(request, 'store_admin/products.html', context)
-
 
 # ============= CUSTOMERS MANAGEMENT =============
 
@@ -932,7 +1426,7 @@ def customers(request):
 
     customers_list = (
         User.objects.filter(user_type='customer')
-        .select_related('profile')
+        .select_related('customer_profile')  # ← CHANGE THIS: 'profile' → 'customer_profile'
         .annotate(
             total_orders=Count('orders', distinct=True),
             total_spent=Coalesce(
@@ -941,6 +1435,13 @@ def customers(request):
             )
         )
     )
+
+    # Calculate average order value per customer
+    for customer in customers_list:
+        if customer.total_orders > 0:
+            customer.avg_order_value = customer.total_spent / customer.total_orders
+        else:
+            customer.avg_order_value = Decimal('0.00')
 
     search = request.GET.get('search')
     if search:
@@ -952,7 +1453,7 @@ def customers(request):
         )
 
     date_from = request.GET.get('date_from')
-    date_to   = request.GET.get('date_to')
+    date_to = request.GET.get('date_to')
     if date_from:
         customers_list = customers_list.filter(date_joined__date__gte=date_from)
     if date_to:
@@ -960,15 +1461,21 @@ def customers(request):
 
     customers_list = customers_list.order_by('-date_joined')
 
+    # Add stats for the template
     context = {
         'access': access,
         'customers': customers_list,
         'search': search,
         'date_from': date_from,
         'date_to': date_to,
+        'total_customers': customers_list.count(),
+        'active_customers': customers_list.filter(is_active=True).count(),
+        'inactive_customers': customers_list.filter(is_active=False).count(),
+        'verified_customers': customers_list.filter(is_verified=True).count(),
+        'high_value_customers': customers_list.filter(total_spent__gte=500000).count(),
+        'new_customers_30d': customers_list.filter(date_joined__gte=timezone.now() - timedelta(days=30)).count(),
     }
     return render(request, 'store_admin/customers.html', context)
-
 
 @login_required
 @admin_or_staff_required
@@ -1199,3 +1706,531 @@ def get_product_stats(request):
             track_inventory=True, stock_quantity=0
         ).count(),
     })
+
+@login_required
+@store_admin_required
+def update_order_status(request, order_id):
+    """Update order status via AJAX"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    
+    try:
+        # Parse JSON data
+        data = json.loads(request.body)
+        new_status = data.get('status')
+        tracking_number = data.get('tracking_number', '')
+        
+        # Get the order
+        from payment.models import Order
+        order = Order.objects.get(id=order_id)
+        
+        # Check permissions
+        access = get_user_access_level(request.user)
+        if not access['can_view_all_orders']:
+            # Check if vendor owns this order
+            if not order.items.filter(vendor__user=request.user).exists():
+                return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        
+        # Validate status
+        valid_statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+        if new_status not in valid_statuses:
+            return JsonResponse({'success': False, 'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}, status=400)
+        
+        # Update order
+        from django.utils import timezone
+        order.status = new_status
+        
+        if tracking_number:
+            order.tracking_number = tracking_number
+        
+        # Set appropriate timestamps
+        if new_status == 'shipped' and not order.shipped_at:
+            order.shipped_at = timezone.now()
+        elif new_status == 'delivered' and not order.delivered_at:
+            order.delivered_at = timezone.now()
+        elif new_status == 'cancelled':
+            # Optionally restore stock here
+            pass
+        
+        order.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Order #{order.order_number} status updated to {new_status}',
+            'status': new_status,
+            'status_display': order.get_status_display()
+        })
+        
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Order not found'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+
+
+@login_required
+@store_admin_required
+def cancel_order(request, order_id):
+    """Cancel an order"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    
+    try:
+        from payment.models import Order, OrderItem
+        from eccommence.models import Product, ProductVariant
+        
+        order = Order.objects.get(id=order_id)
+        
+        # Check permissions
+        access = get_user_access_level(request.user)
+        if not access['can_view_all_orders']:
+            if not order.items.filter(vendor__user=request.user).exists():
+                return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        
+        # Only allow cancellation if not already delivered or cancelled
+        if order.status in ['delivered', 'cancelled']:
+            return JsonResponse({'success': False, 'error': f'Order already {order.status}'}, status=400)
+        
+        # Restore stock for each item
+        for item in order.items.all():
+            if item.product.track_inventory:
+                if item.product_variant:
+                    item.product_variant.stock_quantity += item.quantity
+                    item.product_variant.save()
+                else:
+                    item.product.stock_quantity += item.quantity
+                    item.product.save()
+        
+        order.status = 'cancelled'
+        order.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Order #{order.order_number} cancelled successfully'
+        })
+        
+    except Order.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Order not found'}, status=404)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@store_admin_required
+def print_order(request, order_number):
+    """Print order invoice"""
+    from payment.models import Order
+    
+    order = Order.objects.get(order_number=order_number)
+    
+    # Check permissions
+    access = get_user_access_level(request.user)
+    if not access['can_view_all_orders']:
+        if not order.items.filter(vendor__user=request.user).exists():
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden("You don't have permission to view this order")
+    
+    context = {
+        'order': order,
+        'shop': request.tenant,
+    }
+    
+    return render(request, 'store_admin/print_invoice.html', context)
+
+
+@login_required
+@store_admin_required
+def bulk_update_orders(request):
+    """Bulk update multiple orders"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        order_ids = data.get('order_ids', [])
+        new_status = data.get('status')
+        
+        if not order_ids:
+            return JsonResponse({'success': False, 'error': 'No orders selected'}, status=400)
+        
+        from payment.models import Order
+        
+        valid_statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+        if new_status not in valid_statuses:
+            return JsonResponse({'success': False, 'error': f'Invalid status'}, status=400)
+        
+        # Update all orders
+        updated_count = Order.objects.filter(id__in=order_ids).update(status=new_status)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{updated_count} orders updated to {new_status}'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+
+@login_required
+@store_admin_required
+def export_orders(request):
+    """Export orders to CSV"""
+    import csv
+    from django.http import HttpResponse
+    from payment.models import Order
+    
+    order_ids = request.GET.get('ids', '').split(',')
+    
+    if order_ids and order_ids[0]:
+        orders = Order.objects.filter(id__in=order_ids)
+    else:
+        orders = Order.objects.all()
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="orders_export.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Order Number', 'Customer', 'Email', 'Date', 'Total', 'Status', 'Payment Method'])
+    
+    for order in orders:
+        writer.writerow([
+            order.order_number,
+            order.full_name,
+            order.email,
+            order.created_at.strftime('%Y-%m-%d %H:%M'),
+            order.total,
+            order.get_status_display(),
+            order.get_payment_method_display()
+        ])
+    
+    return response
+
+
+
+@login_required
+@store_admin_required
+def toggle_product_status(request, product_id):
+    """Toggle product active/inactive status"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        is_active = data.get('is_active')
+        
+        from eccommence.models import Product
+        product = Product.objects.get(id=product_id)
+        
+        # Check permissions
+        if request.user.user_type == 'vendor' and product.vendor.user != request.user:
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        
+        product.is_active = is_active
+        product.save()
+        
+        return JsonResponse({'success': True})
+        
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+
+
+
+
+@login_required
+@store_admin_required
+def delete_product(request, product_id):
+    """Delete a product"""
+    if request.method != 'DELETE':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+    
+    try:
+        from eccommence.models import Product
+        product = Product.objects.get(id=product_id)
+        
+        # Check permissions
+        if request.user.user_type == 'vendor' and product.vendor.user != request.user:
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        
+        product.delete()
+        
+        return JsonResponse({'success': True})
+        
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@store_admin_required
+def update_product_stock(request, product_id):
+    """Update product stock quantity"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        new_stock = data.get('stock_quantity')
+        
+        if new_stock is None:
+            return JsonResponse({'success': False, 'error': 'Stock quantity required'}, status=400)
+        
+        from eccommence.models import Product
+        product = Product.objects.get(id=product_id)
+        
+        # Check permissions
+        if request.user.user_type == 'vendor' and product.vendor.user != request.user:
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        
+        product.stock_quantity = new_stock
+        product.save()
+        
+        return JsonResponse({'success': True, 'message': f'Stock updated to {new_stock}'})
+        
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@store_admin_required
+def bulk_activate_products(request):
+    """Bulk activate products"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        product_ids = data.get('product_ids', [])
+        
+        from eccommence.models import Product
+        
+        if request.user.user_type == 'vendor':
+            # Vendors can only activate their own products
+            products = Product.objects.filter(id__in=product_ids, vendor__user=request.user)
+        else:
+            products = Product.objects.filter(id__in=product_ids)
+        
+        count = products.update(is_active=True)
+        
+        return JsonResponse({'success': True, 'count': count})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@store_admin_required
+def bulk_deactivate_products(request):
+    """Bulk deactivate products"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        product_ids = data.get('product_ids', [])
+        
+        from eccommence.models import Product
+        
+        if request.user.user_type == 'vendor':
+            products = Product.objects.filter(id__in=product_ids, vendor__user=request.user)
+        else:
+            products = Product.objects.filter(id__in=product_ids)
+        
+        count = products.update(is_active=False)
+        
+        return JsonResponse({'success': True, 'count': count})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+
+@login_required
+@store_admin_required
+def bulk_delete_products(request):
+    """Bulk delete products"""
+    if request.method != 'DELETE':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        product_ids = data.get('product_ids', [])
+        
+        from eccommence.models import Product
+        
+        if request.user.user_type == 'vendor':
+            products = Product.objects.filter(id__in=product_ids, vendor__user=request.user)
+        else:
+            products = Product.objects.filter(id__in=product_ids)
+        
+        count = products.count()
+        products.delete()
+        
+        return JsonResponse({'success': True, 'count': count})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+
+
+from eccommence.models import Category
+
+
+@login_required
+@store_admin_required
+def add_category(request):
+    """Add a new category via AJAX"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        category_name = data.get('name', '').strip()
+        parent_id = data.get('parent_id')
+        description = data.get('description', '').strip()
+        
+        if not category_name:
+            return JsonResponse({'success': False, 'error': 'Category name is required'}, status=400)
+        
+        # Check if category already exists
+        if Category.objects.filter(name__iexact=category_name).exists():
+            return JsonResponse({'success': False, 'error': 'A category with this name already exists'}, status=400)
+        
+        # Get parent category if provided
+        parent_category = None
+        if parent_id:
+            try:
+                parent_category = Category.objects.get(id=parent_id)
+            except Category.DoesNotExist:
+                pass
+        
+        # Create the category
+        category = Category.objects.create(
+            name=category_name,
+            parent=parent_category,
+            description=description,
+            is_active=True
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Category "{category_name}" added successfully!',
+            'category_id': category.id,
+            'category_name': category.get_full_name() if category.parent else category.name
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+
+
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.utils.text import slugify
+
+@login_required
+@store_admin_required
+def preview_product(request):
+    """Generate product preview"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+    
+    try:
+        # Get product data from POST
+        product_name = request.POST.get('name', '')
+        product_slug = slugify(product_name)
+        
+        # Build preview URL
+        preview_url = f'/product/{product_slug}/preview/'
+        
+        # Optionally, you can create a temporary preview in session
+        request.session['preview_product'] = {
+            'name': product_name,
+            'price': request.POST.get('price', 0),
+            'description': request.POST.get('description', ''),
+            'short_description': request.POST.get('short_description', ''),
+            'category_id': request.POST.get('category'),
+            'images': [],  # You can store image data here if needed
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'preview_url': preview_url
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+@login_required
+@store_admin_required
+def set_primary_image(request, image_id):
+    """Set an image as primary for a product"""
+    from eccommence.models import ProductImage
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    
+    try:
+        image = ProductImage.objects.get(id=image_id)
+        product = image.product
+        
+        # Check permissions
+        access = get_user_access_level(request.user)
+        if not access['can_edit_products'] or (
+            request.user.user_type == 'vendor' and product.vendor.user != request.user
+        ):
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        
+        # Set all images to not primary
+        product.images.all().update(is_primary=False)
+        
+        # Set this image as primary
+        image.is_primary = True
+        image.save()
+        
+        return JsonResponse({'success': True, 'message': 'Primary image updated', 'image_id': image_id})
+        
+    except ProductImage.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Image not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+@store_admin_required
+def save_preview(request):
+    """Save product preview data to session"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+    
+    try:
+        # Save product data to session for preview
+        preview_data = {
+            'name': request.POST.get('name', ''),
+            'price': request.POST.get('price', 0),
+            'description': request.POST.get('description', ''),
+            'short_description': request.POST.get('short_description', ''),
+            'category_id': request.POST.get('category'),
+        }
+        
+        request.session['preview_product'] = preview_data
+        
+        return JsonResponse({'success': True, 'message': 'Preview data saved'})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

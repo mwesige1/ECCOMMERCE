@@ -12,7 +12,7 @@ from django.urls import reverse_lazy
 from .models import User, VendorProfile, Address
 from .forms import (
     CustomerRegistrationForm, UserUpdateForm,
-    ChangePasswordForm, AddressForm
+    ChangePasswordForm, AddressForm,CustomerUpdateForm
 )
 from cart.cart import Cart
 from eccommence.models import Customer  # Add this for customer profile
@@ -125,14 +125,16 @@ def profile_view(request):
 @login_required
 def profile_edit(request):
     """Edit user profile"""
-    # Note: Profile model is removed, so we only update User model
-    # Address management is done through Address model
+    # Get or create customer profile
+    customer, created = Customer.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
         user_form = UserUpdateForm(request.POST, instance=request.user)
+        customer_form = CustomerUpdateForm(request.POST, instance=customer)
         
-        if user_form.is_valid():
+        if user_form.is_valid() and customer_form.is_valid():
             user_form.save()
+            customer_form.save()
             
             messages.success(request, 'Your profile has been updated successfully!')
             return redirect('users:profile_view')
@@ -140,9 +142,11 @@ def profile_edit(request):
             messages.error(request, 'Please correct the errors below.')
     else:
         user_form = UserUpdateForm(instance=request.user)
+        customer_form = CustomerUpdateForm(instance=customer)
     
     context = {
         'user_form': user_form,
+        'customer_form': customer_form,
     }
     
     return render(request, 'users/profile_edit.html', context)
@@ -225,15 +229,15 @@ def change_password(request):
 
 @login_required
 def address_list(request):
-    """List all user addresses"""
     addresses = Address.objects.filter(user=request.user)
+    default_count = addresses.filter(is_default=True).count()
     
     context = {
         'addresses': addresses,
+        'default_count': default_count,
     }
     
     return render(request, 'users/address_list.html', context)
-
 
 @login_required
 def address_add(request):
@@ -270,9 +274,13 @@ def address_edit(request, pk):
     else:
         form = AddressForm(instance=address)
     
-    return render(request, 'users/address_form.html', {'form': form, 'action': 'Edit'})
-
-
+    context = {
+        'form': form,
+        'action': 'Edit',
+        'address': address,  # ← MAKE SURE THIS LINE EXISTS
+    }
+    
+    return render(request, 'users/address_form.html', context)
 @login_required
 def address_delete(request, pk):
     """Delete address"""
@@ -378,5 +386,6 @@ class CustomPasswordResetView(PasswordResetView):
     success_url = reverse_lazy('users:password_reset_done')
 
     def form_valid(self, form):
+        # Store the email in session to display on the done page
         self.request.session['reset_email'] = form.cleaned_data['email']
         return super().form_valid(form)

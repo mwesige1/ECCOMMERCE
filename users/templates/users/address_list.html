@@ -922,15 +922,15 @@
                         <span>Saved</span>
                     </div>
                 </div>
-                <div class="stat-pill">
-                    <div class="stat-pill-icon gold">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <div class="stat-pill-text">
-                        <strong>{% with c=0 %}{% for a in addresses %}{% if a.is_default %}{% with c=c|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ addresses|length }}{% endwith %}</strong>
-                        <span>Default</span>
-                    </div>
-                </div>
+               <div class="stat-pill">
+    <div class="stat-pill-icon gold">
+        <i class="fas fa-star"></i>
+    </div>
+    <div class="stat-pill-text">
+        <strong>{{ default_count }}</strong>
+        <span>Default</span>
+    </div>
+</div>
             </div>
             {% endif %}
         </div>

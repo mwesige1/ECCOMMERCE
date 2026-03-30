@@ -697,6 +697,7 @@
     }
 </style>
 
+
 <!-- ── Breadcrumb ── -->
 <div class="bc-bar">
     <nav class="bc-inner" aria-label="Breadcrumb">
@@ -720,110 +721,8 @@
         <!-- ══════════════════════════
              SIDEBAR
         ══════════════════════════ -->
-        <aside class="cp-sidebar" aria-label="Account navigation">
-
-            <!-- Avatar Hero -->
-            <div class="cp-avatar-block">
-                <div class="cp-avatar-wrap"
-                     onclick="document.getElementById('ppFile').click()"
-                     role="button" tabindex="0"
-                     aria-label="Change profile photo">
-                    <div class="cp-avatar-inner">
-                        {% if customer.profile_picture %}
-                            <img src="{{ customer.profile_picture.url }}"
-                                 alt="{{ user.get_full_name }}" id="sidebarAvatarImg">
-                        {% else %}
-                            <div class="cp-avatar-ph" id="sidebarAvatarImg">
-                                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="cp-av-overlay"><i class="fas fa-camera"></i></div>
-                </div>
-                <p class="cp-user-name">{{ user.get_full_name|default:user.email }}</p>
-                <p class="cp-user-email">{{ user.email }}</p>
-                <span class="cp-user-badge">
-                    <i class="fas fa-circle-check"></i>
-                    {{ user.user_type|title }}
-                </span>
-            </div>
-
-            <!-- Profile completion bar -->
-            <div class="cp-completion">
-                <div class="cpc-head">
-                    <span class="cpc-label">Profile Completeness</span>
-                    <span class="cpc-pct" id="cpcPct">–</span>
-                </div>
-                <div class="cpc-track">
-                    <div class="cpc-fill" id="cpcFill" style="width:0%"></div>
-                </div>
-            </div>
-
-            <!-- Nav -->
-            <nav class="cp-nav">
-                <div class="cp-nav-section">Account</div>
-                <div class="cp-nav-item">
-                    <a href="{% url 'users:profile_view' %}">
-                        <span class="ni"><i class="fas fa-user"></i></span> Profile Overview
-                    </a>
-                </div>
-                <div class="cp-nav-item">
-                    <a href="{% url 'users:profile_edit' %}">
-                        <span class="ni"><i class="fas fa-pen"></i></span> Edit Profile
-                    </a>
-                </div>
-                <div class="cp-nav-item">
-                    <a href="{% url 'users:address_list' %}">
-                        <span class="ni"><i class="fas fa-map-marker-alt"></i></span> Address Book
-                    </a>
-                </div>
-
-                <div class="cp-nav-divider"></div>
-                <div class="cp-nav-section">Settings</div>
-
-                <div class="cp-nav-item">
-                    <a href="#" class="active" id="nav-notifications" data-tab="notifications">
-                        <span class="ni"><i class="fas fa-bell"></i></span> Notifications
-                    </a>
-                </div>
-                <div class="cp-nav-item">
-                    <a href="#" id="nav-preferences" data-tab="preferences">
-                        <span class="ni"><i class="fas fa-sliders"></i></span> Preferences
-                    </a>
-                </div>
-                <div class="cp-nav-item">
-                    <a href="#" id="nav-security" data-tab="security">
-                        <span class="ni"><i class="fas fa-shield-halved"></i></span> Security
-                    </a>
-                </div>
-                <div class="cp-nav-item">
-                    <a href="#" id="nav-privacy" data-tab="privacy">
-                        <span class="ni"><i class="fas fa-lock"></i></span> Privacy
-                    </a>
-                </div>
-
-                <div class="cp-nav-divider"></div>
-                <div class="cp-nav-section">Quick Links</div>
-
-                <div class="cp-nav-item">
-                    <a href="{% url 'users:change_password' %}">
-                        <span class="ni"><i class="fas fa-key"></i></span> Change Password
-                    </a>
-                </div>
-                <div class="cp-nav-item">
-                    <a href="{% url 'payment:order_history' %}">
-                        <span class="ni"><i class="fas fa-box"></i></span> Orders
-                    </a>
-                </div>
-
-                <div class="cp-nav-divider"></div>
-                <div class="cp-nav-item danger">
-                    <a href="{% url 'users:logout' %}">
-                        <span class="ni"><i class="fas fa-arrow-right-from-bracket"></i></span> Sign Out
-                    </a>
-                </div>
-            </nav>
-        </aside>
+  
+        {% include 'users/sidebar.html' with active_tab='profile' %}
 
         <!-- ══════════════════════════
              TAB CONTENT
@@ -1211,7 +1110,7 @@
                                 </div>
                             </div>
                             <div class="si-right">
-                                {% if user.email_verified %}
+                                {% if user.is_verified %}
                                     <span class="status-dot on"><i class="fas fa-circle"></i> Verified</span>
                                 {% else %}
                                     <span class="status-dot off"><i class="fas fa-circle"></i> Unverified</span>
@@ -1345,13 +1244,16 @@
                     <p class="tab-sub">Control your data, visibility, and connected applications</p>
                 </div>
 
-                <!-- Data sharing -->
+                <!-- Data & Personalisation (Future Feature) -->
                 <div class="cp-card">
                     <div class="cp-card-head">
                         <div class="cp-card-icon blue"><i class="fas fa-database"></i></div>
                         <div>
                             <div class="cp-card-title">Data &amp; Personalisation</div>
                             <div class="cp-card-sub">Manage how your data is used to personalise your experience</div>
+                        </div>
+                        <div class="cp-card-head-right">
+                            <span class="badge" style="background:var(--warning-light); color:var(--warning); padding:2px 8px; border-radius:20px; font-size:10px;">Coming Soon</span>
                         </div>
                     </div>
                     <div class="cp-card-body">
@@ -1362,7 +1264,7 @@
                                     <div class="tr-desc">Allow us to show ads based on your browsing and purchase history</div>
                                 </div>
                                 <div class="ts">
-                                    <input type="checkbox" id="priv-ads" name="personalised_ads" checked>
+                                    <input type="checkbox" id="priv-ads" name="personalised_ads" disabled>
                                     <label for="priv-ads"></label>
                                 </div>
                             </div>
@@ -1372,7 +1274,7 @@
                                     <div class="tr-desc">Help us improve the platform by sharing anonymised usage data</div>
                                 </div>
                                 <div class="ts">
-                                    <input type="checkbox" id="priv-analytics" name="analytics" checked>
+                                    <input type="checkbox" id="priv-analytics" name="analytics" disabled>
                                     <label for="priv-analytics"></label>
                                 </div>
                             </div>
@@ -1382,10 +1284,13 @@
                                     <div class="tr-desc">Allow trusted partners to use your data for relevant offers</div>
                                 </div>
                                 <div class="ts">
-                                    <input type="checkbox" id="priv-partners" name="share_partners">
+                                    <input type="checkbox" id="priv-partners" name="share_partners" disabled>
                                     <label for="priv-partners"></label>
                                 </div>
                             </div>
+                        </div>
+                        <div class="field-hint" style="margin-top:12px; padding-top:8px; border-top:1px solid var(--border);">
+                            <i class="fas fa-info-circle"></i> These features will be available in a future update
                         </div>
                     </div>
                 </div>
@@ -1401,19 +1306,19 @@
                     </div>
                     <div class="cp-card-body">
                         <div class="ca-list">
-                            <div class="ca-item connected">
+                            <div class="ca-item">
                                 <div class="ca-left">
                                     <div class="ca-logo google"><i class="fab fa-google"></i></div>
                                     <div>
                                         <div class="ca-name">Google</div>
-                                        <div class="ca-status on">
-                                            <i class="fas fa-circle-check"></i> Connected as {{ user.email }}
+                                        <div class="ca-status off">
+                                            <i class="fas fa-circle-xmark"></i> Not connected
                                         </div>
                                     </div>
                                 </div>
                                 <button class="btn btn-ghost btn-sm"
-                                        onclick="toast('Account disconnected','Your Google account has been unlinked','info')">
-                                    <i class="fas fa-unlink"></i> Disconnect
+                                        onclick="toast('Coming Soon','Google sign-in integration is on our roadmap','info')">
+                                    <i class="fas fa-link"></i> Connect
                                 </button>
                             </div>
                             <div class="ca-item">
@@ -1427,7 +1332,7 @@
                                     </div>
                                 </div>
                                 <button class="btn btn-ghost btn-sm"
-                                        onclick="toast('Redirecting…','You will be taken to Facebook to authorise','info')">
+                                        onclick="toast('Coming Soon','Facebook sign-in integration is on our roadmap','info')">
                                     <i class="fas fa-link"></i> Connect
                                 </button>
                             </div>
@@ -1442,7 +1347,7 @@
                                     </div>
                                 </div>
                                 <button class="btn btn-ghost btn-sm"
-                                        onclick="toast('Redirecting…','You will be taken to Apple to authorise','info')">
+                                        onclick="toast('Coming Soon','Apple sign-in integration is on our roadmap','info')">
                                     <i class="fas fa-link"></i> Connect
                                 </button>
                             </div>
@@ -1450,44 +1355,44 @@
                     </div>
                 </div>
 
-                <!-- Danger zone -->
-                <div class="cp-card">
-                    <div class="cp-card-head">
-                        <div class="cp-card-icon red"><i class="fas fa-triangle-exclamation"></i></div>
-                        <div>
-                            <div class="cp-card-title">Danger Zone</div>
-                            <div class="cp-card-sub">Irreversible actions — please read before proceeding</div>
-                        </div>
-                    </div>
-                    <div class="cp-card-body">
-                        <div class="danger-item">
-                            <div class="di-left">
-                                <div class="di-icon"><i class="fas fa-eraser"></i></div>
-                                <div>
-                                    <div class="di-title">Clear All Data</div>
-                                    <div class="di-desc">Remove your order history, saved addresses, and preferences. Your account will remain active.</div>
-                                </div>
-                            </div>
-                            <button class="btn btn-danger btn-sm"
-                                    onclick="confirmAction('Clear all data? This cannot be undone.', () => toast('Data cleared','Your data has been removed','success'))">
-                                <i class="fas fa-eraser"></i> Clear Data
-                            </button>
-                        </div>
-                        <div class="danger-item">
-                            <div class="di-left">
-                                <div class="di-icon"><i class="fas fa-user-slash"></i></div>
-                                <div>
-                                    <div class="di-title">Delete Account</div>
-                                    <div class="di-desc">Permanently delete your account and all associated data. This action is irreversible and you will lose access immediately.</div>
-                                </div>
-                            </div>
-                            <button class="btn btn-danger btn-sm"
-                                    onclick="confirmAction('Permanently delete your account? This cannot be undone.', () => window.location.href=''>
-                                <i class="fas fa-trash"></i> Delete Account
-                            </button>
-                        </div>
-                    </div>
+            <!-- Danger zone -->
+<div class="cp-card">
+    <div class="cp-card-head">
+        <div class="cp-card-icon red"><i class="fas fa-triangle-exclamation"></i></div>
+        <div>
+            <div class="cp-card-title">Danger Zone</div>
+            <div class="cp-card-sub">Irreversible actions — please read before proceeding</div>
+        </div>
+    </div>
+    <div class="cp-card-body">
+        <div class="danger-item">
+            <div class="di-left">
+                <div class="di-icon"><i class="fas fa-eraser"></i></div>
+                <div>
+                    <div class="di-title">Clear All Data</div>
+                    <div class="di-desc">Remove your order history, saved addresses, and preferences. Your account will remain active.</div>
                 </div>
+            </div>
+            <button class="btn btn-danger btn-sm"
+                    onclick="if(confirm('Clear all data? This cannot be undone.')) { alert('This feature will be available soon'); }">
+                <i class="fas fa-eraser"></i> Clear Data
+            </button>
+        </div>
+        <div class="danger-item">
+            <div class="di-left">
+                <div class="di-icon"><i class="fas fa-user-slash"></i></div>
+                <div>
+                    <div class="di-title">Delete Account</div>
+                    <div class="di-desc">Permanently delete your account and all associated data. This action is irreversible and you will lose access immediately.</div>
+                </div>
+            </div>
+            <button class="btn btn-danger btn-sm"
+                    onclick="if(confirm('Permanently delete your account? This cannot be undone.')) { window.location.href='{% url "users:delete_account" %}'; }">
+                <i class="fas fa-trash"></i> Delete Account
+            </button>
+        </div>
+    </div>
+</div>
             </div>
 
         </div><!-- /.cp-content -->
@@ -1561,50 +1466,50 @@
        AVATAR UPLOAD
     ══════════════════════ */
     const ppFile = document.getElementById('ppFile');
-    ppFile.addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
+    if (ppFile) {
+        ppFile.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        if (!file.type.startsWith('image/')) {
-            toast('Invalid file', 'Please choose an image file', 'error'); return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            toast('File too large', 'Maximum size is 5 MB', 'error'); return;
-        }
+            if (!file.type.startsWith('image/')) {
+                toast('Invalid file', 'Please choose an image file', 'error'); return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                toast('File too large', 'Maximum size is 5 MB', 'error'); return;
+            }
 
-        /* Local preview across both avatar instances */
-        const reader = new FileReader();
-        reader.onload = ev => {
-            ['previewImg', 'sidebarAvatarImg'].forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                if (el.tagName === 'IMG') {
-                    el.src = ev.target.result;
-                } else {
-                    const img = document.createElement('img');
-                    img.id  = id;
-                    img.src = ev.target.result;
-                    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
-                    el.replaceWith(img);
-                }
-            });
-        };
-        reader.readAsDataURL(file);
+            const reader = new FileReader();
+            reader.onload = ev => {
+                ['previewImg', 'sidebarAvatarImg'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    if (el.tagName === 'IMG') {
+                        el.src = ev.target.result;
+                    } else {
+                        const img = document.createElement('img');
+                        img.id  = id;
+                        img.src = ev.target.result;
+                        img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+                        el.replaceWith(img);
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
 
-        /* Server upload */
-        const fd = new FormData();
-        fd.append('profile_picture', file);
-        fetch("{% url 'users:upload_profile_picture' %}", {
-            method: 'POST',
-            body: fd,
-            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
-        })
-        .then(r => r.json())
-        .then(d => d.success
-            ? toast('Photo updated', 'Your profile picture has been saved', 'success')
-            : toast('Upload failed', d.message || 'Please try again', 'error'))
-        .catch(() => toast('Network error', 'Could not upload the photo', 'error'));
-    });
+            const fd = new FormData();
+            fd.append('profile_picture', file);
+            fetch("{% url 'users:upload_profile_picture' %}", {
+                method: 'POST',
+                body: fd,
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            })
+            .then(r => r.json())
+            .then(d => d.success
+                ? toast('Photo updated', 'Your profile picture has been saved', 'success')
+                : toast('Upload failed', d.message || 'Please try again', 'error'))
+            .catch(() => toast('Network error', 'Could not upload the photo', 'error'));
+        });
+    }
 
     const removeBtn = document.getElementById('removeAvatarBtn');
     if (removeBtn) {
@@ -1626,7 +1531,6 @@
             () => {% if customer.profile_picture %}true{% else %}false{% endif %},
             () => '{{ customer.date_of_birth }}' !== 'None' && '{{ customer.date_of_birth }}' !== '',
             () => '{{ customer.gender }}' !== '',
-            () => '{{ customer.city }}'   !== '',
         ];
         const met = checks.filter(fn => fn()).length;
         const pct = Math.round((met / checks.length) * 100);
@@ -1694,8 +1598,11 @@ function savePreferences(e) {
 /* ══════════════════════
    CONFIRM HELPER
 ══════════════════════ */
-function confirmAction(message, onConfirm) {
-    if (confirm(message)) onConfirm();
+
+function confirmAction(message, callback) {
+    if (confirm(message)) {
+        callback();
+    }
 }
 </script>
 {% endblock %}

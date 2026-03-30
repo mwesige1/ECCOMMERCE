@@ -1,0 +1,1040 @@
+{% extends 'store_admin/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Orders Management — Homies Admin{% endblock %}
+{% block page_title %}Orders Management{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --order-pending: #f59e0b;
+    --order-processing: #3b82f6;
+    --order-shipped: #8b5cf6;
+    --order-delivered: #10b981;
+    --order-cancelled: #ef4444;
+}
+
+/* Stats */
+.orders-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.order-stat-card {
+    background: white;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.order-stat-card:hover { border-color: var(--primary); }
+.order-stat-card.active { border-color: var(--primary); background: #f0f9ff; }
+
+.order-stat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.order-stat-icon.pending    { background: rgba(245,158,11,.12); color: #b45309; }
+.order-stat-icon.processing { background: rgba(59,130,246,.12); color: #1d4ed8; }
+.order-stat-icon.shipped    { background: rgba(139,92,246,.12);  color: #6d28d9; }
+.order-stat-icon.delivered  { background: rgba(16,185,129,.12);  color: #065f46; }
+.order-stat-icon.cancelled  { background: rgba(239,68,68,.12);   color: #991b1b; }
+
+.order-stat-value  { font-size: 22px; font-weight: 700; color: var(--gray-900); margin-bottom: 3px; }
+.order-stat-label  { font-size: 11px; color: var(--gray-500); margin-bottom: 8px; }
+.order-stat-amount { font-size: 11px; color: var(--gray-600); padding-top: 8px; border-top: 0.5px solid var(--border-color); }
+
+/* Action bar */
+.action-bar {
+    background: rgba(0, 255, 225, 0.279);
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.bulk-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.bulk-select {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+}
+
+.bulk-select input  {
+     width: 15px;
+    height: 15px; 
+    cursor: pointer;
+ }
+.bulk-select label  { font-size: 12px; font-weight: 500; color: var(--gray-600); cursor: pointer; }
+
+.bulk-btn {
+    padding: 6px 12px;
+    border: 0.5px solid var(--border-color);
+    background: white;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--gray-600);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+}
+
+.bulk-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+.selected-count-badge {
+    background: var(--primary);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* Extended dropdown - wider */
+.filter-select {
+    padding: 8px 32px 8px 14px;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 18px;
+    background: white;
+    cursor: pointer;
+    color: var(--gray-700);
+    transition: all 0.15s;
+    min-width: 260px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.filter-select:focus { outline: none; 
+    border-color: var(--primary);
+     box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+     }
+
+/* Extended search bar - wider and longer */
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: white;
+    transition: all 0.15s;
+    min-width: 580px;
+}
+
+.search-box:focus-within { 
+    border-color: var(--primary);
+     box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+     }
+.search-box i { 
+    color: var(--gray-400); 
+    font-size: 20px; }
+.search-box input { 
+    border: none; 
+    outline: none; 
+    font-size: 13px; 
+    width: 580px; 
+    background: transarent;
+}
+
+/* Table */
+.orders-table-container {
+    background: white;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.orders-table { width: 100%; border-collapse: collapse; }
+
+.orders-table th {
+    text-align: left;
+    padding: 11px 14px;
+    background: #f8fafc;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    border-bottom: 0.5px solid var(--border-color);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.orders-table td {
+    padding: 13px 14px;
+    border-bottom: 0.5px solid var(--border-color);
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.orders-table tbody tr:last-child td { border-bottom: none; }
+.orders-table tbody tr:hover   { background: #fafcff; }
+.orders-table tbody tr.selected { background: #eff6ff; }
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-pending    { background: #fef3c7; color: #92400e; }
+.status-processing { background: #dbeafe; color: #1e40af; }
+.status-shipped    { background: #ede9fe; color: #5b21b6; }
+.status-delivered  { background: #d1fae5; color: #065f46; }
+.status-cancelled  { background: #fee2e2; color: #991b1b; }
+
+/* Customer */
+.customer-info    { display: flex; align-items: center; gap: 9px; }
+
+.customer-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.customer-name  { font-weight: 600; color: var(--gray-900); font-size: 12px; margin-bottom: 1px; }
+.customer-email { font-size: 11px; color: var(--gray-500); }
+
+/* Order number */
+.order-number {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-family: monospace;
+    font-size: 12px;
+    transition: color 0.15s;
+}
+.order-number:hover { text-decoration: underline; }
+
+/* Action icons */
+.action-buttons { display: flex; gap: 5px; }
+
+.action-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-color);
+    background: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    color: var(--gray-500);
+    font-size: 13px;
+}
+
+.action-icon:hover               { transform: translateY(-1px); }
+.action-icon.view:hover          { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+.action-icon.print:hover         { background: var(--gray-100); color: var(--gray-700); }
+.action-icon.update:hover        { background: #fef3c7; color: #b45309; border-color: #fcd34d; }
+.action-icon.cancel:hover        { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+/* Status Modal - Enhanced Design */
+.status-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 80%; height: 80%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-modal.active { display: flex; }
+
+.status-modal-content {
+    background: white;
+    border-radius: 24px;
+    max-width: 520px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.status-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    border-radius: 24px 24px 0 0;
+}
+
+.status-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.status-modal-close {
+    background: #f1f5f9;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--gray-500);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-modal-close:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    transform: rotate(90deg);
+}
+
+.status-modal-body {
+    padding: 24px;
+}
+
+.order-info-card {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.order-info-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.order-info-text {
+    flex: 1;
+}
+
+.order-info-text .label {
+    font-size: 11px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.order-info-text .value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gray-900);
+    font-family: monospace;
+}
+
+.status-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.status-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+}
+
+.status-option:hover {
+    border-color: var(--primary);
+    background: #f8fafc;
+    transform: translateX(4px);
+}
+
+.status-option.selected {
+    border-color: var(--primary);
+    background: #eff6ff;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.1);
+}
+
+.status-option input {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.status-option-content {
+    flex: 1;
+}
+
+.status-option-content strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--gray-800);
+}
+
+.status-option-content small {
+    color: var(--gray-500);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.status-badge-preview {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    display: inline-block;
+}
+
+.tracking-input {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    background: #fafcff;
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 20px;
+}
+
+.tracking-input label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--gray-700);
+}
+
+.tracking-input input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.tracking-input input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.status-modal-footer {
+    padding: 16px 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.status-modal-footer button {
+    padding: 10px 24px;
+    border-radius: 40px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.status-modal-footer .btn-cancel {
+    background: #f1f5f9;
+    border: none;
+    color: var(--gray-600);
+}
+
+.status-modal-footer .btn-cancel:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+.status-modal-footer .btn-update {
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    border: none;
+    color: var(--gray-600);
+    box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+}
+
+.status-modal-footer .btn-update:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+}
+
+.status-modal-footer .btn-update:active {
+    transform: translateY(0);
+}
+
+/* Pagination */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 16px; }
+
+.page-btn {
+    padding: 6px 11px;
+    border: 0.5px solid var(--border-color);
+    background: white;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+}
+
+.page-btn:hover,
+.page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Toast */
+.toast-message {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 16px;
+    background: #10b981;
+    color: white;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 1100;
+    font-size: 12px;
+    animation: slideIn .3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+
+.toast-message.error { background: #ef4444; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .action-bar    { flex-direction: column; align-items: stretch; }
+    .filters       { flex-direction: column; width: 100%; }
+    .filter-select { width: 100%; min-width: auto; }
+    .search-box    { width: 100%; min-width: auto; }
+    .search-box input { width: 100%; }
+    .orders-table  { min-width: 860px; }
+    .orders-table-container { overflow-x: auto; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="orders-container">
+
+    <!-- Stats Cards -->
+    <div class="orders-stats">
+        <div class="order-stat-card" data-status="pending">
+            <div class="order-stat-icon pending"><i class="fas fa-clock"></i></div>
+            <div class="order-stat-value">{{ pending_count|default:0 }}</div>
+            <div class="order-stat-label">Pending</div>
+            <div class="order-stat-amount">UGX {{ pending_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="order-stat-card" data-status="processing">
+            <div class="order-stat-icon processing"><i class="fas fa-spinner"></i></div>
+            <div class="order-stat-value">{{ processing_count|default:0 }}</div>
+            <div class="order-stat-label">Processing</div>
+            <div class="order-stat-amount">UGX {{ processing_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="order-stat-card" data-status="shipped">
+            <div class="order-stat-icon shipped"><i class="fas fa-truck"></i></div>
+            <div class="order-stat-value">{{ shipped_count|default:0 }}</div>
+            <div class="order-stat-label">Shipped</div>
+            <div class="order-stat-amount">UGX {{ shipped_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="order-stat-card" data-status="delivered">
+            <div class="order-stat-icon delivered"><i class="fas fa-check-circle"></i></div>
+            <div class="order-stat-value">{{ delivered_count|default:0 }}</div>
+            <div class="order-stat-label">Delivered</div>
+            <div class="order-stat-amount">UGX {{ delivered_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="order-stat-card" data-status="cancelled">
+            <div class="order-stat-icon cancelled"><i class="fas fa-times-circle"></i></div>
+            <div class="order-stat-value">{{ cancelled_count|default:0 }}</div>
+            <div class="order-stat-label">Cancelled</div>
+            <div class="order-stat-amount">UGX {{ cancelled_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        
+        <div class="filters">
+            <select id="statusFilter" class="filter-select" onchange="filterOrders()">
+                <option value="all">📋 All statuses</option>
+                <option value="pending">⏳ Pending</option>
+                <option value="processing">⚙️ Processing</option>
+                <option value="shipped">🚚 Shipped</option>
+                <option value="delivered">✅ Delivered</option>
+                <option value="cancelled">❌ Cancelled</option>
+            </select>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search by order #, customer name or email..." onkeyup="filterOrders()">
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="orders-table-container">
+        <table class="orders-table" id="ordersTable">
+            <thead>
+                <tr>
+                    <th style="width:36px;"><input type="checkbox" id="selectAllTable" onclick="toggleSelectAllTable()"></th>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </thead>
+            <tbody id="ordersTableBody">
+                {% for order in orders %}
+                <tr data-id="{{ order.id }}"
+                    data-status="{{ order.status }}"
+                    data-order-number="{{ order.order_number }}"
+                    data-search="{{ order.order_number }} {{ order.full_name|lower }} {{ order.email|lower }}">
+
+                    <td>
+                        <input type="checkbox" class="order-checkbox" value="{{ order.id }}">
+                    </td>
+
+                    <td>
+                        <a href="javascript:void(0)" class="order-number"
+                           onclick="viewOrder('{{ order.order_number }}')">
+                            #{{ order.order_number }}
+                        </a>
+                    </td>
+
+                    <td>
+                        <div class="customer-info">
+                            <div class="customer-avatar">{{ order.full_name|slice:":1"|upper }}</div>
+                            <div class="customer-details">
+                                <div class="customer-name">{{ order.full_name|truncatechars:25 }}</div>
+                                <div class="customer-email">{{ order.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div style="font-size:12px;">{{ order.created_at|date:"M d, Y" }}</div>
+                        <div style="font-size:11px;color:var(--gray-500);">{{ order.created_at|date:"H:i" }}</div>
+                    </td>
+
+                    <td style="color:var(--gray-600);">
+                        {{ order.item_count }} item{{ order.item_count|pluralize }}
+                    </td>
+
+                    <td>
+                        <strong>UGX {{ order.total|floatformat:0|intcomma }}</strong>
+                    </td>
+
+                    <td>
+                        <span class="status-badge status-{{ order.status }}">
+                            <i class="fas fa-{% if order.status == 'pending' %}clock{% elif order.status == 'processing' %}spinner{% elif order.status == 'shipped' %}truck{% elif order.status == 'delivered' %}check-circle{% else %}times-circle{% endif %}"></i>
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-icon view"
+                                onclick="viewOrder('{{ order.order_number }}')"
+                                title="View details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-icon print"
+                                onclick="printOrder('{{ order.order_number }}')"
+                                title="Print invoice">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button class="action-icon update"
+                                onclick="openStatusModal('{{ order.id }}', '{{ order.order_number }}', '{{ order.status }}')"
+                                title="Update status">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            {% if order.status != 'cancelled' and order.status != 'delivered' %}
+                            <button class="action-icon cancel"
+                                onclick="cancelOrder('{{ order.id }}', '{{ order.order_number }}')"
+                                title="Cancel order">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align:center;padding:60px 0;">
+                        <i class="fas fa-inbox" style="font-size:40px;color:var(--gray-300);"></i>
+                        <h3 style="margin-top:14px;font-size:15px;">No orders found</h3>
+                        <p style="color:var(--gray-500);font-size:13px;margin-top:4px;">
+                            When customers place orders, they'll appear here.
+                        </p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if orders.has_other_pages %}
+        <div class="pagination">
+            {% if orders.has_previous %}
+            <button class="page-btn" onclick="goToPage({{ orders.previous_page_number }})">
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            {% endif %}
+            {% for num in orders.paginator.page_range %}
+                {% if orders.number == num %}
+                <button class="page-btn active">{{ num }}</button>
+                {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+                <button class="page-btn" onclick="goToPage({{ num }})">{{ num }}</button>
+                {% endif %}
+            {% endfor %}
+            {% if orders.has_next %}
+            <button class="page-btn" onclick="goToPage({{ orders.next_page_number }})">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Enhanced Status Modal -->
+<div id="statusModal" class="status-modal">
+    <div class="status-modal-content">
+        <div class="status-modal-header">
+            <h3><i class="fas fa-sync-alt" style="margin-right: 8px;"></i> Update Order Status</h3>
+            <button class="status-modal-close" onclick="closeStatusModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="status-modal-body">
+            <input type="hidden" id="currentOrderId" value="">
+            
+            <!-- Order Info Card -->
+            <div class="order-info-card">
+                <div class="order-info-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="order-info-text">
+                    <div class="label">Order Number</div>
+                    <div class="value" id="currentOrderNumberDisplay">---</div>
+                </div>
+            </div>
+
+            <div class="status-options">
+                <label class="status-option" data-status="pending">
+                    <input type="radio" name="order_status" value="pending">
+                    <div class="status-option-content">
+                        <strong><span class="status-badge-preview" style="background:#f59e0b;"></span> Pending</strong>
+                        <small>Order received, awaiting payment confirmation</small>
+                    </div>
+                </label>
+                <label class="status-option" data-status="processing">
+                    <input type="radio" name="order_status" value="processing">
+                    <div class="status-option-content">
+                        <strong><span class="status-badge-preview" style="background:#3b82f6;"></span> Processing</strong>
+                        <small>Payment confirmed, preparing for shipment</small>
+                    </div>
+                </label>
+                <label class="status-option" data-status="shipped">
+                    <input type="radio" name="order_status" value="shipped">
+                    <div class="status-option-content">
+                        <strong><span class="status-badge-preview" style="background:#8b5cf6;"></span> Shipped</strong>
+                        <small>Order has been dispatched</small>
+                    </div>
+                </label>
+                <label class="status-option" data-status="delivered">
+                    <input type="radio" name="order_status" value="delivered">
+                    <div class="status-option-content">
+                        <strong><span class="status-badge-preview" style="background:#10b981;"></span> Delivered</strong>
+                        <small>Order delivered to customer</small>
+                    </div>
+                </label>
+                <label class="status-option" data-status="cancelled">
+                    <input type="radio" name="order_status" value="cancelled">
+                    <div class="status-option-content">
+                        <strong><span class="status-badge-preview" style="background:#ef4444;"></span> Cancelled</strong>
+                        <small>Order has been cancelled</small>
+                    </div>
+                </label>
+            </div>
+            
+            <div id="trackingInput" class="tracking-input" style="display:none;">
+                <label><i class="fas fa-box"></i> Tracking Number</label>
+                <input type="text" id="trackingNumber" placeholder="Enter tracking number (e.g., TRK-123456789)">
+            </div>
+        </div>
+        <div class="status-modal-footer">
+            <button class="btn-cancel" onclick="closeStatusModal()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="btn-update" onclick="updateOrderStatus()">
+                <i class="fas fa-check"></i> Update Status
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedOrders = new Set();
+
+function filterOrders() {
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#ordersTableBody tr').forEach(row => {
+        if (!row.dataset.id) return;
+        const matchStatus = status === 'all' || row.dataset.status === status;
+        const matchSearch = !search || (row.dataset.search || '').includes(search);
+        row.style.display = matchStatus && matchSearch ? '' : 'none';
+    });
+}
+
+document.querySelectorAll('.order-stat-card').forEach(card => {
+    card.addEventListener('click', function () {
+        document.getElementById('statusFilter').value = this.dataset.status;
+        filterOrders();
+        document.querySelectorAll('.order-stat-card').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+function toggleSelectAll() {
+    const checked = document.getElementById('selectAll').checked;
+    document.querySelectorAll('.order-checkbox').forEach(cb => {
+        cb.checked = checked;
+        checked ? selectedOrders.add(cb.value) : selectedOrders.delete(cb.value);
+        cb.closest('tr').classList.toggle('selected', checked);
+    });
+    updateSelectedDisplay();
+}
+
+function toggleSelectAllTable() {
+    document.getElementById('selectAll').checked = document.getElementById('selectAllTable').checked;
+    toggleSelectAll();
+}
+
+function updateSelectedDisplay() {
+    const badge = document.getElementById('selectedCountDisplay');
+    const count = selectedOrders.size;
+    if (badge) {
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+        badge.innerHTML = `<i class="fas fa-check-circle"></i> ${count} selected`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.order-checkbox').forEach(cb => {
+        cb.addEventListener('change', function () {
+            this.checked ? selectedOrders.add(this.value) : selectedOrders.delete(this.value);
+            this.closest('tr').classList.toggle('selected', this.checked);
+            updateSelectedDisplay();
+            const all = document.querySelectorAll('.order-checkbox');
+            const allChecked = all.length > 0 && Array.from(all).every(c => c.checked);
+            if (document.getElementById('selectAll')) document.getElementById('selectAll').checked = allChecked;
+            if (document.getElementById('selectAllTable')) document.getElementById('selectAllTable').checked = allChecked;
+        });
+    });
+});
+
+function openStatusModal(orderId, orderNumber, currentStatus) {
+    document.getElementById('currentOrderId').value = orderId;
+    document.getElementById('currentOrderNumberDisplay').textContent = orderNumber;
+    document.querySelectorAll('input[name="order_status"]').forEach(r => {
+        r.checked = false;
+        r.closest('.status-option').classList.remove('selected');
+    });
+    const current = document.querySelector(`input[name="order_status"][value="${currentStatus}"]`);
+    if (current) { 
+        current.checked = true; 
+        current.closest('.status-option').classList.add('selected'); 
+    }
+    document.getElementById('trackingInput').style.display = currentStatus === 'shipped' ? 'block' : 'none';
+    document.getElementById('trackingNumber').value = '';
+    document.getElementById('statusModal').classList.add('active');
+}
+
+document.querySelectorAll('.status-option').forEach(opt => {
+    opt.addEventListener('click', function () {
+        document.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
+        this.classList.add('selected');
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+        const val = radio ? radio.value : '';
+        document.getElementById('trackingInput').style.display = val === 'shipped' ? 'block' : 'none';
+    });
+});
+
+function updateOrderStatus() {
+    const selected = document.querySelector('input[name="order_status"]:checked');
+    if (!selected) { showToast('Please select a status', 'error'); return; }
+    const orderId = document.getElementById('currentOrderId').value;
+    const newStatus = selected.value;
+    const trackingNumber = document.getElementById('trackingNumber').value;
+    const btn = document.querySelector('.status-modal-footer .btn-update');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+    btn.disabled = true;
+    fetch(`/manage/orders/${orderId}/update-status/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ status: newStatus, tracking_number: trackingNumber })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast(`Status updated to ${newStatus}`, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error updating status', 'error');
+            btn.innerHTML = orig; btn.disabled = false;
+        }
+    })
+    .catch(() => { showToast('Network error. Please try again.', 'error'); btn.innerHTML = orig; btn.disabled = false; });
+}
+
+function closeStatusModal() { document.getElementById('statusModal').classList.remove('active'); }
+
+function viewOrder(orderNumber)  { window.location.href = `/manage/orders/${orderNumber}/`; }
+function printOrder(orderNumber) { window.open(`/manage/orders/${orderNumber}/print/`, '_blank'); }
+
+function cancelOrder(orderId, orderNumber) {
+    if (!confirm(`Cancel order #${orderNumber}?`)) return;
+    fetch(`/manage/orders/${orderId}/cancel/`, {
+        method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { showToast(`Order #${orderNumber} cancelled`, 'success'); setTimeout(() => location.reload(), 1000); }
+        else showToast(data.error || 'Error cancelling order', 'error');
+    });
+}
+
+function bulkUpdateStatus(status) {
+    if (selectedOrders.size === 0) { showToast('Select at least one order', 'error'); return; }
+    if (!confirm(`Update ${selectedOrders.size} order(s) to ${status}?`)) return;
+    fetch('/manage/orders/bulk-update/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ order_ids: Array.from(selectedOrders), status })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { showToast(`${selectedOrders.size} order(s) updated`, 'success'); setTimeout(() => location.reload(), 1500); }
+        else showToast(data.error || 'Error updating orders', 'error');
+    });
+}
+
+function exportSelectedOrders() {
+    if (selectedOrders.size === 0) { showToast('Select orders to export', 'error'); return; }
+    window.location.href = `/manage/orders/export/?ids=${Array.from(selectedOrders).join(',')}`;
+}
+
+function goToPage(page) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    window.location.href = url.toString();
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast-message${type === 'error' ? ' error' : ''}`;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function getCookie(name) {
+    return document.cookie.split(';').reduce((val, c) => {
+        const [k, v] = c.trim().split('=');
+        return k === name ? decodeURIComponent(v) : val;
+    }, null);
+}
+
+window.onclick = e => { if (e.target === document.getElementById('statusModal')) closeStatusModal(); };
+document.getElementById('searchInput')?.addEventListener('keypress', e => { if (e.key === 'Enter') filterOrders(); });
+filterOrders();
+</script>
+{% endblock %}

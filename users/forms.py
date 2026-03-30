@@ -635,3 +635,34 @@ class VendorDocumentUploadForm(forms.ModelForm):
                 'accept': 'image/*,application/pdf'
             }),
         }
+from eccommence.models import Customer
+
+class CustomerUpdateForm(forms.ModelForm):
+    """Update customer profile information"""
+    
+    date_of_birth = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date',
+            'placeholder': 'Date of Birth'
+        })
+    )
+    
+    class Meta:
+        model = Customer
+        fields = [
+            'date_of_birth',
+            'gender',
+            'newsletter_subscription',
+            'sms_notifications',
+        ]
+        widgets = {
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'newsletter_subscription': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'sms_notifications': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+        }

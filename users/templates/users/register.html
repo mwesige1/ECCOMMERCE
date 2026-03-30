@@ -301,6 +301,23 @@
 
         .form-input::placeholder { color: var(--gray-medium); }
 
+        .form-input.error {
+            border-color: var(--error-red);
+        }
+
+        .form-input.error:focus {
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+        }
+
+        .error-message {
+            color: var(--error-red);
+            font-size: 0.75rem;
+            margin-top: 0.375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
         /* Phone prefix */
         .phone-wrap {
             display: flex;
@@ -385,6 +402,23 @@
             font-size: 0.75rem;
             font-weight: 600;
             margin-top: 0.3rem;
+        }
+
+        /* Password match indicator */
+        .password-match-indicator {
+            font-size: 0.75rem;
+            margin-top: 0.375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .match-success {
+            color: var(--success-green);
+        }
+
+        .match-error {
+            color: var(--error-red);
         }
 
         /* Terms */
@@ -681,9 +715,12 @@
                     <div class="phone-wrap">
                         <div class="phone-prefix">🇺🇬 +256</div>
                         <input type="tel" name="phone" id="phone"
-                               class="form-input" placeholder="700 000 000"
+                               class="form-input" placeholder="700 123 456"
                                autocomplete="tel">
                     </div>
+                    <small class="error-message" id="phoneError" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i> Please enter a valid Ugandan phone number
+                    </small>
                 </div>
 
                 <!-- Password -->
@@ -720,6 +757,7 @@
                             <i class="fas fa-eye" id="pwicon2"></i>
                         </button>
                     </div>
+                    <div class="password-match-indicator" id="matchIndicator"></div>
                 </div>
 
                 <!-- Terms -->
@@ -814,8 +852,87 @@
             strengthLabel.style.color     = lvl.color;
         });
 
-        // Loading state on submit
-        document.getElementById('registerForm').addEventListener('submit', function () {
+        // Password match validation
+        const pw2 = document.getElementById('password2');
+        const matchIndicator = document.getElementById('matchIndicator');
+
+        function checkPasswordMatch() {
+            const p1 = pw1.value;
+            const p2 = pw2.value;
+            
+            if (!p2) {
+                matchIndicator.innerHTML = '';
+                return;
+            }
+            
+            if (p1 === p2) {
+                matchIndicator.innerHTML = '<i class="fas fa-check-circle"></i> Passwords match';
+                matchIndicator.className = 'password-match-indicator match-success';
+                pw2.setCustomValidity('');
+            } else {
+                matchIndicator.innerHTML = '<i class="fas fa-exclamation-circle"></i> Passwords do not match';
+                matchIndicator.className = 'password-match-indicator match-error';
+                pw2.setCustomValidity("Passwords don't match");
+            }
+        }
+
+        pw1.addEventListener('input', checkPasswordMatch);
+        pw2.addEventListener('input', checkPasswordMatch);
+
+        // Phone number validation (Ugandan format)
+        const phoneInput = document.getElementById('phone');
+        const phoneError = document.getElementById('phoneError');
+
+        function validatePhone() {
+            const phone = phoneInput.value.replace(/\s/g, '');
+            if (phone && !/^[0-9]{9}$/.test(phone)) {
+                phoneInput.classList.add('error');
+                phoneError.style.display = 'flex';
+                return false;
+            } else {
+                phoneInput.classList.remove('error');
+                phoneError.style.display = 'none';
+                return true;
+            }
+        }
+
+        phoneInput.addEventListener('input', validatePhone);
+        phoneInput.addEventListener('blur', validatePhone);
+
+        // Phone number formatting on submit - prepend +256
+        function formatPhoneNumber() {
+            let phone = phoneInput.value.replace(/\s/g, '');
+            if (phone && /^[0-9]{9}$/.test(phone)) {
+                phoneInput.value = '+256' + phone;
+            }
+        }
+
+        // Loading state on submit with validation
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            // Check password match
+            if (pw1.value !== pw2.value) {
+                e.preventDefault();
+                matchIndicator.innerHTML = '<i class="fas fa-exclamation-circle"></i> Passwords do not match';
+                matchIndicator.className = 'password-match-indicator match-error';
+                pw2.focus();
+                return;
+            }
+            
+            // Check phone format if phone is provided
+            const phone = phoneInput.value.replace(/\s/g, '');
+            if (phone && !/^[0-9]{9}$/.test(phone)) {
+                e.preventDefault();
+                phoneInput.classList.add('error');
+                phoneError.style.display = 'flex';
+                phoneInput.focus();
+                return;
+            }
+            
+            // Format phone number with +256 prefix
+            if (phone && /^[0-9]{9}$/.test(phone)) {
+                phoneInput.value = '+256' + phone;
+            }
+            
             const btn     = document.getElementById('registerBtn');
             const spinner = document.getElementById('btnSpinner');
             const txt     = document.getElementById('btnText');

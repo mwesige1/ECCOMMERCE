@@ -52,7 +52,6 @@
         a{
             text-decoration: none;
         }
-        /* profile images css code ***/
         /* User avatar image in dropdown */
 .user-avatar {
     display: flex;
@@ -1132,7 +1131,7 @@ body.dark-mode .link-subtitle {
 
         /* Products Grid */
         .products-grid {
-            display: grid;
+            display:grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 0.1rem;
             margin-bottom: 2rem;

@@ -1,74 +1,93 @@
 from django import forms
-from .models import ShippingAddress, Refund
+from users.models import Address
+from .models import Refund
 
 
 class ShippingForm(forms.ModelForm):
-    """Shipping address form"""
+    """Shipping address form using Address model from users app"""
     
     class Meta:
-        model = ShippingAddress
+        model = Address
         fields = [
-            'shipping_full_name',
-            'shipping_email', 
-            'shipping_phone',
-            'shipping_address1',
-            'shipping_address2',
-            'shipping_city',
-            'shipping_country',
+            'full_name',
+            'email',
+            'phone',
+            'address_line1',
+            'address_line2',
+            'city',
+            'state',
+            'postal_code',
+            'country',
             'delivery_instructions',
+            'is_default',
         ]
         
         widgets = {
-            'shipping_full_name': forms.TextInput(attrs={
+            'full_name': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Full Name',
                 'required': True,
             }),
-            'shipping_email': forms.EmailInput(attrs={
+            'email': forms.EmailInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Email Address',
                 'required': True,
             }),
-            'shipping_phone': forms.TextInput(attrs={
+            'phone': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Phone Number (e.g., 0700123456)',
                 'required': True,
             }),
-            'shipping_address1': forms.TextInput(attrs={
+            'address_line1': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Address Line 1',
                 'required': True,
             }),
-            'shipping_address2': forms.TextInput(attrs={
+            'address_line2': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Address Line 2 (Optional)',
             }),
-            'shipping_city': forms.TextInput(attrs={
+            'city': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'City',
                 'required': True,
             }),
-            'shipping_country': forms.TextInput(attrs={
+            'state': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'State/Province',
+                'required': True,
+            }),
+            'postal_code': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Postal Code',
+            }),
+            'country': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Country',
-                'value': 'Uganda',
+                'initial': 'Uganda',
             }),
             'delivery_instructions': forms.Textarea(attrs={
                 'class': 'form-textarea',
                 'placeholder': 'Delivery instructions (Optional)',
                 'rows': 3,
             }),
+            'is_default': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
         }
         
         labels = {
-            'shipping_full_name': 'Full Name',
-            'shipping_email': 'Email Address',
-            'shipping_phone': 'Phone Number',
-            'shipping_address1': 'Address Line 1',
-            'shipping_address2': 'Address Line 2',
-            'shipping_city': 'City',
-            'shipping_country': 'Country',
+            'full_name': 'Full Name',
+            'email': 'Email Address',
+            'phone': 'Phone Number',
+            'address_line1': 'Address Line 1',
+            'address_line2': 'Address Line 2',
+            'city': 'City',
+            'state': 'State/Province',
+            'postal_code': 'Postal Code',
+            'country': 'Country',
             'delivery_instructions': 'Delivery Instructions',
+            'is_default': 'Set as default address',
         }
 
 

@@ -1,0 +1,1781 @@
+{% extends 'store_admin/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+    {% if product %}Edit Product{% else %}Add New Product{% endif %} — Homies Admin
+{% endblock %}
+
+{% block page_title %}
+    {% if product %}Edit Product{% else %}Add New Product{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   PRODUCT FORM - ENTERPRISE GRADE
+   ============================================ */
+
+:root {
+    --form-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --label-color: #1e293b;
+    --input-bg: #ffffff;
+    --input-border: #cbd5e1;
+    --input-focus: #2563eb;
+    --error-color: #ef4444;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --info-color: #3b82f6;
+}
+
+/* Form Container */
+.product-form-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Form Layout */
+.form-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Form Card */
+.form-card {
+    background: var(--form-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.form-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.form-card-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--label-color);
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-card-header p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+.form-card-body {
+    padding: 24px;
+}
+
+.form-card-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--label-color);
+    margin-bottom: 8px;
+}
+
+.form-group label .required {
+    color: var(--error-color);
+    margin-left: 4px;
+}
+
+.form-group label .optional {
+    color: #94a3b8;
+    font-weight: normal;
+    font-size: 11px;
+    margin-left: 8px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    transition: all 0.2s;
+    background: var(--input-bg);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-control.is-invalid {
+    border-color: var(--error-color);
+}
+
+.invalid-feedback {
+    color: var(--error-color);
+    font-size: 11px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.help-text {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* Textarea */
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Select */
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 20px;
+    padding-right: 40px;
+}
+
+/* Checkbox & Radio */
+.checkbox-group, .radio-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.checkbox-label, .radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: normal;
+    margin: 0;
+}
+
+.checkbox-label input, .radio-label input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Image Upload Area */
+.image-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafcff;
+}
+
+.image-upload-area:hover {
+    border-color: var(--input-focus);
+    background: #f8fafc;
+}
+
+.image-upload-area i {
+    font-size: 48px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.image-upload-area p {
+    margin: 0;
+    font-size: 14px;
+    color: #475569;
+}
+
+.image-upload-area small {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.image-preview-item {
+    position: relative;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.image-preview-item .image-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+}
+
+.image-preview-item .image-actions button {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.image-preview-item .image-actions button:hover {
+    background: var(--error-color);
+}
+
+.image-preview-item .primary-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: var(--success-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* Variants Section */
+.variants-section {
+    margin-top: 24px;
+}
+
+.variants-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.variants-header h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.btn-add-variant {
+    padding: 6px 12px;
+    background: var(--info-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.variants-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.variants-table th {
+    text-align: left;
+    padding: 12px;
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.variants-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.variant-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+}
+
+.btn-remove-variant {
+    background: none;
+    border: none;
+    color: var(--error-color);
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+/* SEO Preview */
+.seo-preview {
+    background: #f8fafc;
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.seo-preview .preview-title {
+    font-size: 18px;
+    color: #1a0dab;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.seo-preview .preview-url {
+    font-size: 13px;
+    color: #006621;
+    margin-bottom: 4px;
+}
+
+.seo-preview .preview-description {
+    font-size: 13px;
+    color: #545454;
+}
+
+/* Price Input Group */
+.price-input-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.price-input-group .currency {
+    background: #f1f5f9;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    color: #475569;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--success-color);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Stock Indicator */
+.stock-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    background: #f8fafc;
+    margin-top: 8px;
+}
+
+.stock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.stock-badge.in-stock {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.stock-badge.low-stock {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.stock-badge.out-of-stock {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Action Buttons */
+.btn-save {
+    background: var(--success-color);
+    color: white;
+    padding: 10px 24px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-save:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.btn-save-draft {
+    background: #64748b;
+    color: white;
+    padding: 10px 24px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background: white;
+    color: #64748b;
+    padding: 10px 24px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #f8fafc;
+}
+
+.btn-preview {
+    background: var(--info-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Toast Message */
+.toast-message {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    background: var(--success-color);
+    color: white;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+.toast-message.error {
+    background: var(--error-color);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Add Category Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: var(--radius-lg);
+    max-width: 450px;
+    width: 90%;
+    animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--gray-400);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    border: 1px solid var(--border-color);
+    padding: 8px 20px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.category-select-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.category-select-group select {
+    flex: 1;
+}
+
+.btn-add-category {
+    background: var(--info-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if form.errors %}
+    <div class="alert alert-danger">
+        <ul>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <li>{{ field }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<div class="product-form-container">
+<form method="POST" enctype="multipart/form-data" id="productForm">
+        {% csrf_token %}
+        
+        <div class="form-grid">
+            <!-- LEFT COLUMN - Main Product Information -->
+            <div>
+                <!-- Basic Information -->
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+                        <p>Essential details about your product</p>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="form-group">
+                            <label>Product Name <span class="required">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ product.name|default:'' }}" 
+                                   placeholder="e.g., Premium Wireless Headphones" required>
+                            <div class="help-text">Clear, descriptive name that helps customers find your product</div>
+                        </div>
+                        
+                        <div class="row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <!-- SKU field removed - system auto-generates -->
+                            
+                            <div class="form-group">
+                                <label>Category <span class="required">*</span></label>
+                                <div class="category-select-group">
+                                    <select name="category" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}" {% if product.category.id == category.id %}selected{% endif %}>
+                                            {% if category.parent %}{{ category.parent.name }} > {% endif %}{{ category.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="button" class="btn-add-category" onclick="openAddCategoryModal()">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div class="help-text">Select an existing category or add a new one</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Short Description</label>
+                            <input type="text" name="short_description" class="form-control" 
+                                   value="{{ product.short_description|default:'' }}" 
+                                   placeholder="Brief summary (max 150 characters)" maxlength="150">
+                            <div class="help-text">Appears in product listings and search results</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Full Description</label>
+                            <textarea name="description" class="form-control" rows="8" 
+                                      placeholder="Detailed product description with features, specifications, and benefits...">{{ product.description|default:'' }}</textarea>
+                            <div class="help-text">Use rich formatting. Include key features, materials, dimensions, and care instructions.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pricing & Inventory -->
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h3><i class="fas fa-tag"></i> Pricing & Inventory</h3>
+                        <p>Set your product price and stock levels</p>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label>Regular Price <span class="required">*</span></label>
+                                <div class="price-input-group">
+                                    <span class="currency">UGX</span>
+                                    <input type="number" name="price" class="form-control" value="{{ product.price|default:'' }}" 
+                                           step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Compare at Price <span class="optional">(Optional)</span></label>
+                                <div class="price-input-group">
+                                    <span class="currency">UGX</span>
+                                    <input type="number" name="compare_at_price" class="form-control" 
+                                           value="{{ product.compare_at_price|default:'' }}" step="0.01" min="0">
+                                </div>
+                                <div class="help-text">Original price to show discount</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="is_on_sale" {% if product.is_on_sale %}checked{% endif %}>
+                                    <span>Enable Sale Pricing</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; display: none;" id="saleFields">
+                            <div class="form-group">
+                                <label>Sale Price</label>
+                                <div class="price-input-group">
+                                    <span class="currency">UGX</span>
+                                    <input type="number" name="sale_price" class="form-control" 
+                                           value="{{ product.sale_price|default:'' }}" step="0.01" min="0">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Sale End Date</label>
+                                <input type="datetime-local" name="sale_end_date" class="form-control" 
+                                       value="{{ product.sale_end_date|date:'Y-m-d\TH:i'|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Track Inventory - Always checked and disabled -->
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="track_inventory" checked disabled>
+                                    <span>Track Inventory (Always enabled)</span>
+                                </label>
+                                <input type="hidden" name="track_inventory" value="on">
+                            </div>
+                            <div class="help-text">Inventory tracking is always enabled to manage stock levels</div>
+                        </div>
+                        
+                        <div class="row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;" id="inventoryFields">
+                            <div class="form-group">
+                                <label>Stock Quantity</label>
+                                <input type="number" name="stock_quantity" class="form-control" 
+                                       value="{{ product.stock_quantity|default:0 }}" min="0">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Low Stock Threshold</label>
+                                <input type="number" name="low_stock_threshold" class="form-control" 
+                                       value="{{ product.low_stock_threshold|default:10 }}" min="0">
+                                <div class="help-text">Alert when stock falls below this number</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="checkbox-group" style="margin-top: 32px;">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="allow_backorder" {% if product.allow_backorder %}checked{% endif %}>
+                                        <span>Allow Backorders</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stock-indicator" id="stockIndicator" style="display: none;">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="stockStatus"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Images -->
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h3><i class="fas fa-images"></i> Product Images</h3>
+                        <p>Upload high-quality images (Max 5MB each)</p>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click or drag images here to upload</p>
+                            <small>Supported formats: JPG, PNG, GIF, WebP (Max 5MB)</small>
+                            <input type="file" name="images" id="imageInput" multiple accept="image/*" style="display: none;">
+                        </div>
+                        
+                        <div class="image-preview-grid" id="imagePreviewGrid">
+                            {% if product and product.images.all %}
+                                {% for image in product.images.all %}
+                                <div class="image-preview-item" data-image-id="{{ image.id }}">
+                                    <img src="{{ image.image.url }}" alt="{{ image.alt_text }}">
+                                    <div class="image-actions">
+                                        <button type="button" onclick="setPrimaryImage({{ image.id }})" class="btn-primary-badge" title="Set as Primary">
+                                             <i class="fas fa-star"></i>
+                                            </button>
+                                        <button type="button" onclick="removeImage({{ image.id }})" class="btn-remove-image">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% if image.is_primary %}
+                                    <div class="primary-badge">Primary</div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Hidden input for primary image -->
+                        <input type="hidden" name="primary_image_id" id="primaryImageId" value="">
+                    </div>
+                </div>
+                
+                <!-- Product Variants -->
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h3><i class="fas fa-list-ul"></i> Product Variants</h3>
+                        <p>Add variants like size, color, material</p>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="variants-section">
+                            <div class="variants-header">
+                                <h4>Variant Options</h4>
+                                <button type="button" class="btn-add-variant" onclick="addVariant()">
+                                    <i class="fas fa-plus"></i> Add Variant
+                                </button>
+                            </div>
+                            
+                            <table class="variants-table" id="variantsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Variant Name</th>
+                                        <th>Value</th>
+                                        <th>SKU</th>
+                                        <th>Price Adjustment</th>
+                                        <th>Stock</th>
+                                        <th></th>
+                                     </thead>
+                                <tbody id="variantsBody">
+                                    {% for variant in product.variants.all %}
+                                    <tr>
+                                        <td><input type="text" name="variant_name[]" class="variant-input" value="{{ variant.name }}"></td>
+                                        <td><input type="text" name="variant_value[]" class="variant-input" value="{{ variant.value }}"></td>
+                                        <td><input type="text" name="variant_sku[]" class="variant-input" value="{{ variant.sku }}"></td>
+                                        <td><input type="number" name="variant_price_adjustment[]" class="variant-input" value="{{ variant.price_adjustment }}" step="0.01"></td>
+                                        <td><input type="number" name="variant_stock[]" class="variant-input" value="{{ variant.stock_quantity }}"></td>
+                                        <td><button type="button" class="btn-remove-variant" onclick="removeVariant(this)"><i class="fas fa-trash"></i></button></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RIGHT COLUMN - Additional Settings -->
+            <div>
+                <!-- Status & Visibility -->
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h3><i class="fas fa-eye"></i> Status & Visibility</h3>
+                        <p>Control product availability</p>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="is_active" {% if product.is_active %}checked{% endif %}>
+                                    <span>Active</span>
+                                </label>
+                                <div class="help-text">Active products appear in your store</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="is_featured" {% if product.is_featured %}checked{% endif %}>
+                                    <span>Featured Product</span>
+                                </label>
+                                <div class="help-text">Feature on homepage and promotional sections</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Physical Properties -->
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h3><i class="fas fa-weight-hanging"></i> Physical Properties</h3>
+                        <p>Shipping dimensions and weight</p>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label>Weight (kg)</label>
+                                <input type="number" name="weight" class="form-control" value="{{ product.weight|default:'' }}" step="0.01" min="0">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Length (cm)</label>
+                                <input type="number" name="length" class="form-control" value="{{ product.length|default:'' }}" step="0.01" min="0">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Width (cm)</label>
+                                <input type="number" name="width" class="form-control" value="{{ product.width|default:'' }}" step="0.01" min="0">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Height (cm)</label>
+                                <input type="number" name="height" class="form-control" value="{{ product.height|default:'' }}" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SEO Settings -->
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h3><i class="fas fa-search"></i> Search Engine Optimization</h3>
+                        <p>Improve product visibility in search results</p>
+                    </div>
+                    <div class="form-card-body">
+                        <div class="form-group">
+                            <label>Meta Title</label>
+                            <input type="text" name="meta_title" class="form-control" 
+       value="{% if product %}{{ product.meta_title|default:product.name }}{% endif %}" 
+       maxlength="60" placeholder="SEO title (60 characters max)">
+                            <div class="help-text">Recommended: 50-60 characters</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Meta Description</label>
+                            <textarea name="meta_description" class="form-control" rows="3" 
+          maxlength="160" placeholder="Brief description for search results (160 characters max)">{% if product %}{{ product.meta_description|default:product.short_description }}{% endif %}</textarea>
+                            <div class="help-text">Recommended: 150-160 characters</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Meta Keywords</label>
+                            <input type="text" name="meta_keywords" class="form-control" 
+                                   value="{{ product.meta_keywords|default:'' }}" 
+                                   placeholder="product, keywords, separated, by, commas">
+                            <div class="help-text">Comma-separated keywords</div>
+                        </div>
+                       <div class="preview-title" id="seoTitlePreview">
+    {% if product %}
+        {{ product.meta_title|default:product.name|default:"Product Title" }}
+    {% else %}
+        Product Title
+    {% endif %}
+</div>
+                    </div>
+                </div>
+                
+                <!-- Save Actions -->
+                <div class="form-card">
+                    <div class="form-card-footer">
+                        <button type="button" class="btn-cancel" onclick="window.history.back()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="button" class="btn-preview" onclick="previewProduct()">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                        <button type="button" class="btn-save-draft" id="saveDraftBtn">
+                            <i class="fas fa-save"></i> Save Draft
+                        </button>
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-check"></i> {% if product %}Update{% else %}Publish{% endif %} Product
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Add Category Modal -->
+<div id="addCategoryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-folder-plus"></i> Add New Category</h3>
+            <button class="modal-close" onclick="closeAddCategoryModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Category Name <span class="required">*</span></label>
+                <input type="text" id="newCategoryName" class="form-control" placeholder="e.g., Electronics, Clothing, Books">
+                <div class="help-text">Enter the name of the new category</div>
+            </div>
+            <div class="form-group">
+                <label>Parent Category <span class="optional">(Optional)</span></label>
+                <select id="newCategoryParent" class="form-control">
+                    <option value="">None (Top Level Category)</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">
+                        {% if category.parent %}{{ category.parent.name }} > {% endif %}{{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="help-text">Select a parent category if this is a subcategory</div>
+            </div>
+            <div class="form-group">
+                <label>Description <span class="optional">(Optional)</span></label>
+                <textarea id="newCategoryDescription" class="form-control" rows="3" placeholder="Brief description of the category"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeAddCategoryModal()">Cancel</button>
+            <button type="button" class="btn-primary" onclick="saveNewCategory()">Save Category</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================
+// PRODUCT FORM JAVASCRIPT
+// ============================================
+
+// Toggle Sale Fields
+const saleCheckbox = document.querySelector('input[name="is_on_sale"]');
+if (saleCheckbox) {
+    saleCheckbox.addEventListener('change', function() {
+        const saleFields = document.getElementById('saleFields');
+        if (saleFields) {
+            saleFields.style.display = this.checked ? 'grid' : 'none';
+        }
+    });
+    
+    // Initialize sale fields visibility
+    if (saleCheckbox.checked) {
+        const saleFields = document.getElementById('saleFields');
+        if (saleFields) saleFields.style.display = 'grid';
+    }
+}
+
+// Track Inventory - Always enabled, checkbox disabled
+const inventoryCheckbox = document.querySelector('input[name="track_inventory"]');
+if (inventoryCheckbox) {
+    inventoryCheckbox.disabled = true;
+}
+
+function updateStockIndicator() {
+    const stockQty = parseInt(document.querySelector('input[name="stock_quantity"]')?.value || 0);
+    const threshold = parseInt(document.querySelector('input[name="low_stock_threshold"]')?.value || 10);
+    const indicator = document.getElementById('stockIndicator');
+    const statusSpan = document.getElementById('stockStatus');
+    
+    if (!indicator || !statusSpan) return;
+    
+    indicator.style.display = 'block';
+    
+    if (stockQty <= 0) {
+        statusSpan.innerHTML = '<span class="stock-badge out-of-stock"><i class="fas fa-times-circle"></i> Out of Stock</span>';
+    } else if (stockQty <= threshold) {
+        statusSpan.innerHTML = `<span class="stock-badge low-stock"><i class="fas fa-exclamation-triangle"></i> Low Stock: ${stockQty} units remaining</span>`;
+    } else {
+        statusSpan.innerHTML = `<span class="stock-badge in-stock"><i class="fas fa-check-circle"></i> In Stock: ${stockQty} units</span>`;
+    }
+}
+
+// Stock quantity change listeners
+const stockQuantityInput = document.querySelector('input[name="stock_quantity"]');
+const lowStockThresholdInput = document.querySelector('input[name="low_stock_threshold"]');
+if (stockQuantityInput) stockQuantityInput.addEventListener('input', updateStockIndicator);
+if (lowStockThresholdInput) lowStockThresholdInput.addEventListener('input', updateStockIndicator);
+updateStockIndicator();
+
+// ============================================
+// ADD CATEGORY MODAL FUNCTIONS
+// ============================================
+
+function openAddCategoryModal() {
+    document.getElementById('addCategoryModal').classList.add('active');
+}
+
+function closeAddCategoryModal() {
+    document.getElementById('addCategoryModal').classList.remove('active');
+    document.getElementById('newCategoryName').value = '';
+    document.getElementById('newCategoryParent').value = '';
+    document.getElementById('newCategoryDescription').value = '';
+}
+
+function saveNewCategory() {
+    const categoryName = document.getElementById('newCategoryName').value.trim();
+    const parentId = document.getElementById('newCategoryParent').value;
+    const description = document.getElementById('newCategoryDescription').value.trim();
+    
+    if (!categoryName) {
+        showToast('Please enter a category name', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const saveBtn = document.querySelector('#addCategoryModal .btn-primary');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    saveBtn.disabled = true;
+    
+    fetch('/manage/categories/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            name: categoryName,
+            parent_id: parentId || null,
+            description: description
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message || 'Category added successfully!', 'success');
+            const categorySelect = document.querySelector('select[name="category"]');
+            const newOption = document.createElement('option');
+            newOption.value = data.category_id;
+            newOption.textContent = data.category_name;
+            categorySelect.appendChild(newOption);
+            newOption.selected = true;
+            closeAddCategoryModal();
+        } else {
+            showToast(data.error || 'Error adding category', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Network error. Please try again.', 'error');
+    })
+    .finally(() => {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+// ============================================
+// IMAGE UPLOAD HANDLING
+// ============================================
+
+const imageUploadArea = document.getElementById('imageUploadArea');
+const imageInput = document.getElementById('imageInput');
+const imagePreviewGrid = document.getElementById('imagePreviewGrid');
+let newImageFiles = [];
+
+if (imageUploadArea && imageInput) {
+    imageUploadArea.addEventListener('click', () => imageInput.click());
+    
+    imageUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        imageUploadArea.style.borderColor = 'var(--input-focus)';
+        imageUploadArea.style.background = '#f8fafc';
+    });
+    
+    imageUploadArea.addEventListener('dragleave', () => {
+        imageUploadArea.style.borderColor = 'var(--border-color)';
+        imageUploadArea.style.background = '#fafcff';
+    });
+    
+    imageUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        imageUploadArea.style.borderColor = 'var(--border-color)';
+        imageUploadArea.style.background = '#fafcff';
+        const files = Array.from(e.dataTransfer.files);
+        handleImageUpload(files);
+    });
+    
+    imageInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        handleImageUpload(files);
+        imageInput.value = '';
+    });
+}
+
+function handleImageUpload(files) {
+    for (let file of files) {
+        if (!file.type.startsWith('image/')) {
+            showToast('Only image files are allowed', 'error');
+            continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showToast(`Image "${file.name}" is too large. Max 5MB`, 'error');
+            continue;
+        }
+        
+        newImageFiles.push(file);
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'image-preview-item';
+            previewDiv.setAttribute('data-new-image', 'true');
+            previewDiv.setAttribute('data-file-index', newImageFiles.length - 1);
+            previewDiv.innerHTML = `
+                <img src="${e.target.result}" alt="Product image">
+                <div class="image-actions">
+                    <button type="button" class="btn-primary-badge" onclick="setAsPrimary(this)" title="Set as Primary">
+                        <i class="fas fa-star"></i>
+                    </button>
+                    <button type="button" class="btn-remove-image" onclick="removeNewImage(this)" title="Remove">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="primary-badge" style="display: none;">Primary</div>
+            `;
+            imagePreviewGrid.appendChild(previewDiv);
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    showToast(`${files.length} image(s) added`, 'success');
+}
+
+// ============================================
+// IMAGE MANAGEMENT FUNCTIONS
+// ============================================
+
+function setPrimaryImage(imageId) {
+    console.log('Setting primary image for ID:', imageId);
+    
+   
+    const button = document.querySelector(`.image-preview-item[data-image-id="${imageId}"] .btn-primary-badge`);
+    const originalHTML = button?.innerHTML;
+    if (button) button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    const url = `/manage/products/set-primary/${imageId}/`;
+    console.log('Fetching URL:', url);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            // Update UI - remove primary badge from all
+            document.querySelectorAll('.image-preview-item').forEach(item => {
+                const badge = item.querySelector('.primary-badge');
+                if (badge) badge.style.display = 'none';
+            });
+            // Add primary badge to selected image
+            const selectedItem = document.querySelector(`.image-preview-item[data-image-id="${imageId}"]`);
+            const badge = selectedItem.querySelector('.primary-badge');
+            if (badge) badge.style.display = 'block';
+            
+            // Store the primary image ID in hidden input
+            const primaryImageInput = document.getElementById('primaryImageId');
+            if (primaryImageInput) {
+                primaryImageInput.value = imageId;
+                console.log('Saved primary image ID to hidden input:', imageId);
+            }
+            
+            showToast('Primary image updated', 'success');
+        } else {
+            showToast(data.error || 'Error updating primary image', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error details:', error);
+        showToast('Network error. Please check console for details.', 'error');
+    })
+    .finally(() => {
+        if (button && originalHTML) button.innerHTML = originalHTML;
+    });
+}
+function setAsPrimary(button) {
+    const previewItem = button.closest('.image-preview-item');
+    const imageId = previewItem.dataset.imageId;
+    
+    if (imageId) {
+        // Existing image - use the setPrimaryImage function
+        setPrimaryImage(imageId);
+    } else {
+        // New image - just update UI
+        const allItems = document.querySelectorAll('.image-preview-item');
+        allItems.forEach(item => {
+            const badge = item.querySelector('.primary-badge');
+            if (badge) badge.style.display = 'none';
+        });
+        
+        const badge = previewItem.querySelector('.primary-badge');
+        if (badge) badge.style.display = 'block';
+        
+        // For new images, we can't set the ID yet, but we'll remember which one is primary
+        const primaryImageInput = document.getElementById('primaryImageId');
+        if (primaryImageInput) {
+            primaryImageInput.value = 'new';
+            console.log('Marked as primary for new image');
+        }
+        
+        showToast('Primary image set for new image (will be saved when product is saved)', 'success');
+    }
+}
+
+function removeNewImage(button) {
+    const previewItem = button.closest('.image-preview-item');
+    const fileIndex = parseInt(previewItem.dataset.fileIndex);
+    
+    if (!isNaN(fileIndex)) {
+        newImageFiles.splice(fileIndex, 1);
+        document.querySelectorAll('.image-preview-item[data-new-image="true"]').forEach((item, idx) => {
+            item.setAttribute('data-file-index', idx);
+        });
+    }
+    
+    previewItem.remove();
+    showToast('Image removed', 'info');
+}
+
+function removeImage(imageId) {
+    if (confirm('Remove this image?')) {
+        fetch(`/manage/products/remove-image/${imageId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        }).then(() => {
+            const imageElement = document.querySelector(`.image-preview-item[data-image-id="${imageId}"]`);
+            if (imageElement) imageElement.remove();
+            showToast('Image removed', 'success');
+        });
+    }
+}
+
+// ============================================
+// VARIANT MANAGEMENT
+// ============================================
+
+function addVariant() {
+    const tbody = document.getElementById('variantsBody');
+    if (!tbody) return;
+    
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><input type="text" name="variant_name[]" class="variant-input" placeholder="e.g., Size"></div>
+         <input type="text" name="variant_value[]" class="variant-input" placeholder="e.g., XL"></div>
+         <input type="text" name="variant_sku[]" class="variant-input" placeholder="Optional"></div>
+         <input type="number" name="variant_price_adjustment[]" class="variant-input" value="0" step="0.01"></div>
+         <input type="number" name="variant_stock[]" class="variant-input" value="0"></div>
+         <button type="button" class="btn-remove-variant" onclick="removeVariant(this)"><i class="fas fa-trash"></i></button></div>
+    `;
+    tbody.appendChild(newRow);
+    showToast('Variant added', 'success');
+}
+
+function removeVariant(button) {
+    button.closest('tr').remove();
+    showToast('Variant removed', 'info');
+}
+
+// ============================================
+// SEO PREVIEW
+// ============================================
+
+const titleInput = document.querySelector('input[name="meta_title"]');
+const descInput = document.querySelector('textarea[name="meta_description"]');
+const nameInput = document.querySelector('input[name="name"]');
+
+function updateSEOPreview() {
+    const titlePreview = document.getElementById('seoTitlePreview');
+    const descPreview = document.getElementById('seoDescPreview');
+    
+    if (titlePreview) {
+        const title = titleInput?.value || nameInput?.value || 'Product Title';
+        titlePreview.textContent = title;
+    }
+    if (descPreview) {
+        const desc = descInput?.value || 'Product description will appear here';
+        descPreview.textContent = desc;
+    }
+}
+
+if (titleInput) titleInput.addEventListener('input', updateSEOPreview);
+if (descInput) descInput.addEventListener('input', updateSEOPreview);
+if (nameInput) nameInput.addEventListener('input', updateSEOPreview);
+
+// ============================================
+// FORM SUBMISSION - COMPLETE
+// ============================================
+
+const productForm = document.getElementById('productForm');
+if (productForm) {
+    productForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.querySelector('input[name="name"]')?.value.trim();
+        const price = document.querySelector('input[name="price"]')?.value;
+        const category = document.querySelector('select[name="category"]')?.value;
+        
+        if (!name) {
+            showToast('Product name is required', 'error');
+            return false;
+        }
+        
+        if (!price || parseFloat(price) <= 0) {
+            showToast('Valid price is required', 'error');
+            return false;
+        }
+        
+        if (!category) {
+            showToast('Please select a category', 'error');
+            return false;
+        }
+        
+        const formData = new FormData(this);
+        
+        // Add new image files
+        if (typeof newImageFiles !== 'undefined' && newImageFiles.length > 0) {
+            newImageFiles.forEach((file, index) => {
+                formData.append('images', file);
+            });
+            console.log(`Adding ${newImageFiles.length} images to form data`);
+        }
+        
+        // Get the current primary image ID from the UI
+        const primaryImageInput = document.getElementById('primaryImageId');
+        if (primaryImageInput && primaryImageInput.value) {
+            formData.append('primary_image_id', primaryImageInput.value);
+            console.log('Adding primary image ID to form data:', primaryImageInput.value);
+        } else {
+            // Find which image has the primary badge
+            const primaryImageItem = document.querySelector('.image-preview-item .primary-badge[style*="display: block"], .image-preview-item .primary-badge:not([style*="display: none"])');
+            if (primaryImageItem) {
+                const primaryImageElement = primaryImageItem.closest('.image-preview-item');
+                const primaryImageId = primaryImageElement?.dataset.imageId;
+                if (primaryImageId) {
+                    formData.append('primary_image_id', primaryImageId);
+                    console.log('Found primary image ID from UI:', primaryImageId);
+                }
+            }
+        }
+        
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn?.innerHTML || 'Save Product';
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.disabled = true;
+        }
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.text().then(text => {
+                console.log('Response text:', text);
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Failed to parse JSON:', e);
+                    throw new Error('Server returned invalid response');
+                }
+            });
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                showToast(data.message || 'Product saved successfully!', 'success');
+                if (data.redirect_url) {
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1500);
+                }
+            } else {
+                showToast(data.error || 'Error saving product', 'error');
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            showToast(error.message || 'Network error. Please try again.', 'error');
+            if (submitBtn) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    });
+}
+
+// ============================================
+// SAVE DRAFT - COMPLETE
+// ============================================
+
+const saveDraftBtn = document.getElementById('saveDraftBtn');
+if (saveDraftBtn) {
+    saveDraftBtn.addEventListener('click', function() {
+        const name = document.querySelector('input[name="name"]')?.value.trim();
+        
+        if (!name) {
+            showToast('Product name is required even for draft', 'error');
+            return;
+        }
+        
+        const originalText = saveDraftBtn.innerHTML;
+        saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving draft...';
+        saveDraftBtn.disabled = true;
+        
+        const form = document.getElementById('productForm');
+        const formData = new FormData(form);
+        formData.append('save_draft', 'true');
+        
+        if (typeof newImageFiles !== 'undefined' && newImageFiles.length > 0) {
+            newImageFiles.forEach(file => {
+                formData.append('images', file);
+            });
+        }
+        
+        // Also add primary image ID for draft
+        const primaryImageInput = document.getElementById('primaryImageId');
+        if (primaryImageInput && primaryImageInput.value) {
+            formData.append('primary_image_id', primaryImageInput.value);
+        }
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Product saved as draft!', 'success');
+                if (data.redirect_url) {
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1500);
+                }
+            } else {
+                showToast(data.error || 'Error saving draft', 'error');
+                saveDraftBtn.innerHTML = originalText;
+                saveDraftBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Network error. Please try again.', 'error');
+            saveDraftBtn.innerHTML = originalText;
+            saveDraftBtn.disabled = false;
+        });
+    });
+}
+
+// ============================================
+// PREVIEW PRODUCT - COMPLETE
+// ============================================
+
+function previewProduct() {
+    const name = document.querySelector('input[name="name"]')?.value;
+    if (!name) {
+        showToast('Please enter product name first', 'error');
+        return;
+    }
+    
+    const previewBtn = document.querySelector('.btn-preview');
+    const originalText = previewBtn?.innerHTML;
+    if (previewBtn) {
+        previewBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+        previewBtn.disabled = true;
+    }
+    
+    const form = document.getElementById('productForm');
+    const formData = new FormData(form);
+    
+    if (typeof newImageFiles !== 'undefined' && newImageFiles.length > 0) {
+        newImageFiles.forEach(file => {
+            formData.append('images', file);
+        });
+    }
+    
+    // Generate a slug from the product name
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    
+    // Save preview data to session first
+    fetch('/manage/products/preview/save/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.open(`/product/${slug}/preview/`, '_blank');
+            showToast('Preview opened in new tab', 'success');
+        } else {
+            window.open(`/product/${slug}/preview/`, '_blank');
+            showToast('Preview opened (basic preview)', 'info');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        window.open(`/product/${slug}/preview/`, '_blank');
+        showToast('Preview opened (basic preview)', 'info');
+    })
+    .finally(() => {
+        if (previewBtn) {
+            previewBtn.innerHTML = originalText;
+            previewBtn.disabled = false;
+        }
+    });
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+    toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function getCookie(name) {
+    let value = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                value = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return value;
+}
+
+// Auto-generate slug
+let isGeneratingSlug = false;
+if (nameInput) {
+    nameInput.addEventListener('blur', function() {
+        if (!isGeneratingSlug && this.value && !document.querySelector('input[name="slug"]')?.value) {
+            const slug = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            if (slug && slug.length > 0) {
+                const slugInput = document.createElement('input');
+                slugInput.type = 'hidden';
+                slugInput.name = 'slug';
+                slugInput.value = slug;
+                this.closest('form')?.appendChild(slugInput);
+            }
+        }
+    });
+}
+
+// Close modal on click outside
+window.onclick = function(event) {
+    const modal = document.getElementById('addCategoryModal');
+    if (event.target === modal) {
+        closeAddCategoryModal();
+    }
+}
+
+// Add CSS for toast messages if not present
+if (!document.querySelector('#toast-styles')) {
+    const style = document.createElement('style');
+    style.id = 'toast-styles';
+    style.textContent = `
+        .toast-message {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1100;
+            animation: slideIn 0.3s ease;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .toast-message.error {
+            background: #ef4444;
+        }
+        .toast-message.info {
+            background: #3b82f6;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+</script>
+{% endblock %}

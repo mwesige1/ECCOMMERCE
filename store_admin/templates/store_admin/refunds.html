@@ -1,0 +1,691 @@
+{% extends 'store_admin/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Refunds Management — Homies Admin{% endblock %}
+{% block page_title %}Refunds Management{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --refund-pending: #f59e0b;
+    --refund-approved: #10b981;
+    --refund-rejected: #ef4444;
+}
+
+/* Stats */
+.refund-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.refund-stat-card {
+    background: white;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.refund-stat-card:hover { border-color: var(--primary); }
+.refund-stat-card.active { border-color: var(--primary); background: #f0f9ff; }
+
+.refund-stat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.refund-stat-icon.pending  { background: rgba(245,158,11,.12); color: #b45309; }
+.refund-stat-icon.approved { background: rgba(16,185,129,.12);  color: #065f46; }
+.refund-stat-icon.rejected { background: rgba(239,68,68,.12);   color: #991b1b; }
+.refund-stat-icon.total    { background: rgba(37,99,235,.12);   color: #1d4ed8; }
+
+.refund-stat-value  { font-size: 22px; font-weight: 700; color: var(--gray-900); margin-bottom: 3px; }
+.refund-stat-label  { font-size: 11px; color: var(--gray-500); margin-bottom: 8px; }
+.refund-stat-amount { font-size: 11px; color: var(--gray-600); padding-top: 8px; border-top: 0.5px solid var(--border-color); }
+
+/* Action bar */
+.action-bar {
+    background: white;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 12px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.filter-select {
+    padding: 6px 10px;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    background: white;
+    cursor: pointer;
+    color: var(--gray-700);
+    transition: border-color 0.15s;
+}
+
+.filter-select:focus { outline: none; border-color: var(--primary); }
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: white;
+    transition: border-color 0.15s;
+}
+
+.search-box:focus-within { border-color: var(--primary); }
+.search-box i   { color: var(--gray-400); font-size: 12px; }
+.search-box input { border: none; outline: none; font-size: 12px; width: 200px; background: transparent; }
+
+.btn-export {
+    padding: 6px 14px;
+    border: 0.5px solid var(--primary);
+    background: #eff6ff;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+}
+
+.btn-export:hover { background: var(--primary); color: white; }
+
+/* Table */
+.refunds-table-container {
+    background: white;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.refunds-table { width: 100%; border-collapse: collapse; }
+
+.refunds-table th {
+    text-align: left;
+    padding: 11px 14px;
+    background: #f8fafc;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    border-bottom: 0.5px solid var(--border-color);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.refunds-table td {
+    padding: 13px 14px;
+    border-bottom: 0.5px solid var(--border-color);
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.refunds-table tbody tr:last-child td { border-bottom: none; }
+.refunds-table tbody tr:hover { background: #fafcff; }
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-pending  { background: #fef3c7; color: #92400e; }
+.status-approved { background: #d1fae5; color: #065f46; }
+.status-rejected { background: #fee2e2; color: #991b1b; }
+
+/* Customer */
+.customer-info  { display: flex; align-items: center; gap: 9px; }
+
+.customer-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.order-number {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-family: monospace;
+    font-size: 12px;
+}
+.order-number:hover { text-decoration: underline; }
+
+.refund-id-badge {
+    font-family: monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gray-600);
+    background: var(--gray-50);
+    padding: 3px 7px;
+    border-radius: 4px;
+    border: 0.5px solid var(--border-color);
+}
+
+.reason-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #f1f5f9;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    color: var(--gray-600);
+}
+
+.refund-amount { color: #059669; font-weight: 600; font-size: 12px; }
+
+/* Action icons */
+.action-buttons { display: flex; gap: 5px; }
+
+.action-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-color);
+    background: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    color: var(--gray-500);
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.action-icon:hover            { transform: translateY(-1px); }
+.action-icon.view:hover       { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+.action-icon.approve:hover    { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.action-icon.reject:hover     { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+/* Reject Modal */
+.reject-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.reject-modal.active { display: flex; }
+
+.reject-modal-content {
+    background: white;
+    border-radius: var(--radius-xl);
+    max-width: 440px;
+    width: 90%;
+    animation: slideIn .25s ease;
+}
+
+.reject-modal-header {
+    padding: 16px 20px;
+    border-bottom: 0.5px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reject-modal-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--gray-400);
+}
+.modal-close:hover { color: var(--gray-700); }
+.reject-modal-body   { padding: 20px; }
+.reject-modal-footer {
+    padding: 12px 20px;
+    border-top: 0.5px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.reject-textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 0.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.reject-textarea:focus { outline: none; border-color: var(--primary); }
+
+/* Toast */
+.toast-message {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    padding: 10px 16px;
+    background: #10b981;
+    color: white;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 1100;
+    font-size: 12px;
+    animation: slideIn .3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+
+.toast-message.error { background: #ef4444; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .action-bar { flex-direction: column; align-items: stretch; }
+    .filters { flex-direction: column; width: 100%; }
+    .filter-select, .search-box { width: 100%; }
+    .search-box input { width: 100%; }
+    .refunds-table { min-width: 800px; }
+    .refunds-table-container { overflow-x: auto; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="refunds-container">
+
+    <!-- Stats Cards -->
+    <div class="refund-stats">
+        <div class="refund-stat-card" data-status="pending">
+            <div class="refund-stat-icon pending"><i class="fas fa-clock"></i></div>
+            <div class="refund-stat-value">{{ pending_count|default:0 }}</div>
+            <div class="refund-stat-label">Pending</div>
+            <div class="refund-stat-amount">UGX {{ pending_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="refund-stat-card" data-status="approved">
+            <div class="refund-stat-icon approved"><i class="fas fa-check-circle"></i></div>
+            <div class="refund-stat-value">{{ approved_count|default:0 }}</div>
+            <div class="refund-stat-label">Approved</div>
+            <div class="refund-stat-amount">UGX {{ approved_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="refund-stat-card" data-status="rejected">
+            <div class="refund-stat-icon rejected"><i class="fas fa-times-circle"></i></div>
+            <div class="refund-stat-value">{{ rejected_count|default:0 }}</div>
+            <div class="refund-stat-label">Rejected</div>
+            <div class="refund-stat-amount">UGX {{ rejected_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="refund-stat-card" data-status="all">
+            <div class="refund-stat-icon total"><i class="fas fa-chart-line"></i></div>
+            <div class="refund-stat-value">{{ total_count|default:0 }}</div>
+            <div class="refund-stat-label">Total requests</div>
+            <div class="refund-stat-amount">UGX {{ total_amount|default:0|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div class="filters">
+            <select id="statusFilter" class="filter-select" onchange="filterRefunds()">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+            </select>
+
+            <select id="reasonFilter" class="filter-select" onchange="filterRefunds()">
+                <option value="all">All reasons</option>
+                <option value="damaged">Damaged product</option>
+                <option value="wrong_item">Wrong item received</option>
+                <option value="not_as_described">Not as described</option>
+                <option value="defective">Defective product</option>
+                <option value="late_delivery">Late delivery</option>
+                <option value="changed_mind">Changed mind</option>
+                <option value="other">Other</option>
+            </select>
+
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput"
+                    placeholder="Search by order # or refund ID…"
+                    onkeyup="filterRefunds()">
+            </div>
+        </div>
+
+        <button class="btn-export" onclick="exportRefunds()">
+            <i class="fas fa-download"></i> Export data
+        </button>
+    </div>
+
+    <!-- Refunds Table -->
+    <div class="refunds-table-container">
+        <table class="refunds-table" id="refundsTable">
+            <thead>
+                <tr>
+                    <th>Refund ID</th>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Reason</th>
+                    <th>Amount</th>
+                    <th>Requested</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="refundsTableBody">
+                {% for refund in refunds %}
+                <tr data-id="{{ refund.id }}"
+                    data-status="{{ refund.status }}"
+                    data-reason="{{ refund.reason }}"
+                    data-search="{{ refund.refund_id }} {{ refund.order.order_number }} {{ refund.order.full_name|lower }}">
+
+                    <td>
+                        <span class="refund-id-badge">{{ refund.refund_id }}</span>
+                    </td>
+
+                    <td>
+                        <a href="{% url 'store_admin:order_detail' refund.order.order_number %}"
+                           class="order-number">
+                            #{{ refund.order.order_number }}
+                        </a>
+                    </td>
+
+                    <td>
+                        <div class="customer-info">
+                            <div class="customer-avatar">
+                                {{ refund.order.full_name|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <div style="font-weight:600;font-size:12px;">
+                                    {{ refund.order.full_name|truncatechars:25 }}
+                                </div>
+                                <div style="font-size:11px;color:var(--gray-500);">
+                                    {{ refund.order.email }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="reason-badge">{{ refund.get_reason_display }}</span>
+                    </td>
+
+                    <td>
+                        <span class="refund-amount">
+                            UGX {{ refund.refund_amount|floatformat:0|intcomma }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div style="font-size:12px;">{{ refund.requested_at|date:"M d, Y" }}</div>
+                        <div style="font-size:11px;color:var(--gray-500);">
+                            {{ refund.requested_at|timesince }} ago
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="status-badge status-{{ refund.status }}">
+                            <i class="fas fa-{% if refund.status == 'pending' %}clock{% elif refund.status == 'approved' %}check-circle{% else %}times-circle{% endif %}"></i>
+                            {{ refund.get_status_display }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'store_admin:order_detail' refund.order.order_number %}"
+                               class="action-icon view" title="View order details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if refund.status == 'pending' %}
+                            <button class="action-icon approve"
+                                onclick="openApproveModal({{ refund.id }}, '{{ refund.refund_id }}')"
+                                title="Approve refund">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="action-icon reject"
+                                onclick="openRejectModal({{ refund.id }}, '{{ refund.refund_id }}')"
+                                title="Reject refund">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align:center;padding:60px 0;">
+                        <i class="fas fa-undo-alt" style="font-size:40px;color:var(--gray-300);"></i>
+                        <h3 style="margin-top:14px;font-size:15px;">No refund requests</h3>
+                        <p style="color:var(--gray-500);font-size:13px;margin-top:4px;">
+                            When customers request refunds, they'll appear here.
+                        </p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" class="reject-modal">
+    <div class="reject-modal-content">
+        <div class="reject-modal-header">
+            <h3>Reject refund request</h3>
+            <button class="modal-close" onclick="closeRejectModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="reject-modal-body">
+            <input type="hidden" id="rejectRefundId">
+            <p style="font-size:12px;color:var(--gray-500);margin-bottom:14px;">
+                Refund: <strong id="rejectRefundDisplay" style="color:var(--gray-900);"></strong>
+            </p>
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">
+                Reason for rejection
+            </label>
+            <textarea id="rejectionReason" class="reject-textarea"
+                placeholder="Provide a reason for rejecting this refund…"></textarea>
+        </div>
+        <div class="reject-modal-footer">
+            <button class="bulk-btn" onclick="closeRejectModal()"
+                style="background:var(--gray-100);color:var(--gray-700);">Cancel</button>
+            <button class="bulk-btn" onclick="submitReject()"
+                style="background:#ef4444;color:white;border-color:#ef4444;">Reject refund</button>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Modal -->
+<div id="approveModal" class="reject-modal">
+    <div class="reject-modal-content">
+        <div class="reject-modal-header">
+            <h3>Approve refund request</h3>
+            <button class="modal-close" onclick="closeApproveModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="reject-modal-body">
+            <input type="hidden" id="approveRefundId">
+            <p style="font-size:13px;color:var(--gray-600);">
+                Are you sure you want to approve refund
+                <strong id="approveRefundDisplay" style="color:var(--gray-900);"></strong>?
+                This action cannot be undone.
+            </p>
+        </div>
+        <div class="reject-modal-footer">
+            <button class="bulk-btn" onclick="closeApproveModal()"
+                style="background:var(--gray-100);color:var(--gray-700);">Cancel</button>
+            <button class="bulk-btn" onclick="submitApprove()"
+                style="background:#10b981;color:white;border-color:#10b981;">Approve refund</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterRefunds() {
+    const status = document.getElementById('statusFilter').value;
+    const reason = document.getElementById('reasonFilter').value;
+    const search = document.getElementById('searchInput').value.toLowerCase();
+
+    document.querySelectorAll('#refundsTableBody tr').forEach(row => {
+        if (!row.dataset.id) return;
+        const matchStatus = status === 'all' || row.dataset.status === status;
+        const matchReason = reason === 'all' || row.dataset.reason === reason;
+        const matchSearch = !search || (row.dataset.search || '').includes(search);
+        row.style.display = matchStatus && matchReason && matchSearch ? '' : 'none';
+    });
+}
+
+document.querySelectorAll('.refund-stat-card').forEach(card => {
+    card.addEventListener('click', function () {
+        document.getElementById('statusFilter').value = this.dataset.status;
+        filterRefunds();
+        document.querySelectorAll('.refund-stat-card').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+let pendingRejectId = null;
+let pendingApproveId = null;
+
+function openRejectModal(id, refundId) {
+    pendingRejectId = id;
+    document.getElementById('rejectRefundId').value = id;
+    document.getElementById('rejectRefundDisplay').textContent = refundId;
+    document.getElementById('rejectionReason').value = '';
+    document.getElementById('rejectModal').classList.add('active');
+}
+
+function closeRejectModal() { document.getElementById('rejectModal').classList.remove('active'); }
+
+function submitReject() {
+    const reason = document.getElementById('rejectionReason').value.trim();
+    if (!reason) { showToast('Please provide a rejection reason', 'error'); return; }
+
+    fetch(`/manage/refunds/${pendingRejectId}/process/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ action: 'reject', rejection_reason: reason })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Refund rejected successfully');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error processing refund', 'error');
+        }
+    })
+    .catch(() => showToast('Network error. Please try again.', 'error'));
+
+    closeRejectModal();
+}
+
+function openApproveModal(id, refundId) {
+    pendingApproveId = id;
+    document.getElementById('approveRefundId').value = id;
+    document.getElementById('approveRefundDisplay').textContent = refundId;
+    document.getElementById('approveModal').classList.add('active');
+}
+
+function closeApproveModal() { document.getElementById('approveModal').classList.remove('active'); }
+
+function submitApprove() {
+    fetch(`/manage/refunds/${pendingApproveId}/process/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ action: 'approve' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Refund approved successfully');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error approving refund', 'error');
+        }
+    })
+    .catch(() => showToast('Network error. Please try again.', 'error'));
+
+    closeApproveModal();
+}
+
+function exportRefunds() {
+    const status = document.getElementById('statusFilter').value;
+    const reason = document.getElementById('reasonFilter').value;
+    const search = document.getElementById('searchInput').value;
+    const params = new URLSearchParams();
+    if (status !== 'all') params.append('status', status);
+    if (reason !== 'all') params.append('reason', reason);
+    if (search) params.append('search', search);
+    params.append('export', 'csv');
+    window.location.href = `/manage/refunds/export/?${params.toString()}`;
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast-message${type === 'error' ? ' error' : ''}`;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function getCookie(name) {
+    return document.cookie.split(';').reduce((val, c) => {
+        const [k, v] = c.trim().split('=');
+        return k === name ? decodeURIComponent(v) : val;
+    }, null);
+}
+
+window.onclick = e => {
+    if (e.target === document.getElementById('rejectModal')) closeRejectModal();
+    if (e.target === document.getElementById('approveModal')) closeApproveModal();
+};
+
+document.getElementById('searchInput')?.addEventListener('keypress', e => {
+    if (e.key === 'Enter') filterRefunds();
+});
+
+filterRefunds();
+</script>
+{% endblock %}

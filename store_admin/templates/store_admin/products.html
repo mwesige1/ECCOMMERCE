@@ -1,0 +1,972 @@
+{% extends 'store_admin/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Products Management — Homies Admin{% endblock %}
+{% block page_title %}Products Management{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Stats */
+.products-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+    .products-stats { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+}
+
+.product-stat-card {
+    background: white;
+    border: 0.5px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.product-stat-card:hover { border-color: var(--primary); }
+.product-stat-card.active { border-color: var(--primary); background: #f0f9ff; }
+
+.product-stat-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.product-stat-icon.total     { background: rgba(37,99,235,.1);   color: #1d4ed8; }
+.product-stat-icon.active    { background: rgba(16,185,129,.1);  color: #065f46; }
+.product-stat-icon.inactive  { background: rgba(100,116,139,.1); color: #64748b; }
+.product-stat-icon.lowstock  { background: rgba(245,158,11,.1);  color: #b45309; }
+.product-stat-icon.outofstock{ background: rgba(239,68,68,.1);   color: #991b1b; }
+
+.product-stat-value { font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 2px; }
+.product-stat-label { font-size: 10px; color: var(--gray-500); }
+
+/* Action bar */
+.action-bar {
+    background: rgba(191, 227, 237, 0.226);
+    border: 0.5px solid var(--border-color);
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+.btn-create {
+    background: var(--primary);
+    color: rgb(10, 37, 248);
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 15px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: opacity 0.15s;
+}
+
+.btn-create:hover { opacity: 0.85;
+color: #e10a11; }
+
+.filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-select {
+    padding: 6px 10px;
+    border: 0.5px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 12px;
+    background: white;
+    cursor: pointer;
+    color: var(--gray-700);
+    min-width: 10px;
+    transition: border-color 0.15s;
+justify-content: left;}
+
+.filter-select:focus { outline: none; border-color: var(--primary); }
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 0.5px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+    min-width: 600px;
+    transition: border-color 0.15s;
+}
+
+.search-box:focus-within { border-color: var(--primary); }
+.search-box i   { 
+    color: var(--gray-400);
+     font-size: 11px; }
+.search-box input { 
+    border: none; outline: none; 
+    font-size: 12px; width: 100%; 
+    background: transparent; }
+
+/* Products Grid */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+/* Product Card */
+.product-card {
+    background: white;
+    border: 0.5px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    position: relative;
+    cursor: pointer;
+}
+
+.product-card:hover { border-color: #cbd5e1; }
+.product-card.selected { border: 1.5px solid var(--primary); }
+
+/* Badges */
+.product-badge {
+    position: absolute;
+    top: 7px; left: 7px;
+    z-index: 5;
+    display: flex;
+    gap: 4px;
+}
+
+.badge-featured {
+    background: #f59e0b;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.badge-sale {
+    background: #ef4444;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+/* Image */
+.product-image {
+    height: 130px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-image img { width: 100%; height: 100%; object-fit: cover; }
+
+.product-image-placeholder { font-size: 28px; color: var(--gray-300); }
+
+/* Overlay actions */
+.product-actions-overlay {
+    position: absolute;
+    top: 7px; right: 7px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.product-card:hover .product-actions-overlay { opacity: 1; }
+
+.product-action-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: white;
+    border: 0.5px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--gray-600);
+    font-size: 11px;
+}
+
+.product-action-icon:hover          { transform: scale(1.05); }
+.product-action-icon.edit:hover     { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+.product-action-icon.stock:hover    { background: #fef3c7; color: #b45309; border-color: #fcd34d; }
+.product-action-icon.delete:hover   { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+
+/* Card info */
+.product-info { padding: 10px; }
+
+.product-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-900);
+    margin-bottom: 6px;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 32px;
+}
+
+.product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+}
+
+.product-price       { font-size: 13px; font-weight: 500; color: var(--primary); }
+.product-price-old   { font-size: 10px; color: var(--gray-400); text-decoration: line-through; margin-left: 3px; }
+.product-vendor      { font-size: 10px; color: var(--gray-500); }
+
+.product-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 7px;
+    border-top: 0.5px solid var(--border-color);
+    font-size: 10px;
+    color: var(--gray-600);
+    margin-bottom: 7px;
+}
+
+.product-sales { display: flex; align-items: center; gap: 3px; }
+
+.product-stock { display: flex; align-items: center; gap: 3px; cursor: pointer; }
+.product-stock:hover { color: var(--primary); }
+
+.stock-indicator       { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+.stock-indicator.in-stock   { background: #10b981; }
+.stock-indicator.low-stock  { background: #f59e0b; }
+.stock-indicator.out-of-stock{ background: #ef4444; }
+
+.product-status {
+    padding-top: 7px;
+    border-top: 0.5px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-toggle { display: flex; align-items: center; gap: 5px; }
+.status-toggle span { font-size: 10px; color: var(--gray-500); }
+
+.toggle-switch { position: relative; display: inline-block; width: 30px; height: 17px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.2s;
+    border-radius: 17px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 11px; width: 11px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: 0.2s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider { background-color: #10b981; }
+input:checked + .toggle-slider:before { transform: translateX(13px); }
+
+.sku-code { font-size: 9px; color: var(--gray-400); max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Stock Modal */
+.stock-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.stock-modal.active { display: flex; }
+
+.stock-modal-content {
+    background: white;
+    border-radius: 14px;
+    max-width: 380px;
+    width: 90%;
+    animation: modalIn .2s ease;
+}
+
+.stock-modal-header {
+    padding: 14px 18px;
+    border-bottom: 0.5px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stock-modal-header h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.stock-modal-close { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--gray-400); }
+.stock-modal-close:hover { color: var(--gray-700); }
+.stock-modal-body { padding: 18px; }
+
+.product-info-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.product-info-icon {
+    width: 30px; height: 30px;
+    background: #fef3c7;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b45309;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.product-info-text .label { font-size: 10px; color: var(--gray-500); margin-bottom: 2px; }
+.product-info-text .value { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+
+.current-stock {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.current-stock .label { font-size: 11px; color: var(--gray-500); }
+.current-stock .value { font-size: 18px; font-weight: 700; color: var(--gray-900); }
+
+.stock-input-group { margin-bottom: 12px; }
+.stock-input-group label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 5px; color: var(--gray-700); }
+
+.stock-input-group input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 0.5px solid var(--border-color);
+    border-radius: 7px;
+    font-size: 12px;
+    transition: border-color 0.15s;
+}
+
+.stock-input-group input:focus { outline: none; border-color: var(--primary); }
+.stock-input-group small { display: block; margin-top: 3px; color: var(--gray-500); font-size: 10px; }
+
+.stock-modal-footer {
+    padding: 12px 18px;
+    border-top: 0.5px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.stock-modal-footer .btn-cancel {
+    padding: 6px 14px;
+    border: 0.5px solid var(--border-color);
+    border-radius: 6px;
+    background: #f1f5f9;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--gray-700);
+}
+
+.stock-modal-footer .btn-update {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    background: #f59e0b;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Bulk bar */
+.bulk-actions-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gray-900);
+    color: white;
+    padding: 7px 16px;
+    border-radius: 30px;
+    display: none;
+    gap: 10px;
+    align-items: center;
+    z-index: 100;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.bulk-actions-bar.show { display: flex; }
+
+.bulk-action-btn {
+    background: rgba(255,255,255,.15);
+    border: none;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.bulk-action-btn:hover { background: rgba(255,255,255,.3); }
+
+/* Pagination */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 5px; margin-top: 20px; }
+
+.page-btn {
+    padding: 5px 9px;
+    border: 0.5px solid var(--border-color);
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.15s;
+}
+
+.page-btn:hover,
+.page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Toast */
+.toast-message {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    padding: 8px 14px;
+    background: #10b981;
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 1100;
+    font-size: 11px;
+    animation: slideIn .2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+
+.toast-message.error { background: #ef4444; }
+
+/* Empty state */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+}
+
+.empty-state i   { font-size: 40px; color: var(--gray-300); margin-bottom: 12px; display: block; }
+.empty-state h3  { font-size: 14px; margin-bottom: 4px; }
+.empty-state p   { font-size: 12px; color: var(--gray-500); }
+
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes modalIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+@media (max-width: 768px) {
+    .action-bar { flex-direction: column; 
+    align-items: stretch;
+     }
+    .filters {
+     flex-direction: column; 
+     }
+    .filter-select, .search-box { 
+    width: 100%; 
+    }
+    .products-grid { 
+    grid-template-columns: 1fr;
+     }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="products-container">
+   
+
+    <!-- Stats -->
+    <div class="products-stats">
+        <div class="product-stat-card" data-filter="all">
+            <div class="product-stat-icon total"><i class="fas fa-box"></i></div>
+            <div class="product-stat-value">{{ total_products|default:0 }}</div>
+            <div class="product-stat-label">Total</div>
+        </div>
+        <div class="product-stat-card" data-filter="active">
+            <div class="product-stat-icon active"><i class="fas fa-check-circle"></i></div>
+            <div class="product-stat-value">{{ active_products|default:0 }}</div>
+            <div class="product-stat-label">Active</div>
+        </div>
+        <div class="product-stat-card" data-filter="inactive">
+            <div class="product-stat-icon inactive"><i class="fas fa-ban"></i></div>
+            <div class="product-stat-value">{{ inactive_products|default:0 }}</div>
+            <div class="product-stat-label">Inactive</div>
+        </div>
+        <div class="product-stat-card" data-filter="lowstock">
+            <div class="product-stat-icon lowstock"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="product-stat-value">{{ low_stock_count|default:0 }}</div>
+            <div class="product-stat-label">Low stock</div>
+        </div>
+        <div class="product-stat-card" data-filter="outofstock">
+            <div class="product-stat-icon outofstock"><i class="fas fa-times-circle"></i></div>
+            <div class="product-stat-value">{{ out_of_stock|default:0 }}</div>
+            <div class="product-stat-label">Out of stock</div>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <a href="{% url 'store_admin:add_product' %}" class="btn-create">
+            <i class="fas fa-plus"></i> Add product
+        </a>
+        <div class="filters">
+            <select id="categoryFilter" class="filter-select" onchange="filterProducts()">
+                <option value="all">All categories</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <select id="vendorFilter" class="filter-select" onchange="filterProducts()">
+                <option value="all">All vendors</option>
+                {% for vendor in vendors %}
+                <option value="{{ vendor.id }}">{{ vendor.store_name }}</option>
+                {% endfor %}
+            </select>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search by name, SKU…" oninput="filterProducts()">
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid" id="productsGrid">
+        {% for product in products %}
+        <div class="product-card"
+             data-id="{{ product.id }}"
+             data-status="{% if product.is_active %}active{% else %}inactive{% endif %}"
+             data-category="{{ product.category.id }}"
+             data-vendor="{{ product.vendor.id }}">
+
+            <div class="product-badge">
+                {% if product.is_featured %}
+                <span class="badge-featured"><i class="fas fa-star"></i> Featured</span>
+                {% endif %}
+                {% if product.is_on_sale %}
+                <span class="badge-sale"><i class="fas fa-tag"></i> Sale</span>
+                {% endif %}
+            </div>
+
+            <div class="product-image">
+                 {% if product.primary_image_url %}
+        <img src="{{ product.primary_image_url }}" alt="{{ product.name }}">
+                {% else %}
+                    <div class="product-image-placeholder">
+                        <i class="fas fa-box"></i>
+                    </div>
+                {% endif %}
+
+                <div class="product-actions-overlay">
+                    <div class="product-action-icon edit"
+                         onclick="editProduct({{ product.id }})"
+                         title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="product-action-icon stock"
+                         onclick="openStockModal({{ product.id }}, '{{ product.name|escapejs }}', {{ product.stock_quantity }})"
+                         title="Update stock">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="product-action-icon delete"
+                         onclick="deleteProduct({{ product.id }}, '{{ product.name|escapejs }}')"
+                         title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-info">
+                <div class="product-name">{{ product.name|truncatechars:45 }}</div>
+
+                <div class="product-meta">
+                    <div>
+                        <span class="product-price">UGX {{ product.current_price|floatformat:0|intcomma }}</span>
+                        {% if product.compare_at_price and product.compare_at_price > product.current_price %}
+                        <span class="product-price-old">UGX {{ product.compare_at_price|floatformat:0|intcomma }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="product-vendor">{{ product.vendor.store_name|truncatechars:12 }}</span>
+                </div>
+
+                <div class="product-stats">
+                    <div class="product-sales">
+                        <i class="fas fa-chart-line"></i> {{ product.total_sales|default:0 }} sold
+                    </div>
+                    <div class="product-stock"
+                         onclick="openStockModal({{ product.id }}, '{{ product.name|escapejs }}', {{ product.stock_quantity }})">
+                        <span class="stock-indicator
+                            {% if product.track_inventory %}
+                                {% if product.stock_quantity <= 0 %}out-of-stock
+                                {% elif product.stock_quantity <= product.low_stock_threshold %}low-stock
+                                {% else %}in-stock{% endif %}
+                            {% else %}in-stock{% endif %}">
+                        </span>
+                        {% if product.track_inventory %}
+                            {% if product.stock_quantity <= 0 %}Out of stock
+                            {% elif product.stock_quantity <= product.low_stock_threshold %}{{ product.stock_quantity }} left
+                            {% else %}{{ product.stock_quantity }} in stock{% endif %}
+                        {% else %}Unlimited{% endif %}
+                    </div>
+                </div>
+
+                <div class="product-status">
+                    <div class="status-toggle">
+                        <span>Active</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="product-status-checkbox"
+                                   data-id="{{ product.id }}"
+                                   {% if product.is_active %}checked{% endif %}
+                                   onchange="toggleProductStatus({{ product.id }}, this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="sku-code">SKU: {{ product.sku|default:"N/A"|truncatechars:8 }}</div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <h3>No products found</h3>
+            <p>Get started by adding your first product</p>
+            <a href="{% url 'store_admin:add_product' %}" class="btn-create"
+               style="display:inline-flex;margin-top:12px;">
+                <i class="fas fa-plus"></i> Add product
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+    <div class="pagination">
+        {% if products.has_previous %}
+        <button class="page-btn" onclick="goToPage({{ products.previous_page_number }})">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        {% endif %}
+        {% for num in products.paginator.page_range %}
+            {% if products.number == num %}
+            <button class="page-btn active">{{ num }}</button>
+            {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+            <button class="page-btn" onclick="goToPage({{ num }})">{{ num }}</button>
+            {% endif %}
+        {% endfor %}
+        {% if products.has_next %}
+        <button class="page-btn" onclick="goToPage({{ products.next_page_number }})">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Stock Modal -->
+<div id="stockModal" class="stock-modal">
+    <div class="stock-modal-content">
+        <div class="stock-modal-header">
+            <h3><i class="fas fa-boxes"></i> Update stock</h3>
+            <button class="stock-modal-close" onclick="closeStockModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="stock-modal-body">
+            <input type="hidden" id="stockProductId">
+            <div class="product-info-card">
+                <div class="product-info-icon"><i class="fas fa-box"></i></div>
+                <div class="product-info-text">
+                    <div class="label">Product</div>
+                    <div class="value" id="stockProductName">—</div>
+                </div>
+            </div>
+            <div class="current-stock">
+                <span class="label">Current stock</span>
+                <span class="value" id="currentStockValue">0</span>
+            </div>
+            <div class="stock-input-group">
+                <label>Add quantity</label>
+                <input type="number" id="addStockQuantity" placeholder="Quantity to add" min="1" value="1">
+                <small>Increases current stock by this amount</small>
+            </div>
+            <div class="stock-input-group">
+                <label>Set exact quantity</label>
+                <input type="number" id="setStockQuantity" placeholder="Set exact stock count" min="0">
+                <small>Overrides current stock with this value</small>
+            </div>
+        </div>
+        <div class="stock-modal-footer">
+            <button class="btn-cancel" onclick="closeStockModal()">Cancel</button>
+            <button class="btn-update" onclick="updateStockQuantity()">Update stock</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions-bar" id="bulkActionsBar">
+    <span id="selectedCount">0 selected</span>
+    <button class="bulk-action-btn" onclick="bulkActivate()">Activate</button>
+    <button class="bulk-action-btn" onclick="bulkDeactivate()">Deactivate</button>
+    <button class="bulk-action-btn" onclick="bulkDelete()">Delete</button>
+    <button class="bulk-action-btn" onclick="clearSelection()">Clear</button>
+</div>
+
+<script>
+let selectedProducts = new Set();
+let currentStockId = null;
+let currentStockName = null;
+let currentStockQty = 0;
+
+// Filtering
+function filterProducts() {
+    const category = document.getElementById('categoryFilter').value;
+    const vendor   = document.getElementById('vendorFilter').value;
+    const search   = document.getElementById('searchInput').value.toLowerCase();
+
+    document.querySelectorAll('.product-card').forEach(card => {
+        const matchCat    = category === 'all' || card.dataset.category === category;
+        const matchVendor = vendor   === 'all' || card.dataset.vendor   === vendor;
+        const name        = card.querySelector('.product-name')?.textContent.toLowerCase() || '';
+        const sku         = card.querySelector('.sku-code')?.textContent.toLowerCase()     || '';
+        const matchSearch = !search || name.includes(search) || sku.includes(search);
+        card.style.display = matchCat && matchVendor && matchSearch ? '' : 'none';
+    });
+}
+
+// Stats card filter
+document.querySelectorAll('.product-stat-card').forEach(card => {
+    card.addEventListener('click', function () {
+        const filter = this.dataset.filter;
+        document.querySelectorAll('.product-card').forEach(p => {
+            let show = true;
+            if (filter === 'active')     show = p.dataset.status === 'active';
+            else if (filter === 'inactive') show = p.dataset.status === 'inactive';
+            else if (filter === 'lowstock') show = p.querySelector('.product-stock')?.textContent.includes('left');
+            else if (filter === 'outofstock') show = p.querySelector('.product-stock')?.textContent.toLowerCase().includes('out of stock');
+            p.style.display = show ? '' : 'none';
+        });
+        document.querySelectorAll('.product-stat-card').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+// Card click — Ctrl/Cmd to multi-select
+document.addEventListener('click', function (e) {
+    const card = e.target.closest('.product-card');
+    if (!card) return;
+    if (e.target.closest('.product-action-icon') || e.target.closest('.toggle-switch')) return;
+    if (e.ctrlKey || e.metaKey) {
+        const id = card.dataset.id;
+        if (selectedProducts.has(id)) { selectedProducts.delete(id); card.classList.remove('selected'); }
+        else { selectedProducts.add(id); card.classList.add('selected'); }
+        updateBulkBar();
+    } else if (selectedProducts.size > 0) {
+        clearSelection();
+    }
+});
+
+function updateBulkBar() {
+    const bar = document.getElementById('bulkActionsBar');
+    const n = selectedProducts.size;
+    bar.classList.toggle('show', n > 0);
+    document.getElementById('selectedCount').textContent = `${n} selected`;
+}
+
+function clearSelection() {
+    selectedProducts.clear();
+    document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+    updateBulkBar();
+}
+
+// Product actions
+function editProduct(id) { window.location.href = `/manage/products/${id}/edit/`; }
+
+function toggleProductStatus(id, isActive) {
+    fetch(`/manage/products/${id}/toggle-status/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ is_active: isActive })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelector(`.product-card[data-id="${id}"]`)
+                ?.setAttribute('data-status', isActive ? 'active' : 'inactive');
+            showToast(`Product ${isActive ? 'activated' : 'deactivated'}`);
+        } else {
+            const cb = document.querySelector(`.product-status-checkbox[data-id="${id}"]`);
+            if (cb) cb.checked = !isActive;
+            showToast(data.error || 'Error updating status', 'error');
+        }
+    })
+    .catch(() => showToast('Network error. Please try again.', 'error'));
+}
+
+function deleteProduct(id, name) {
+    fetch(`/manage/products/${id}/delete/`, {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelector(`.product-card[data-id="${id}"]`)?.remove();
+            showToast('Product deleted');
+            updateStats();
+        } else {
+            showToast(data.error || 'Error deleting product', 'error');
+        }
+    })
+    .catch(() => showToast('Network error. Please try again.', 'error'));
+}
+
+// Stock modal
+function openStockModal(id, name, stock) {
+    currentStockId = id; currentStockName = name; currentStockQty = stock;
+    document.getElementById('stockProductId').value = id;
+    document.getElementById('stockProductName').textContent = name;
+    document.getElementById('currentStockValue').textContent = stock;
+    document.getElementById('addStockQuantity').value = 1;
+    document.getElementById('setStockQuantity').value = '';
+    document.getElementById('stockModal').classList.add('active');
+}
+
+function closeStockModal() { document.getElementById('stockModal').classList.remove('active'); }
+
+function updateStockQuantity() {
+    const setVal = document.getElementById('setStockQuantity').value;
+    const addVal = parseInt(document.getElementById('addStockQuantity').value) || 0;
+    let newStock = setVal !== '' ? parseInt(setVal) : currentStockQty + addVal;
+    if (isNaN(newStock) || newStock < 0) { showToast('Please enter a valid quantity', 'error'); return; }
+    if (addVal <= 0 && setVal === '') { showToast('Please enter a quantity', 'error'); return; }
+
+    fetch(`/manage/products/${currentStockId}/update-stock/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ stock_quantity: newStock })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const card = document.querySelector(`.product-card[data-id="${currentStockId}"]`);
+            if (card) {
+                const cls = newStock <= 0 ? 'out-of-stock' : (newStock <= 10 ? 'low-stock' : 'in-stock');
+                const label = newStock <= 0 ? 'Out of stock' : (newStock <= 10 ? `${newStock} left` : `${newStock} in stock`);
+                const stockEl = card.querySelector('.product-stock');
+                if (stockEl) stockEl.innerHTML = `<span class="stock-indicator ${cls}"></span>${label}`;
+            }
+            showToast(`Stock updated to ${newStock} units`);
+            closeStockModal();
+        } else {
+            showToast(data.error || 'Error updating stock', 'error');
+        }
+    })
+    .catch(() => showToast('Network error. Please try again.', 'error'));
+}
+
+// Bulk actions
+function bulkAction(url, method, body, successMsg) {
+    fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ product_ids: Array.from(selectedProducts), ...body })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { showToast(successMsg); clearSelection(); updateStats(); }
+        else showToast(data.error || 'Error', 'error');
+    });
+}
+
+function bulkActivate()   { if (!selectedProducts.size) return; if (confirm(`Activate ${selectedProducts.size} product(s)?`)) bulkAction('/manage/products/bulk-activate/', 'POST', {}, `${selectedProducts.size} product(s) activated`); }
+function bulkDeactivate() { if (!selectedProducts.size) return; if (confirm(`Deactivate ${selectedProducts.size} product(s)?`)) bulkAction('/manage/products/bulk-deactivate/', 'POST', {}, `${selectedProducts.size} product(s) deactivated`); }
+function bulkDelete()     { if (!selectedProducts.size) return; if (confirm(`Delete ${selectedProducts.size} product(s)? Cannot be undone.`)) bulkAction('/manage/products/bulk-delete/', 'DELETE', {}, `${selectedProducts.size} product(s) deleted`); }
+
+function updateStats() {
+    const cards = document.querySelectorAll('.product-card');
+    const stat = document.querySelectorAll('.product-stat-card');
+    if (stat[0]) stat[0].querySelector('.product-stat-value').textContent = cards.length;
+    if (stat[1]) stat[1].querySelector('.product-stat-value').textContent = document.querySelectorAll('.product-card[data-status="active"]').length;
+    if (stat[2]) stat[2].querySelector('.product-stat-value').textContent = document.querySelectorAll('.product-card[data-status="inactive"]').length;
+}
+
+function goToPage(page) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    window.location.href = url.toString();
+}
+
+function showToast(message, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast-message${type === 'error' ? ' error' : ''}`;
+    t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+function getCookie(name) {
+    return document.cookie.split(';').reduce((val, c) => {
+        const [k, v] = c.trim().split('=');
+        return k === name ? decodeURIComponent(v) : val;
+    }, null);
+}
+
+window.onclick = e => { if (e.target === document.getElementById('stockModal')) closeStockModal(); };
+filterProducts();
+</script>
+{% endblock %}

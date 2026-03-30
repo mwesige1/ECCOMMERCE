@@ -5,7 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.db.models import Q, Avg, Count, Prefetch, F, Sum,Max,Min
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponseBadRequest,Http404
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from decimal import Decimal
@@ -566,3 +566,68 @@ def submit_review(request, product_slug):
     })
 
 
+def product_preview(request, slug):
+    """Preview product before publishing"""
+    # Check if there's preview data in session
+    preview_data = request.session.get('preview_product', None)
+    
+    if preview_data:
+        # Create a temporary product object for preview
+        from django.forms.models import model_to_dict
+        
+        class TempProduct:
+            pass
+        
+        product = TempProduct()
+        product.name = preview_data.get('name', '')
+        product.price = preview_data.get('price', 0)
+        product.description = preview_data.get('description', '')
+        product.short_description = preview_data.get('short_description', '')
+        product.slug = slug
+        product.is_active = True
+        product.is_on_sale = False
+        product.rating = 0
+        product.total_reviews = 0
+        
+        # Try to get category
+        category_id = preview_data.get('category_id')
+        if category_id:
+            try:
+                product.category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                product.category = None
+        else:
+            product.category = None
+        
+        # For images, we can't show actual uploaded images in preview without saving
+        # So we'll show placeholder or no images
+        product.images = []
+        
+        context = {
+            'product': product,
+            'is_preview': True,
+        }
+    else:
+        # If no preview data, try to get actual product
+        try:
+            product = Product.objects.get(slug=slug, is_active=True)
+            context = {
+                'product': product,
+                'is_preview': False,
+            }
+        except Product.DoesNotExist:
+            raise Http404("Product not found")
+    
+    return render(request, 'eccommence/product_detail.html', context)
+
+
+@property
+def primary_image_url(self):
+    """Return the URL of the primary image or first image if none is primary"""
+    primary = self.images.filter(is_primary=True).first()
+    if primary:
+        return primary.image.url
+    first = self.images.first()
+    if first:
+        return first.image.url
+    return None

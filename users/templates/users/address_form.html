@@ -983,8 +983,8 @@
                 {% endif %}
 
                 <form method="post" 
-                      action="{% if action == 'Add' %}{% url 'users:address_add' %}{% else %}{% url 'users:address_edit' address.id %}{% endif %}"
-                      id="addressForm" novalidate>
+                    action="{% if action == 'Add' %}{% url 'users:address_add' %}{% elif address %}{% url 'users:address_edit' address.id %}{% endif %}"
+                    id="addressForm" novalidate>
                     {% csrf_token %}
 
                     <!-- ── SECTION 1: Address Type ── -->

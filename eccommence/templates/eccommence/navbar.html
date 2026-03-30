@@ -6,20 +6,24 @@
             <span class="logo-text">{{ request.tenant.name|upper|default:"HOMIES" }}</span>
         </a>
         
-        <!-- Delivery Info -->
-  <div class="delivery-info">
+    <!-- Delivery Info -->
+<div class="delivery-info">
     <i class="fas fa-map-marker-alt"></i>
     <div>
         <div class="delivery-location">Deliver to</div>
         <div class="delivery-text">
-            {% if user.is_authenticated and user.customer_profile %}
-                {% with default_address=user.customer_profile.addresses.all %}
+            {% if user.is_authenticated %}
+                {% with default_address=user.addresses.filter.is_default.first %}
                     {% if default_address %}
-                        {% with first_addr=default_address.0 %}
-                            {{ first_addr.address_line1|truncatechars:20 }}{% if first_addr.city %}, {{ first_addr.city }}{% endif %}
-                        {% endwith %}
+                        {{ default_address.city|default:default_address.address_line1|truncatechars:20 }}
                     {% else %}
-                        <a href="{% url 'users:address_add' %}" style="color: var(--primary-blue); text-decoration: none;">+ Add address</a>
+                        {% with first_address=user.addresses.first %}
+                            {% if first_address %}
+                                {{ first_address.city|default:first_address.address_line1|truncatechars:20 }}
+                            {% else %}
+                                <a href="{% url 'users:address_add' %}" style="color: var(--primary-blue); text-decoration: none;">+ Add address</a>
+                            {% endif %}
+                        {% endwith %}
                     {% endif %}
                 {% endwith %}
             {% else %}
@@ -91,7 +95,7 @@
                         <div class="dropdown-header">
                             <div class="dropdown-avatar">
                                  {% if user.profile.profile_picture %}
-                                    <img src="{{ user.profile.profile_picture.url }}" 
+                                    <img src="{{ customer.profile_picture.url }}" 
                                          alt="{{ user.get_full_name }}"
                                          class="avatar-img">
                                 {% else %}
@@ -138,12 +142,12 @@
                                 Account Settings
                             </a>
                             
-                            {% if user.is_vendor %}
-                                <a href="" class="dropdown-link">
+                           
+                                <a href="{% url 'store_admin:dashboard' %}" class="dropdown-link">
                                     <i class="fas fa-store"></i>
                                     Vendor Dashboard
                                 </a>
-                            {% endif %}
+                          
                         </div>
                         
                         <div class="dropdown-footer">

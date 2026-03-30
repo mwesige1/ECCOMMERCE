@@ -12,4 +12,6 @@ urlpatterns = [
     #path('toggle-wishlist/', views.toggle_wishlist, name='toggle_wishlist'),
 
     # ... other URLs
+    # In eccommence/urls.py, add this line:
+path('product/<slug:slug>/preview/', views.product_preview, name='product_preview'),
 ]

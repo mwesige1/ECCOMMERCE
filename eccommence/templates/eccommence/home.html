@@ -1,27 +1,464 @@
 {% extends 'eccommence/base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}
-    {% if query %}Search: {{ query }}{% elif selected_category %}{{ selected_category.name }}{% else %}Home{% endif %} - {{ request.tenant.name }}
+    {% if query %}Search: {{ query }}{% elif selected_category %}{{ selected_category.name }}{% else %}Home{% endif %} — {{ request.tenant.name }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --blue:       #2563eb;
+    --blue-dark:  #1d4ed8;
+    --yellow:     #ffd814;
+    --yellow-hov: #f7ca00;
+    --ink:        #0f172a;
+    --muted:      #334155;
+    --gray:       #64748b;
+    --border:     #e2e8f0;
+    --surface:    #f8fafc;
+    --bg:         #f5f5f5;
+    --green:      #10b981;
+    --red:        #ef4444;
+    --trans:      all 0.2s ease;
+}
+
+/* ── Layout ── */
+.product-main {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 16px;
+}
+
+/* ── Sidebar ── */
+.filters-sidebar {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    position: sticky;
+    top: 88px;
+    height: fit-content;
+}
+
+.filter-section {
+    border-bottom: 1px solid var(--surface);
+    padding: 12px 0;
+}
+
+.filter-section:first-child { padding-top: 0; }
+.filter-section:last-child  { border-bottom: none; padding-bottom: 0; }
+
+.sort-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.sort-label i { color: var(--blue); }
+
+.sort-select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 12px;
+    background: #fff;
+    color: var(--muted);
+    cursor: pointer;
+    transition: var(--trans);
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+}
+
+/* Price */
+.price-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.price-input-group label {
+    font-size: 10px;
+    color: var(--gray);
+    display: block;
+    margin-bottom: 3px;
+}
+
+.price-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    transition: border-color .15s;
+}
+
+.price-input:focus { outline: none; border-color: var(--blue); }
+
+.price-slider-wrapper {
+    position: relative;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 10px 0;
+}
+
+.price-slider-track {
+    position: absolute;
+    height: 100%;
+    background: var(--blue);
+    border-radius: 2px;
+}
+
+.price-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: transparent;
+    position: absolute;
+    top: 0;
+    pointer-events: none;
+}
+
+.price-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    background: var(--blue);
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+
+.go-button {
+    width: 100%;
+    padding: 7px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.go-button:hover { background: var(--blue-dark); }
+
+/* Checkboxes */
+.filter-options  { list-style: none; padding: 0; }
+.filter-option   { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; cursor: pointer; }
+.filter-option input { width: 14px; height: 14px; cursor: pointer; accent-color: var(--blue); }
+.filter-option label { font-size: 12px; color: var(--muted); cursor: pointer; transition: color .15s; }
+.filter-option label:hover { color: var(--blue); }
+
+/* Rating */
+.rating-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .15s;
+    margin-bottom: 2px;
+}
+
+.rating-option:hover  { background: var(--surface); }
+.rating-stars         { color: #f59e0b; font-size: 10px; letter-spacing: 1px; }
+.rating-text          { font-size: 11px; color: var(--gray); }
+
+
+
+
+/* ── Products Grid ── */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+/* ── Product Card — Jumia style ── */
+.product-card {
+    background: #fff;
+    border: 0px solid #eee;
+    border-radius: 0px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+    position: relative;
+    cursor: pointer;
+}
+
+.product-card:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Product card link - makes whole card clickable */
+.product-card-link {
+    position: relative;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Discount badge — flush top-left */
+.product-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: var(--red);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 0 0 4px 0;
+    font-size: 9px;
+    font-weight: 700;
+    z-index: 2;
+    line-height: 1;
+}
+
+/* Wishlist button — visible on hover */
+.btn-wishlist {
+    position: absolute;
+    bottom: 20px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 11px;
+    color: var(--gray);
+    z-index: 10;  /* Increased to keep above the link */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    opacity: 1;
+}
+
+.product-card:hover .btn-wishlist {
+    opacity: 1;
+    transform: scale(1.05);
+}
+.btn-wishlist:hover {
+    color: var(--red);
+    border-color: var(--red);
+    transform: scale(1.1);
+}
+.btn-wishlist .fas {
+    color: var(--red);
+}
+
+/* Image — full width square, no padding */
+.product-image-link {
+    display: block;
+    background: #fff;
+    position: relative;
+    padding-top: 100%;
+    overflow: hidden;
+}
+
+.product-image {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Info area */
+.product-info {
+    padding: 8px 8px 10px 15px;  /* top right bottom left - left is 15px */
+    border-top: 1px solid #f5f5f5;
+}
+.product-title-link { text-decoration: none; }
+
+/* Shortened product name - only 2-3 words */
+.product-title {
+    font-size: 12px;
+    font-weight: 400;
+    color: #333;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 34px;
+    margin-bottom: 6px;
+    transition: color .15s;
+}
+
+.product-title:hover { color: var(--blue); }
+
+/* Price styling */
+.product-price {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+}
+.price-main {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111;
+    display: block;
+}
+
+
+
+.price-compare {
+    font-size: 11px;
+    color: #646363;
+    text-decoration: line-through;
+    display: block;
+}
+
+/* ── Pagination ── */
+.pagination-bottom { display: flex; justify-content: center; padding-top: 14px; border-top: 1px solid var(--border); }
+.pagination-pages  { display: flex; gap: 5px; align-items: center; }
+
+.page-btn {
+    min-width: 30px;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    color: var(--muted);
+    transition: var(--trans);
+}
+
+.page-btn:hover      { border-color: var(--blue); color: var(--blue); }
+.page-btn.active     { background: var(--blue); color: white; border-color: var(--blue); }
+.page-btn-arrow      { padding: 5px 8px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; color: var(--muted); transition: var(--trans); text-decoration: none; display: inline-flex; align-items: center; }
+.page-btn-arrow:hover { border-color: var(--blue); color: var(--blue); }
+
+/* ── Empty state ── */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 48px 20px;
+    background: var(--surface);
+    border-radius: 8px;
+}
+
+.empty-state i   { font-size: 36px; color: var(--border); margin-bottom: 12px; display: block; }
+.empty-state h3  { font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+.empty-state p   { font-size: 12px; color: var(--gray); margin-bottom: 14px; }
+
+.empty-state .btn-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    background: var(--blue);
+    color: white;
+    border-radius: 7px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ── Notification ── */
+.notif {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    z-index: 10000;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: notifIn .25s ease;
+    pointer-events: none;
+}
+
+.notif.success { border-left: 3px solid var(--green); color: var(--green); }
+.notif.error   { border-left: 3px solid var(--red);   color: var(--red); }
+.notif.info    { border-left: 3px solid var(--blue);  color: var(--blue); }
+
+@keyframes notifIn {
+    from { transform: translateX(110%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .product-main  { grid-template-columns: 220px 1fr; }
+    .products-grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
+}
+
+@media (max-width: 768px) {
+    .product-main      { grid-template-columns: 1fr; padding: 12px; }
+    .filters-sidebar   { position: static; }
+    .products-grid     { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 6px; }
+}
+
+@media (max-width: 480px) {
+    .products-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
 {% endblock %}
 
 {% block content %}
 
-<!-- Search Results Header (if search active) -->
 {% if query or selected_category %}
-<div style="background: #f8fafc; padding: 1.5rem 0; margin-bottom: 2rem; border-bottom: 1px solid #e2e8f0;">
-    <div style="max-width: 1500px; margin: 0 auto; padding: 0 2rem;">
-        {% if query %}
-            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #1e293b;">Search Results for "{{ query }}"</h2>
-            <p style="color: #64748b;">{{ total_products }} product{{ total_products|pluralize }} found</p>
-        {% elif selected_category %}
-            <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #1e293b;">{{ selected_category.name }}</h2>
-            <p style="color: #64748b;">{{ total_products }} product{{ total_products|pluralize }}</p>
-        {% endif %}
-        
+<div style="background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 0;margin-bottom:4px;">
+    <div style="max-width:1360px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            {% if query %}
+                <h2 style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:2px;">
+                    Search results for "{{ query }}"
+                </h2>
+                <p style="font-size:11px;color:#64748b;">
+                    {{ total_products }} product{{ total_products|pluralize }} found
+                </p>
+            {% elif selected_category %}
+                <h2 style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:2px;">
+                    {{ selected_category.name }}
+                </h2>
+                <p style="font-size:11px;color:#64748b;">
+                    {{ total_products }} product{{ total_products|pluralize }}
+                </p>
+            {% endif %}
+        </div>
         {% if query or min_price or max_price or in_stock_only or on_sale_only %}
-        <a href="{% url 'eccommence:home' %}" 
-           style="display: inline-block; margin-top: 0.5rem; color: #2563eb; text-decoration: none; font-size: 0.9rem;">
+        <a href="{% url 'eccommence:home' %}"
+           style="font-size:11px;color:#2563eb;text-decoration:none;display:flex;align-items:center;gap:4px;">
             <i class="fas fa-times-circle"></i> Clear all filters
         </a>
         {% endif %}
@@ -29,21 +466,22 @@
 </div>
 {% endif %}
 
-<!-- Main Product Layout -->
 <main class="product-main">
-    <!-- Filters Sidebar -->
+
+    <!-- ── Sidebar ── -->
     <aside class="filters-sidebar">
-        <!-- Categories Section -->
+
         <div class="filter-section">
-            <label class="sort-label">
-                <i class="fas fa-th-large"></i> Categories
-            </label>
+            <div class="sort-label"><i class="fas fa-th-large"></i> Categories</div>
             <select class="sort-select" id="categorySelect">
-                <option value="{% url 'eccommence:home' %}" {% if not selected_category %}selected{% endif %}>All Categories</option>
+                <option value="{% url 'eccommence:home' %}"
+                    {% if not selected_category %}selected{% endif %}>
+                    All categories
+                </option>
                 {% for category in all_categories %}
                     {% if category.slug %}
-                    <option value="{% url 'eccommence:category_view' category.slug %}" 
-                            {% if selected_category and selected_category.slug == category.slug %}selected{% endif %}>
+                    <option value="{% url 'eccommence:category_view' category.slug %}"
+                        {% if selected_category and selected_category.slug == category.slug %}selected{% endif %}>
                         {{ category.name }}
                     </option>
                     {% endif %}
@@ -51,117 +489,75 @@
             </select>
         </div>
 
-       <!-- Brands Dropdown -->
-<div class="filter-section">
-    <label class="sort-label">
-        <i class="fas fa-copyright"></i> Brands
-    </label>
-    <select class="sort-select" id="brandSelect">
-        <option value="">All Brands</option>
-        {% for vendor in vendors %}
-        <option value="{{ vendor.slug }}" 
-                {% if vendor.slug in selected_vendors %}selected{% endif %}>
-            {{ vendor.store_name }} ({{ vendor.product_count|default:0 }})
-        </option>
-        {% endfor %}
-    </select>
-</div>
-
-        <!-- Price Range with Editable Inputs and Slider -->
         <div class="filter-section">
-            <label class="sort-label">
-                <i class="fas fa-dollar-sign"></i> Price Range
-            </label>
-            <div class="price-range-container">
-                <!-- Editable Price Inputs -->
-                <div class="price-inputs">
-                    <div class="price-input-group">
-                        <label class="price-label">Min Price</label>
-                        <input type="number" 
-                               class="price-input" 
-                               id="minPrice" 
-                               value="{{ min_price|default:0 }}" 
-                               placeholder="0"
-                               min="0"
-                               step="1000">
-                    </div>
-                    <div class="price-input-group">
-                        <label class="price-label">Max Price</label>
-                        <input type="number" 
-                               class="price-input" 
-                               id="maxPrice" 
-                               value="{{ max_price|default:5000000 }}" 
-                               placeholder="5,000,000"
-                               min="0"
-                               step="1000">
-                    </div>
-                </div>
-
-                <!-- Price Slider -->
-                <div class="price-slider-wrapper">
-                    <div class="price-slider-track" id="priceTrack"></div>
-                    <input type="range" 
-                           class="price-slider" 
-                           id="minPriceSlider" 
-                           min="0" 
-                           max="5000000" 
-                           step="10000"
-                           value="{{ min_price|default:0 }}">
-                    <input type="range" 
-                           class="price-slider" 
-                           id="maxPriceSlider" 
-                           min="0" 
-                           max="5000000" 
-                           step="10000"
-                           value="{{ max_price|default:5000000 }}">
-                </div>
-
-                <button class="go-button" onclick="applyFilters()">
-                    <i class="fas fa-filter"></i> Apply Filters
-                </button>
-            </div>
-        </div>
-
-        <!-- Sort Section -->
-        <div class="filter-section">
-            <label class="sort-label">
-                <i class="fas fa-sort"></i> Sort By
-            </label>
-            <select class="sort-select" id="sortSelect">
-                <option value="featured" {% if sort_by == 'featured' %}selected{% endif %}>Featured</option>
-                <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
-                <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
-                <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Top Rated</option>
-                <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest Arrivals</option>
-                <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Popular</option>
+            <div class="sort-label"><i class="fas fa-copyright"></i> Brands</div>
+            <select class="sort-select" id="brandSelect">
+                <option value="">All brands</option>
+                {% for vendor in vendors %}
+                <option value="{{ vendor.slug }}"
+                    {% if vendor.slug in selected_vendors %}selected{% endif %}>
+                    {{ vendor.store_name }} ({{ vendor.product_count|default:0 }})
+                </option>
+                {% endfor %}
             </select>
         </div>
 
-        <!-- Availability Filter -->
         <div class="filter-section">
-            <label class="sort-label">
-                <i class="fas fa-box"></i> Availability
-            </label>
+            <div class="sort-label"><i class="fas fa-tag"></i> Price range</div>
+            <div class="price-inputs">
+                <div class="price-input-group">
+                    <label>Min</label>
+                    <input type="number" class="price-input" id="minPrice"
+                           value="{{ min_price|default:0 }}" placeholder="0" min="0" step="1000">
+                </div>
+                <div class="price-input-group">
+                    <label>Max</label>
+                    <input type="number" class="price-input" id="maxPrice"
+                           value="{{ max_price|default:5000000 }}" placeholder="5,000,000" min="0" step="1000">
+                </div>
+            </div>
+            <div class="price-slider-wrapper">
+                <div class="price-slider-track" id="priceTrack"></div>
+                <input type="range" class="price-slider" id="minPriceSlider"
+                       min="0" max="5000000" step="10000" value="{{ min_price|default:0 }}">
+                <input type="range" class="price-slider" id="maxPriceSlider"
+                       min="0" max="5000000" step="10000" value="{{ max_price|default:5000000 }}">
+            </div>
+            <button class="go-button" onclick="applyFilters()">
+                <i class="fas fa-filter"></i> Apply filters
+            </button>
+        </div>
+
+        <div class="filter-section">
+            <div class="sort-label"><i class="fas fa-sort"></i> Sort by</div>
+            <select class="sort-select" id="sortSelect">
+                <option value="featured"   {% if sort_by == 'featured'   %}selected{% endif %}>Featured</option>
+                <option value="price_low"  {% if sort_by == 'price_low'  %}selected{% endif %}>Price: Low to high</option>
+                <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to low</option>
+                <option value="rating"     {% if sort_by == 'rating'     %}selected{% endif %}>Top rated</option>
+                <option value="newest"     {% if sort_by == 'newest'     %}selected{% endif %}>Newest arrivals</option>
+                <option value="popular"    {% if sort_by == 'popular'    %}selected{% endif %}>Most popular</option>
+            </select>
+        </div>
+
+        <div class="filter-section">
+            <div class="sort-label"><i class="fas fa-box"></i> Availability</div>
             <ul class="filter-options">
                 <li class="filter-option">
-                    <input type="checkbox" id="in_stock" name="in_stock" {% if in_stock_only %}checked{% endif %}>
-                    <label for="in_stock">In Stock Only</label>
+                    <input type="checkbox" id="in_stock" {% if in_stock_only %}checked{% endif %}>
+                    <label for="in_stock">In stock only</label>
                 </li>
                 <li class="filter-option">
-                    <input type="checkbox" id="on_sale" name="on_sale" {% if on_sale_only %}checked{% endif %}>
-                    <label for="on_sale">On Sale</label>
+                    <input type="checkbox" id="on_sale" {% if on_sale_only %}checked{% endif %}>
+                    <label for="on_sale">On sale</label>
                 </li>
             </ul>
         </div>
 
-        <!-- Customer Reviews -->
         <div class="filter-section">
-            <label class="sort-label">
-                <i class="fas fa-star"></i> Customer Rating
-            </label>
+            <div class="sort-label"><i class="fas fa-star"></i> Customer rating</div>
             {% for rating in "54321" %}
-            <div class="rating-option" onclick="filterByRating({{ rating }})" 
-                 style="cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: background 0.2s;">
+            <div class="rating-option" onclick="filterByRating({{ rating }})">
                 <div class="rating-stars">
                     {% for i in "12345" %}
                         {% if forloop.counter <= rating|add:"0" %}
@@ -171,137 +567,85 @@
                         {% endif %}
                     {% endfor %}
                 </div>
-                <span class="rating-text">& Up</span>
+                <span class="rating-text">& up</span>
             </div>
             {% endfor %}
         </div>
 
-        <!-- Quick Links -->
-        <div class="filter-section" style="border-top: 2px solid #e2e8f0; padding-top: 1rem;">
-            <label class="sort-label">
-                <i class="fas fa-link"></i> Quick Links
-            </label>
-            <ul style="list-style: none; padding: 0;">
-                <li style="margin-bottom: 0.5rem;">
-                    <a href="{% url 'eccommence:category_list' %}" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
-                        <i class="fas fa-th-large"></i> All Categories
-                    </a>
-                </li>
-                <li style="margin-bottom: 0.5rem;">
-                    <a href="{% url 'eccommence:home' %}?on_sale=1" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
-                        <i class="fas fa-tags"></i> Sale Items
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'eccommence:home' %}?sort=newest" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
-                        <i class="fas fa-sparkles"></i> New Arrivals
-                    </a>
-                </li>
-            </ul>
-        </div>
     </aside>
 
-    <!-- Products Grid Section -->
+    <!-- ── Products ── -->
     <section class="products-section">
-       
 
-        <!-- Products Grid -->
         <div class="products-grid">
+            
             {% if products %}
                 {% for product in products %}
+                {% if product.is_in_stock %}
                 <div class="product-card">
-                    <!-- Sale Badge -->
-                    {% if product.is_on_sale %}
+                   
+                    <!-- Make the whole card clickable except wishlist button -->
+                    <a href="{% url 'eccommence:product_detail' product.slug %}" class="product-card-link">
+
+                        <!-- Discount badge -->
+                        {% if product.is_on_sale and product.sale_price %}
                         <div class="product-badge">
-                            {% if product.discount_percentage %}
-                                -{{ product.discount_percentage }}%
+                            {% if product.discount_percentage %}-{{ product.discount_percentage }}%
+                            {% else %}SALE{% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Image — full width, square -->
+                        <div class="product-image-link">
+                            {% if product.images.exists %}
+                                <img src="{{ product.images.first.image.url }}"
+                                     alt="{{ product.name|truncatechars:40 }}"
+                                     class="product-image"
+                                     loading="lazy">
                             {% else %}
-                                Sale
+                                <img src="{% static 'images/no-image.png' %}"
+                                     alt="{{ product.name|truncatechars:40 }}"
+                                     class="product-image">
                             {% endif %}
                         </div>
-                    {% endif %}
-                    
-                    <!-- Product Image -->
-                    <a href="{% url 'eccommence:product_detail' product.slug %}">
-                        {% if product.images.exists %}
-                            <img src="{{ product.images.first.image.url }}" 
-                                 alt="{{ product.name }}" 
-                                 class="product-image"
-                                 loading="lazy">
-                        {% else %}
-                            <img src="{% static 'images/no-image.png' %}" 
-                                 alt="{{ product.name }}" 
-                                 class="product-image">
-                        {% endif %}
-                    </a>
-                    
-                    <!-- Product Title -->
-                    <a href="{% url 'eccommence:product_detail' product.slug %}" class="product-title">
-                        {{ product.name|truncatewords:10 }}
-                    </a>
-                    
-                    <!-- Rating -->
-                    <div class="product-rating">
-                        <div class="rating-stars-small">
-                            {% for i in "12345" %}
-                                {% if forloop.counter <= product.rating|floatformat:0|add:"0" %}
-                                    <i class="fas fa-star"></i>
-                                {% else %}
-                                    <i class="far fa-star"></i>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                        <span class="rating-count">({{ product.total_reviews }})</span>
-                    </div>
-                    
-                    <!-- Price -->
-                    <div class="product-price">
-                        {% if product.is_on_sale and product.sale_price %}
-                            <div class="price-main">UGX {{ product.sale_price|floatformat:0 }}</div>
-                            <div>
-                                <span class="price-old">UGX {{ product.price|floatformat:0 }}</span>
-                                {% if product.discount_percentage %}
-                                <span class="discount-badge">-{{ product.discount_percentage }}%</span>
+
+                        <!-- Info -->
+                        <div class="product-info">
+                            <h3 class="product-title">{{ product.name|truncatechars:45 }}</h3>
+
+                            <div class="product-price">
+                                <!-- Current price (always shown) -->
+                                <span class="price-main">UGX {{ product.current_price|floatformat:0|intcomma }}</span>
+                                
+                                <!-- Compare at price (original price) - only show if it exists and is different from current price -->
+                                {% if product.compare_at_price and product.compare_at_price != product.current_price %}
+                                    <span class="price-compare">UGX {{ product.compare_at_price|floatformat:0|intcomma }}</span>
+                                {% elif product.price != product.current_price %}
+                                    <!-- Alternative: use product.price if compare_at_price not set -->
+                                    <span class="price-compare">UGX {{ product.price|floatformat:0|intcomma }}</span>
                                 {% endif %}
                             </div>
-                        {% else %}
-                            <div class="price-main">UGX {{ product.price|floatformat:0 }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Actions -->
-                    <div class="product-actions">
-                        {% if product.is_in_stock %}
-                            <button type="button" class="btn-add-cart add-cart-home" data-product-id="{{ product.id }}">
-                                <i class="fas fa-cart-plus"></i> Add to Cart
-                            </button>
-                        {% else %}
-                            <button type="button" class="btn-add-cart" disabled style="background: #999; cursor: not-allowed;">
-                                <i class="fas fa-ban"></i> Out of Stock
-                            </button>
-                        {% endif %}
-                        <button class="btn-wishlist" data-product-id="{{ product.id }}" title="Add to Wishlist">
-                            <i class="far fa-heart"></i>
-                        </button>
-                    </div>
+                        </div>
+                    </a>
+
+                    <!-- Wishlist button (outside the link to remain independently clickable) -->
+                    <button class="btn-wishlist" data-product-id="{{ product.id }}" title="Add to wishlist">
+                        <i class="far fa-heart"></i>
+                    </button>
+
                 </div>
+                {% endif %}
                 {% endfor %}
             {% else %}
-                <!-- Empty State -->
-                <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: #f8fafc; border-radius: 12px;">
-                    <i class="fas fa-search" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-                    <h3 style="color: #475569; margin-bottom: 0.5rem; font-size: 1.5rem;">No Products Found</h3>
-                    <p style="color: #94a3b8; margin-bottom: 2rem;">
-                        {% if query %}
-                            No results for "{{ query }}". Try different keywords or adjust your filters.
-                        {% else %}
-                            Try adjusting your filters or browse our categories.
-                        {% endif %}
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <h3>No products found</h3>
+                    <p>
+                        {% if query %}No results for "{{ query }}". Try different keywords.
+                        {% else %}Try adjusting your filters or browse our categories.{% endif %}
                     </p>
-                    <a href="{% url 'eccommence:home' %}" 
-                       style="display: inline-block; padding: 0.75rem 2rem; background: #2563eb; color: white; 
-                              text-decoration: none; border-radius: 8px; font-weight: 600;">
-                        <i class="fas fa-redo"></i> Clear Filters
+                    <a href="{% url 'eccommence:home' %}" class="btn-clear">
+                        <i class="fas fa-redo"></i> Clear filters
                     </a>
                 </div>
             {% endif %}
@@ -312,121 +656,94 @@
         <div class="pagination-bottom">
             <div class="pagination-pages">
                 {% if products.has_previous %}
-                    <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                       class="page-btn-arrow" title="Previous Page">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
+                <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="page-btn-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
                 {% endif %}
-                
+
                 {% for num in products.paginator.page_range %}
                     {% if products.number == num %}
                         <button class="page-btn active">{{ num }}</button>
                     {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
-                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                            class="page-btn">{{ num }}</a>
                     {% elif num == 1 or num == products.paginator.num_pages %}
-                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                            class="page-btn">{{ num }}</a>
                     {% endif %}
                 {% endfor %}
-                
+
                 {% if products.has_next %}
-                    <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
-                       class="page-btn-arrow" title="Next Page">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
+                <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="page-btn-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
                 {% endif %}
-            </div>
-            
-            <!-- Page Info -->
-            <div style="text-align: center; margin-top: 1rem; color: #64748b; font-size: 0.875rem;">
-                Page {{ products.number }} of {{ products.paginator.num_pages }}
             </div>
         </div>
         {% endif %}
+
     </section>
 </main>
 
 <script>
-// Price Range - Sync Slider with Input
-const minPriceSlider = document.getElementById('minPriceSlider');
-const maxPriceSlider = document.getElementById('maxPriceSlider');
-const minPriceInput = document.getElementById('minPrice');
-const maxPriceInput = document.getElementById('maxPrice');
-const priceTrack = document.getElementById('priceTrack');
+// ── Price sliders ──
+const minSlider = document.getElementById('minPriceSlider');
+const maxSlider = document.getElementById('maxPriceSlider');
+const minInput  = document.getElementById('minPrice');
+const maxInput  = document.getElementById('maxPrice');
+const track     = document.getElementById('priceTrack');
 
-function updatePriceSlider() {
-    let minVal = parseInt(minPriceInput.value) || 0;
-    let maxVal = parseInt(maxPriceInput.value) || 5000000;
-    
-    // Ensure min doesn't exceed max
-    if (minVal > maxVal - 10000) {
-        minVal = maxVal - 10000;
-        minPriceInput.value = minVal;
-    }
-    
-    minPriceSlider.value = minVal;
-    maxPriceSlider.value = maxVal;
-    
-    updateSliderTrack();
+function updateTrack() {
+    const min = parseInt(minSlider.value);
+    const max = parseInt(maxSlider.value);
+    track.style.left  = (min / 5000000 * 100) + '%';
+    track.style.width = ((max - min) / 5000000 * 100) + '%';
 }
 
-function updatePriceInputs() {
-    let minVal = parseInt(minPriceSlider.value);
-    let maxVal = parseInt(maxPriceSlider.value);
-    
-    // Ensure sliders don't cross
-    if (minVal > maxVal - 10000) {
-        minVal = maxVal - 10000;
-        minPriceSlider.value = minVal;
-    }
-    
-    minPriceInput.value = minVal;
-    maxPriceInput.value = maxVal;
-    
-    updateSliderTrack();
+function syncFromInput() {
+    let min = parseInt(minInput.value) || 0;
+    let max = parseInt(maxInput.value) || 5000000;
+    if (min > max - 10000) min = max - 10000;
+    minSlider.value = min;
+    maxSlider.value = max;
+    updateTrack();
 }
 
-function updateSliderTrack() {
-    const minVal = parseInt(minPriceSlider.value);
-    const maxVal = parseInt(maxPriceSlider.value);
-    const percent1 = (minVal / 5000000) * 100;
-    const percent2 = (maxVal / 5000000) * 100;
-    
-    priceTrack.style.left = percent1 + '%';
-    priceTrack.style.width = (percent2 - percent1) + '%';
+function syncFromSlider() {
+    let min = parseInt(minSlider.value);
+    let max = parseInt(maxSlider.value);
+    if (min > max - 10000) { min = max - 10000; minSlider.value = min; }
+    minInput.value = min;
+    maxInput.value = max;
+    updateTrack();
 }
 
-// Event listeners for inputs
-if (minPriceInput && maxPriceInput) {
-    minPriceInput.addEventListener('input', updatePriceSlider);
-    maxPriceInput.addEventListener('input', updatePriceSlider);
-    minPriceSlider.addEventListener('input', updatePriceInputs);
-    maxPriceSlider.addEventListener('input', updatePriceInputs);
-    
-    // Initial update
-    updateSliderTrack();
-}
+minInput?.addEventListener('input', syncFromInput);
+maxInput?.addEventListener('input', syncFromInput);
+minSlider?.addEventListener('input', syncFromSlider);
+maxSlider?.addEventListener('input', syncFromSlider);
+if (track) updateTrack();
 
-// Category Select Navigation
-document.getElementById('categorySelect')?.addEventListener('change', function() {
-    if (this.value) {
-        window.location.href = this.value;
-    }
+// ── Category select ──
+document.getElementById('categorySelect')?.addEventListener('change', function () {
+    if (this.value) window.location.href = this.value;
 });
 
-// Sort Functionality
-document.getElementById('sortSelect')?.addEventListener('change', function() {
+// ── Brand select ──
+document.getElementById('brandSelect')?.addEventListener('change', applyFilters);
+
+// ── Sort select ──
+document.getElementById('sortSelect')?.addEventListener('change', function () {
     const url = new URL(window.location);
-    if (this.value && this.value !== 'featured') {
-        url.searchParams.set('sort', this.value);
-    } else {
-        url.searchParams.delete('sort');
-    }
+    this.value && this.value !== 'featured'
+        ? url.searchParams.set('sort', this.value)
+        : url.searchParams.delete('sort');
     window.location.href = url.toString();
 });
 
-// Filter by Rating
+// ── Rating filter ──
 function filterByRating(rating) {
     const url = new URL(window.location);
     url.searchParams.set('min_rating', rating);
@@ -434,174 +751,104 @@ function filterByRating(rating) {
     window.location.href = url.toString();
 }
 
-// Apply All Filters
+// ── Apply filters ──
 function applyFilters() {
     const url = new URL(window.location);
-    
-    // Price filters
-    const minPrice = document.getElementById('minPrice')?.value;
-    const maxPrice = document.getElementById('maxPrice')?.value;
-    
-    if (minPrice && minPrice != '0') url.searchParams.set('min_price', minPrice);
-    else url.searchParams.delete('min_price');
-    
-    if (maxPrice && maxPrice != '5000000') url.searchParams.set('max_price', maxPrice);
-    else url.searchParams.delete('max_price');
-            
-        // Brand filter (single select dropdown)
-        const brandSelect = document.getElementById('brandSelect');
-        const selectedBrand = brandSelect?.value;
+    const min = minInput?.value;
+    const max = maxInput?.value;
 
-        if (selectedBrand && selectedBrand !== '') {
-            url.searchParams.set('vendors', selectedBrand);
-        } else {
-            url.searchParams.delete('vendors');
-        }
-        // Brand Select Navigation
-document.getElementById('brandSelect')?.addEventListener('change', function() {
-    applyFilters();
-});
-    // Availability filters
-    if (document.getElementById('in_stock')?.checked) {
-        url.searchParams.set('in_stock', '1');
-    } else {
-        url.searchParams.delete('in_stock');
-    }
-    
-    if (document.getElementById('on_sale')?.checked) {
-        url.searchParams.set('on_sale', '1');
-    } else {
-        url.searchParams.delete('on_sale');
-    }
-    
-    // Reset to page 1
+    min && min != '0'       ? url.searchParams.set('min_price', min) : url.searchParams.delete('min_price');
+    max && max != '5000000' ? url.searchParams.set('max_price', max) : url.searchParams.delete('max_price');
+
+    const brand = document.getElementById('brandSelect')?.value;
+    brand ? url.searchParams.set('vendors', brand) : url.searchParams.delete('vendors');
+
+    document.getElementById('in_stock')?.checked
+        ? url.searchParams.set('in_stock', '1') : url.searchParams.delete('in_stock');
+    document.getElementById('on_sale')?.checked
+        ? url.searchParams.set('on_sale', '1')  : url.searchParams.delete('on_sale');
+
     url.searchParams.delete('page');
-    
     window.location.href = url.toString();
 }
 
-// ADD TO CART AJAX 
-$(document).on("click", ".add-cart-home", function(e) {
-    e.preventDefault();
-    const productId = $(this).data('product-id');
-    const button = $(this);
-    
-    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
-    
-    $.ajax({
-        type: "POST",
-        url: "{% url 'cart:cart_add' %}",
-        data: {
-            product_id: productId,
-            product_qty: 1,
-            csrfmiddlewaretoken: "{{ csrf_token }}",
-            action: "post",
-        },
-        success: function(json) {
-            const cartCount = document.querySelector('.cart-count');
-            if (cartCount) cartCount.textContent = json.qty;
-            
-            button.prop('disabled', false).html('<i class="fas fa-cart-plus"></i> Add to Cart');
-            showNotification('Product added to cart!', 'success');
-        },
-        error: function(xhr, errmsg, err) {
-            button.prop('disabled', false).html('<i class="fas fa-cart-plus"></i> Add to Cart');
-            showNotification('Error adding to cart', 'error');
-            console.error(xhr.responseText);
+// ── Wishlist ──
+document.querySelectorAll('.btn-wishlist').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const productId = this.dataset.productId;
+        const icon = this.querySelector('i');
+        
+        // Optimistic update - change icon immediately
+        const wasInWishlist = icon.classList.contains('fas');
+        if (wasInWishlist) {
+            icon.className = 'far fa-heart';
+        } else {
+            icon.className = 'fas fa-heart';
         }
-    });
-});
-
-// Wishlist Functionality
-$(document).on('click', '.btn-wishlist', function(e) {
-    e.preventDefault();
-    const button = $(this);
-    const productId = button.data('product-id');
-    
-    fetch("{% url 'cart:wishlist_toggle' %}", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': "{{ csrf_token }}"
-        },
-        body: JSON.stringify({ product_id: productId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const heartIcon = button.find('i');
-            if (data.in_wishlist) {
-                heartIcon.removeClass('far').addClass('fas');
-                showNotification('Added to wishlist', 'success');
-            } else {
-                heartIcon.removeClass('fas').addClass('far');
-                showNotification('Removed from wishlist', 'info');
-            }
-            
-            // Update navbar count
-            const navWishlistCount = document.querySelector('.wishlist-count');
-            if (navWishlistCount) {
-                navWishlistCount.textContent = data.wishlist_count;
-                if (data.wishlist_count > 0) {
-                    navWishlistCount.style.display = 'flex';
+        
+        fetch("{% url 'cart:wishlist_toggle' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ product_id: productId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                // Revert if there was an error
+                if (wasInWishlist) {
+                    icon.className = 'fas fa-heart';
                 } else {
-                    navWishlistCount.style.display = 'none';
+                    icon.className = 'far fa-heart';
+                }
+                showNotif(data.error || 'Error updating wishlist', 'error');
+            } else {
+                // Ensure correct icon based on server response
+                if (data.in_wishlist) {
+                    icon.className = 'fas fa-heart';
+                    showNotif('Added to wishlist', 'success');
+                } else {
+                    icon.className = 'far fa-heart';
+                    showNotif('Removed from wishlist', 'info');
+                }
+                
+                // Update the wishlist count in the navbar
+                const wishlistCountElement = document.querySelector('.wishlist-count');
+                if (wishlistCountElement && data.wishlist_count !== undefined) {
+                    wishlistCountElement.textContent = data.wishlist_count;
+                    if (data.wishlist_count > 0) {
+                        wishlistCountElement.style.display = 'flex'; // or 'inline-flex' depending on your CSS
+                    } else {
+                        wishlistCountElement.style.display = 'none';
+                    }
                 }
             }
-        }
-    })
-    .catch(error => {
-        showNotification('Please login to use wishlist', 'error');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Revert on network error
+            if (wasInWishlist) {
+                icon.className = 'fas fa-heart';
+            } else {
+                icon.className = 'far fa-heart';
+            }
+            showNotif('Please log in to use wishlist', 'error');
+        });
     });
 });
-
-// Notification Helper
-function showNotification(message, type = 'info') {
-    const colors = {
-        success: '#10b981',
-        error: '#ef4444',
-        info: '#3b82f6'
-    };
-    
-    const notification = document.createElement('div');
-    notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${message}`;
-    notification.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        background: white;
-        color: ${colors[type]};
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        z-index: 10000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border-left: 4px solid ${colors[type]};
-        font-size: 0.9rem;
-        max-width: 320px;
-        animation: slideIn 0.3s ease-out;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease-in';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+// ── Notification ──
+function showNotif(msg, type = 'info') {
+    const icons = { success: 'check-circle', error: 'exclamation-circle', info: 'info-circle' };
+    const n = document.createElement('div');
+    n.className = `notif ${type}`;
+    n.innerHTML = `<i class="fas fa-${icons[type]}"></i> ${msg}`;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 3000);
 }
-
-// Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(400px); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(400px); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
 </script>
-
 {% endblock %}

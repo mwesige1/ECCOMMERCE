@@ -576,6 +576,10 @@
                             </button>
                         </div>
                     </div>
+                    <!-- After the password field, add this -->
+{% if request.GET.next %}
+<input type="hidden" name="next" value="{{ request.GET.next }}">
+{% endif %}
 
                     <!-- Remember Me & Forgot Password -->
                     <div class="form-footer">

@@ -41,6 +41,17 @@ class Customer(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    gender = models.CharField(
+        max_length=20,
+        choices=[
+            ('male', 'Male'),
+            ('female', 'Female'),
+            ('other', 'Other'),
+            ('prefer_not_to_say', 'Prefer not to say')
+        ],
+        blank=True
+    )
     
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.user.email}"
@@ -268,6 +279,19 @@ class Product(TimeStampedModel):
         if not self.track_inventory:
             return False
         return 0 < self.stock_quantity <= self.low_stock_threshold
+    @property
+    def primary_image_url(self):
+        """Return the URL of the primary image or first image if none is primary"""
+        try:
+            primary = self.images.filter(is_primary=True).first()
+            if primary:
+                return primary.image.url
+            first = self.images.first()
+            if first:
+                return first.image.url
+        except Exception:
+            pass
+        return None
 
 
 class ProductImage(TimeStampedModel):

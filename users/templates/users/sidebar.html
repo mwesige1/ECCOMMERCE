@@ -1,0 +1,307 @@
+{% load static %}
+
+<!-- Sidebar styles - can be moved to external CSS later -->
+<style>
+    /* ══════════════════════════════════════════
+       SIDEBAR STYLES
+    ══════════════════════════════════════════ */
+    .cp-sidebar {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        position: sticky;
+        top: 24px;
+    }
+
+    .cp-avatar-block {
+        background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 55%, #60a5fa 100%);
+        padding: 32px 20px 24px;
+        text-align: center;
+        position: relative;
+    }
+    .cp-avatar-block::after {
+        content: '';
+        position: absolute;
+        bottom: -1px; left: 0; right: 0;
+        height: 26px;
+        background: var(--white);
+        border-radius: 50% 50% 0 0 / 26px 26px 0 0;
+    }
+    .cp-avatar, .cp-avatar-ph {
+        width: 90px; height: 90px;
+        border-radius: 50%;
+        border: 4px solid var(--white);
+        box-shadow: var(--shadow-lg);
+        margin: 0 auto 12px;
+        display: block;
+        position: relative; z-index: 1;
+        object-fit: cover;
+    }
+    .cp-avatar-ph {
+        background: rgba(255,255,255,.2);
+        backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--white);
+        font-size: 30px; font-weight: 700;
+    }
+    .cp-avatar-wrap {
+        width: 90px; height: 90px;
+        border-radius: 50%;
+        margin: 0 auto 12px;
+        position: relative; z-index: 1;
+        cursor: pointer;
+    }
+    .cp-avatar-wrap:hover .cp-av-overlay { opacity: 1; }
+    .cp-av-overlay {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        background: rgba(0,0,0,.45);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--white); font-size: 18px;
+        opacity: 0;
+        transition: opacity .18s;
+    }
+    .cp-avatar-inner {
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        border: 4px solid var(--white);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+    .cp-avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+    .cp-avatar-inner .cp-avatar-ph {
+        width: 100%; height: 100%;
+        border-radius: 0; border: none; box-shadow: none; margin: 0;
+    }
+
+    .cp-user-name  { font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 3px; text-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .cp-user-email { font-size: 12px; color: rgba(255,255,255,.72); margin-bottom: 10px; }
+    .cp-user-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 12px;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        border-radius: var(--radius-full);
+        font-size: 11px; font-weight: 700;
+        color: var(--white);
+        text-transform: uppercase; letter-spacing: .5px;
+        position: relative; z-index: 1;
+    }
+    .cp-user-badge i { font-size: 9px; color: #fbbf24; }
+
+    /* Completion bar */
+    .cp-completion {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(to right, var(--surface), var(--white));
+    }
+    .cpc-head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+    .cpc-label { font-weight: 600; color: var(--text-secondary); }
+    .cpc-pct   { font-weight: 800; color: var(--primary); }
+    .cpc-track {
+        height: 5px; background: var(--border);
+        border-radius: var(--radius-full); overflow: hidden;
+    }
+    .cpc-fill {
+        height: 100%;
+        border-radius: var(--radius-full);
+        background: linear-gradient(90deg, var(--primary), #60a5fa);
+        transition: width .8s ease;
+    }
+
+    /* Nav */
+    .cp-nav { padding: 8px 10px 14px; }
+    .cp-nav-section {
+        font-size: 10px; font-weight: 800;
+        color: var(--text-placeholder);
+        text-transform: uppercase; letter-spacing: 1px;
+        padding: 10px 14px 4px;
+    }
+    .cp-nav-item { margin-bottom: 2px; }
+    .cp-nav-item a, .cp-nav-item button {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 14px;
+        border-radius: var(--radius-md);
+        font-size: 13.5px; font-weight: 500;
+        color: var(--text-secondary);
+        text-decoration: none; background: transparent;
+        border: none; cursor: pointer;
+        transition: var(--transition);
+        width: 100%; text-align: left; font-family: inherit;
+    }
+    .cp-nav-item a .ni, .cp-nav-item button .ni {
+        width: 34px; height: 34px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; color: var(--text-muted);
+        transition: var(--transition); flex-shrink: 0;
+    }
+    .cp-nav-item a:hover, .cp-nav-item button:hover {
+        background: var(--surface); color: var(--primary);
+    }
+    .cp-nav-item a:hover .ni, .cp-nav-item button:hover .ni {
+        background: var(--primary-light); color: var(--primary);
+    }
+    .cp-nav-item a.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+    .cp-nav-item a.active .ni { background: var(--primary); color: var(--white); }
+    .cp-nav-item.danger a, .cp-nav-item.danger button { color: var(--error); }
+    .cp-nav-item.danger a:hover, .cp-nav-item.danger button:hover { background: var(--error-light); }
+    .cp-nav-item.danger a .ni, .cp-nav-item.danger button .ni { background: var(--error-light); color: var(--error); }
+    .cp-nav-divider { height: 1px; background: var(--border); margin: 6px 14px; }
+    
+    /* Dark Mode Support */
+    body.dark-mode .cp-sidebar {
+        background: var(--black-soft);
+    }
+    body.dark-mode .cp-completion {
+        background: var(--black-rich);
+    }
+    body.dark-mode .cp-nav-item a .ni {
+        background: var(--gray-darker);
+        color: var(--text-muted);
+    }
+    body.dark-mode .cp-nav-item a.active {
+        background: var(--primary-dark);
+        color: var(--white);
+    }
+</style>
+
+<aside class="cp-sidebar" aria-label="Account navigation">
+
+    <!-- Avatar Hero -->
+    <div class="cp-avatar-block">
+        <div class="cp-avatar-wrap"
+             onclick="document.getElementById('ppFile') && document.getElementById('ppFile').click()"
+             role="button" tabindex="0"
+             aria-label="Change profile photo">
+            <div class="cp-avatar-inner">
+                {% if customer.profile_picture %}
+                    <img src="{{ customer.profile_picture.url }}"
+                         alt="{{ user.get_full_name }}" id="sidebarAvatarImg">
+                {% else %}
+                    <div class="cp-avatar-ph" id="sidebarAvatarImg">
+                        {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="cp-av-overlay"><i class="fas fa-camera"></i></div>
+        </div>
+        <p class="cp-user-name">{{ user.get_full_name|default:user.email }}</p>
+        <p class="cp-user-email">{{ user.email }}</p>
+        <span class="cp-user-badge">
+            <i class="fas fa-circle-check"></i>
+            {{ user.user_type|title }}
+        </span>
+    </div>
+
+    <!-- Profile completion bar -->
+    <div class="cp-completion">
+        <div class="cpc-head">
+            <span class="cpc-label">Profile Completeness</span>
+            <span class="cpc-pct" id="cpcPct">–</span>
+        </div>
+        <div class="cpc-track">
+            <div class="cpc-fill" id="cpcFill" style="width:0%"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="cp-nav">
+        <div class="cp-nav-section">Account</div>
+        <div class="cp-nav-item">
+            <a href="{% url 'users:profile_view' %}" class="{% if active_tab == 'profile' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-user"></i></span> Profile Overview
+            </a>
+        </div>
+        <div class="cp-nav-item">
+            <a href="{% url 'users:profile_edit' %}" class="{% if active_tab == 'edit_profile' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-pen"></i></span> Edit Profile
+            </a>
+        </div>
+        <div class="cp-nav-item">
+            <a href="{% url 'users:address_list' %}" class="{% if active_tab == 'addresses' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-map-marker-alt"></i></span> Address Book
+            </a>
+        </div>
+
+        <div class="cp-nav-divider"></div>
+        <div class="cp-nav-section">Settings</div>
+
+        <div class="cp-nav-item">
+            <a href="{% url 'users:account_settings' %}#notifications" class="{% if active_tab == 'notifications' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-bell"></i></span> Notifications
+            </a>
+        </div>
+        <div class="cp-nav-item">
+            <a href="{% url 'users:account_settings' %}#preferences" class="{% if active_tab == 'preferences' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-sliders"></i></span> Preferences
+            </a>
+        </div>
+        <div class="cp-nav-item">
+            <a href="{% url 'users:account_settings' %}#security" class="{% if active_tab == 'security' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-shield-halved"></i></span> Security
+            </a>
+        </div>
+        <div class="cp-nav-item">
+            <a href="{% url 'users:account_settings' %}#privacy" class="{% if active_tab == 'privacy' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-lock"></i></span> Privacy
+            </a>
+        </div>
+
+        <div class="cp-nav-divider"></div>
+        <div class="cp-nav-section">Quick Links</div>
+
+        <div class="cp-nav-item">
+            <a href="{% url 'users:change_password' %}" class="{% if active_tab == 'security' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-key"></i></span> Change Password
+            </a>
+        </div>
+        <div class="cp-nav-item">
+            <a href="{% url 'payment:order_history' %}" class="{% if active_tab == 'orders' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-box"></i></span> Orders
+            </a>
+        </div>
+        <div class="cp-nav-item">
+            <a href="{% url 'cart:wishlist' %}" class="{% if active_tab == 'wishlist' %}active{% endif %}">
+                <span class="ni"><i class="fas fa-heart"></i></span> Wishlist
+                {% if wishlist_count > 0 %}
+                    <span style="margin-left: auto; background: var(--primary); color: white; font-size: 10px; padding: 2px 6px; border-radius: 20px;">{{ wishlist_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+
+        <div class="cp-nav-divider"></div>
+        <div class="cp-nav-item danger">
+            <a href="{% url 'users:logout' %}">
+                <span class="ni"><i class="fas fa-arrow-right-from-bracket"></i></span> Sign Out
+            </a>
+        </div>
+    </nav>
+</aside>
+
+<script>
+    // Profile completion calculation
+    (function() {
+        function calcCompletion() {
+            const checks = [
+                '{{ user.first_name|default:"" }}' !== '',
+                '{{ user.last_name|default:"" }}' !== '',
+                '{{ user.email|default:"" }}' !== '',
+                '{{ user.phone|default:"" }}' !== '',
+                {% if customer.profile_picture %}true{% else %}false{% endif %},
+                '{{ customer.date_of_birth|default:"" }}' !== '',
+                '{{ customer.gender|default:"" }}' !== '',
+            ];
+            const met = checks.filter(v => v === true).length;
+            const pct = Math.round((met / checks.length) * 100);
+            const fill = document.getElementById('cpcFill');
+            const pctEl = document.getElementById('cpcPct');
+            if (fill) fill.style.width = pct + '%';
+            if (pctEl) pctEl.textContent = pct + '%';
+        }
+        calcCompletion();
+    })();
+</script>

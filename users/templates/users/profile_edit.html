@@ -651,7 +651,7 @@
             <div class="ep-avatar-block">
                 <div class="avatar-ring">
                     {% if customer.profile_picture %}
-                        <img src="{{ customer.profile_picture.url }}"
+                       <img src="{{ customer.profile_picture.url }}"
                              alt="{{ user.get_full_name }}"
                              class="ep-avatar" id="avatarPreview">
                     {% else %}
@@ -671,9 +671,9 @@
                     <div class="upload-bar-fill" id="uploadBarFill"></div>
                 </div>
                 <div class="upload-status" id="uploadStatus"></div>
-            <!-- ✅ FIXED — falls back to email, which always exists -->
-            <p class="ep-user-name">{{ user.get_full_name|default:user.email }}</p>               
-             <p class="ep-user-email">{{ user.email }}</p>
+                <!-- ✅ FIXED — falls back to email, which always exists -->
+                <p class="ep-user-name">{{ user.get_full_name|default:user.email }}</p>               
+                 <p class="ep-user-email">{{ user.email }}</p>
             </div>
 
             <!-- Profile Completion -->
@@ -852,71 +852,60 @@
                 <!-- ─── This entire Address Information section has been removed ─── -->
                 <!-- Addresses are now managed through the Address Book -->
 
-                <!-- ─── Notifications ── -->
-                <div class="ep-card">
-                    <div class="ep-card-head">
-                        <div class="ep-card-icon"><i class="fas fa-bell"></i></div>
-                        <div>
-                            <div class="ep-card-title">Notification Preferences</div>
-                            <div class="ep-card-sub">Control how we contact you</div>
-                        </div>
-                    </div>
-                    <div class="ep-card-body">
-                        <div class="toggle-list">
+           <!-- ─── Notifications ── -->
+<div class="ep-card">
+    <div class="ep-card-head">
+        <div class="ep-card-icon"><i class="fas fa-bell"></i></div>
+        <div>
+            <div class="ep-card-title">Notification Preferences</div>
+            <div class="ep-card-sub">Control how we contact you</div>
+        </div>
+    </div>
+    <div class="ep-card-body">
+        <div class="toggle-list">
 
-                            <div class="toggle-item">
-                                <div class="toggle-info">
-                                    <div class="toggle-title">Email Notifications</div>
-                                    <div class="toggle-desc">Order confirmations, shipping updates, and delivery alerts</div>
-                                </div>
-                                <div class="toggle-switch">
-                                    {{ customer_form.email_notifications }}
-                                    <label for="{{ customer_form.email_notifications.id_for_label }}"></label>
-                                </div>
-                            </div>
-
-                            <div class="toggle-item">
-                                <div class="toggle-info">
-                                    <div class="toggle-title">SMS Notifications</div>
-                                    <div class="toggle-desc">Text message updates on your orders in real time</div>
-                                </div>
-                                <div class="toggle-switch">
-                                    {{ customer_form.sms_notifications }}
-                                    <label for="{{ customer_form.sms_notifications.id_for_label }}"></label>
-                                </div>
-                            </div>
-
-                            <div class="toggle-item">
-                                <div class="toggle-info">
-                                    <div class="toggle-title">Newsletter & Promotions</div>
-                                    <div class="toggle-desc">Deals, new arrivals, and exclusive offers</div>
-                                </div>
-                                <div class="toggle-switch">
-                                    {{ customer_form.newsletter_subscription }}
-                                    <label for="{{ customer_form.newsletter_subscription.id_for_label }}"></label>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="ep-actions">
-                        <div class="ep-actions-left">
-                            <i class="fas fa-lock" style="color:var(--text-placeholder); font-size:12px;"></i>
-                            Your data is encrypted and secure
-                        </div>
-                        <div style="display:flex; gap:12px;">
-                            <a href="{% url 'users:profile_view' %}" class="btn btn-ghost">
-                                <i class="fas fa-xmark"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary" id="submitBtn">
-                                <i class="fas fa-check btn-icon"></i>
-                                <div class="btn-spinner"></div>
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
+            <div class="toggle-item">
+                <div class="toggle-info">
+                    <div class="toggle-title">SMS Notifications</div>
+                    <div class="toggle-desc">Text message updates on your orders in real time</div>
                 </div>
+                <div class="toggle-switch">
+                    {{ customer_form.sms_notifications }}
+                    <label for="{{ customer_form.sms_notifications.id_for_label }}"></label>
+                </div>
+            </div>
+
+            <div class="toggle-item">
+                <div class="toggle-info">
+                    <div class="toggle-title">Newsletter & Promotions</div>
+                    <div class="toggle-desc">Deals, new arrivals, and exclusive offers</div>
+                </div>
+                <div class="toggle-switch">
+                    {{ customer_form.newsletter_subscription }}
+                    <label for="{{ customer_form.newsletter_subscription.id_for_label }}"></label>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="ep-actions">
+        <div class="ep-actions-left">
+            <i class="fas fa-lock" style="color:var(--text-placeholder); font-size:12px;"></i>
+            Your data is encrypted and secure
+        </div>
+        <div style="display:flex; gap:12px;">
+            <a href="{% url 'users:profile_view' %}" class="btn btn-ghost">
+                <i class="fas fa-xmark"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+                <i class="fas fa-check btn-icon"></i>
+                <div class="btn-spinner"></div>
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
 
             </form>
         </div><!-- /.ep-content -->
@@ -1035,30 +1024,25 @@
         });
     }
 
-    /* ── Profile Completion ─────────────────────────── */
     function calcCompletion() {
-        const fields = [
-            'id_first_name', 'id_last_name', 'id_email', 'id_phone',
-            'id_date_of_birth', 'id_gender'
-        ];
-        const filled = fields.filter(id => {
-            const el = document.getElementById(id);
-            return el && el.value.trim() !== '';
-        }).length;
-        const pct  = Math.round((filled / fields.length) * 100);
-        const fill = document.getElementById('completionFill');
-        const txt  = document.getElementById('completionPct');
-        fill.style.width = pct + '%';
-        txt.textContent  = pct + '%';
+    const fields = [
+        'id_first_name', 'id_last_name', 'id_email', 'id_phone',
+        'id_date_of_birth', 'id_gender'
+    ];
+    const filled = fields.filter(id => {
+        const el = document.getElementById(id);
+        return el && el.value.trim() !== '';
+    }).length;
+    const pct = Math.round((filled / fields.length) * 100);
+    const fill = document.getElementById('completionFill');
+    const txt = document.getElementById('completionPct');
+    fill.style.width = pct + '%';
+    txt.textContent = pct + '%';
 
-        // Color feedback
-        if (pct < 40)       fill.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
-        else if (pct < 75)  fill.style.background = 'linear-gradient(90deg, #f59e0b, #fcd34d)';
-        else                fill.style.background = 'linear-gradient(90deg, var(--primary), #60a5fa)';
-    }
-    calcCompletion();
-    document.getElementById('epForm').addEventListener('input', calcCompletion);
-
+    if (pct < 40) fill.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
+    else if (pct < 75) fill.style.background = 'linear-gradient(90deg, #f59e0b, #fcd34d)';
+    else fill.style.background = 'linear-gradient(90deg, var(--primary), #60a5fa)';
+}
     /* ── Unsaved Changes Banner ─────────────────────── */
     let dirty = false;
     const saveBanner  = document.getElementById('saveBanner');

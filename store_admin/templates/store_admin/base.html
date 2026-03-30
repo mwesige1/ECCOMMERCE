@@ -691,6 +691,111 @@
             color: #1e40af;
             border-left: 4px solid #3b82f6;
         }
+        /* Dropdown Styles */
+.nav-dropdown {
+    margin-bottom: 4px;
+}
+
+.nav-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--gray-300);
+    border-radius: var(--border-radius-md);
+    transition: var(--transition);
+    gap: 12px;
+    cursor: pointer;
+}
+
+.nav-dropdown-toggle i:first-child {
+    width: 20px;
+    font-size: 18px;
+    color: var(--gray-medium);
+}
+
+.nav-dropdown-toggle span {
+    flex: 1;
+}
+
+.dropdown-arrow {
+    transition: transform 0.3s ease;
+}
+
+.nav-dropdown.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown-toggle:hover {
+    background: var(--sidebar-hover);
+    color: white;
+}
+
+.nav-dropdown-toggle:hover i:first-child {
+    color: var(--yellow);
+}
+
+.nav-dropdown-menu {
+    display: none;
+    padding-left: 32px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.nav-dropdown.active .nav-dropdown-menu {
+    display: block;
+}
+
+.nav-link-sub {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    color: var(--gray-400);
+    border-radius: var(--border-radius-md);
+    transition: var(--transition);
+    gap: 10px;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.nav-link-sub i {
+    width: 18px;
+    font-size: 14px;
+    color: var(--gray-500);
+}
+
+.nav-link-sub:hover {
+    background: var(--sidebar-hover);
+    color: white;
+}
+
+.nav-link-sub:hover i {
+    color: var(--yellow);
+}
+
+.nav-link-sub.active {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.nav-link-sub.active i {
+    color: white;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 8px 12px;
+}
+
+.nav-badge {
+    margin-left: auto;
+    background: var(--accent-orange);
+    color: var(--black-rich);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+}
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -698,136 +803,326 @@
 <body>
     <!-- Sidebar -->
     <aside class="admin-sidebar" id="adminSidebar">
-        <div class="sidebar-header">
-            <div class="shop-logo">
-                <div class="shop-logo-icon">
+    <div class="sidebar-header">
+        <div class="shop-logo">
+            <div class="shop-logo-icon">
+                <i class="fas fa-store"></i>
+            </div>
+            <div>
+                <div class="shop-name">{{ request.tenant.name }}</div>
+                <div class="shop-plan">{{ request.tenant.subscription_plan|default:"Free"|title }} Plan</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="sidebar-user">
+        <div class="user-avatar-sm">
+            {% if request.user.customer_profile.profile_picture %}
+                <img src="{{ request.user.customer_profile.profile_picture.url }}" alt="{{ request.user.get_full_name }}">
+            {% else %}
+                {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+            {% endif %}
+        </div>
+        <div class="user-info-sm">
+            <div class="user-name">{{ request.user.get_full_name|default:request.user.email }}</div>
+            <div class="user-role">
+                <span class="role-badge">{{ request.user.user_type|title }}</span>
+                <span><i class="fas fa-circle" style="font-size: 6px;"></i> Online</span>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <!-- Dashboard -->
+        <div class="nav-item">
+            <a href="{% url 'store_admin:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+        </div>
+        
+        <!-- Orders Dropdown -->
+        <div class="nav-dropdown">
+            <div class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
+            </div>
+            <div class="nav-dropdown-menu">
+                <a href="{% url 'store_admin:orders' %}" class="nav-link-sub">
+                    <i class="fas fa-list"></i>
+                    <span>All Orders</span>
+                </a>
+                <a href="{% url 'store_admin:orders' %}?status=pending" class="nav-link-sub">
+                    <i class="fas fa-clock"></i>
+                    <span>Pending Orders</span>
+                    {% if orders_by_status.pending %}
+                    <span class="nav-badge">{{ orders_by_status.pending }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'store_admin:orders' %}?status=processing" class="nav-link-sub">
+                    <i class="fas fa-spinner"></i>
+                    <span>Processing</span>
+                </a>
+                <a href="{% url 'store_admin:orders' %}?status=shipped" class="nav-link-sub">
+                    <i class="fas fa-truck"></i>
+                    <span>Shipped</span>
+                </a>
+                <a href="{% url 'store_admin:orders' %}?status=delivered" class="nav-link-sub">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Delivered</span>
+                </a>
+                <a href="{% url 'store_admin:orders' %}?status=cancelled" class="nav-link-sub">
+                    <i class="fas fa-times-circle"></i>
+                    <span>Cancelled</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'store_admin:refunds' %}" class="nav-link-sub">
+                    <i class="fas fa-undo-alt"></i>
+                    <span>Refunds</span>
+                    {% if pending_refunds %}
+                    <span class="nav-badge">{{ pending_refunds }}</span>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+        
+        <!-- Products Dropdown -->
+        <div class="nav-dropdown">
+            <div class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
+            </div>
+            <div class="nav-dropdown-menu">
+                <a href="{% url 'store_admin:products' %}" class="nav-link-sub">
+                    <i class="fas fa-list"></i>
+                    <span>All Products</span>
+                </a>
+                <a href="{% url 'store_admin:add_product' %}" class="nav-link-sub">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Add New Product</span>
+                </a>
+                <a href="{% url 'store_admin:products' %}?status=active" class="nav-link-sub">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Active Products</span>
+                </a>
+                <a href="{% url 'store_admin:products' %}?status=inactive" class="nav-link-sub">
+                    <i class="fas fa-ban"></i>
+                    <span>Inactive Products</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'store_admin:products' %}?status=low_stock" class="nav-link-sub">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Low Stock</span>
+                    {% if low_stock_count %}
+                    <span class="nav-badge">{{ low_stock_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'store_admin:products' %}?status=out_of_stock" class="nav-link-sub">
+                    <i class="fas fa-times-circle"></i>
+                    <span>Out of Stock</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'store_admin:promotions' %}" class="nav-link-sub">
+                    <i class="fas fa-tags"></i>
+                    <span>Promotions & Coupons</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Customers Dropdown -->
+        {% if access.can_view_customers %}
+        <div class="nav-dropdown">
+            <div class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                <i class="fas fa-users"></i>
+                <span>Customers</span>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
+            </div>
+            <div class="nav-dropdown-menu">
+                <a href="{% url 'store_admin:customers' %}" class="nav-link-sub">
+                    <i class="fas fa-users"></i>
+                    <span>All Customers</span>
+                </a>
+                <a href="{% url 'store_admin:customers' %}?status=active" class="nav-link-sub">
+                    <i class="fas fa-user-check"></i>
+                    <span>Active Customers</span>
+                </a>
+                <a href="{% url 'store_admin:customers' %}?status=inactive" class="nav-link-sub">
+                    <i class="fas fa-user-slash"></i>
+                    <span>Inactive Customers</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'store_admin:customers' %}?segment=high-value" class="nav-link-sub">
+                    <i class="fas fa-gem"></i>
+                    <span>High Value</span>
+                </a>
+                <a href="{% url 'store_admin:customers' %}?segment=loyal" class="nav-link-sub">
+                    <i class="fas fa-heart"></i>
+                    <span>Loyal Customers</span>
+                </a>
+                <a href="{% url 'store_admin:customers' %}?segment=at-risk" class="nav-link-sub">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>At Risk</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Vendors Dropdown -->
+        {% if access.can_view_vendors %}
+        <div class="nav-dropdown">
+            <div class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                <i class="fas fa-store-alt"></i>
+                <span>Vendors</span>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
+            </div>
+            <div class="nav-dropdown-menu">
+                <a href="{% url 'store_admin:vendors' %}" class="nav-link-sub">
                     <i class="fas fa-store"></i>
-                </div>
-                <div>
-                    <div class="shop-name">{{ request.tenant.name }}</div>
-                    <div class="shop-plan">{{ request.tenant.subscription_plan|default:"Free"|title }} Plan</div>
-                </div>
+                    <span>All Vendors</span>
+                </a>
+                <a href="{% url 'store_admin:vendors' %}?status=active" class="nav-link-sub">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Active Vendors</span>
+                </a>
+                <a href="{% url 'store_admin:vendors' %}?status=pending" class="nav-link-sub">
+                    <i class="fas fa-clock"></i>
+                    <span>Pending Approval</span>
+                    {% if pending_vendors %}
+                    <span class="nav-badge">{{ pending_vendors }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'store_admin:vendors' %}?status=verified" class="nav-link-sub">
+                    <i class="fas fa-badge-check"></i>
+                    <span>Verified Vendors</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'store_admin:vendors' %}?sort=revenue-desc" class="nav-link-sub">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Top Performers</span>
+                </a>
             </div>
         </div>
+        {% endif %}
         
-        <div class="sidebar-user">
-            <div class="user-avatar-sm">
-                {% if request.user.profile.profile_picture %}
-                    <img src="{{ request.user.profile.profile_picture.url }}" alt="{{ request.user.get_full_name }}">
-                {% else %}
-                    {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
-                {% endif %}
+        <!-- Staff Dropdown -->
+        {% if access.can_view_staff %}
+        <div class="nav-dropdown">
+            <div class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                <i class="fas fa-user-tie"></i>
+                <span>Staff</span>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
             </div>
-            <div class="user-info-sm">
-                <div class="user-name">{{ request.user.get_full_name|default:request.user.email }}</div>
-                <div class="user-role">
-                    <span class="role-badge">{{ request.user.user_type|title }}</span>
-                    <span><i class="fas fa-circle" style="font-size: 6px;"></i> Online</span>
-                </div>
+            <div class="nav-dropdown-menu">
+                <a href="{% url 'store_admin:staff' %}" class="nav-link-sub">
+                    <i class="fas fa-users"></i>
+                    <span>All Staff</span>
+                </a>
+                <a href="{% url 'store_admin:staff' %}?role=admin" class="nav-link-sub">
+                    <i class="fas fa-crown"></i>
+                    <span>Administrators</span>
+                </a>
+                <a href="{% url 'store_admin:staff' %}?role=manager" class="nav-link-sub">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Managers</span>
+                </a>
+                <a href="{% url 'store_admin:staff' %}?role=staff" class="nav-link-sub">
+                    <i class="fas fa-user"></i>
+                    <span>Staff</span>
+                </a>
             </div>
         </div>
+        {% endif %}
         
-        <nav class="sidebar-nav">
-            <!-- Main -->
-            <div class="nav-section">
-                <div class="nav-section-title">Main</div>
-                <div class="nav-item">
-                    <a href="{% url 'store_admin:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                        <i class="fas fa-chart-pie"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </div>
+        <!-- Analytics & Reports Dropdown -->
+        {% if access.can_view_revenue %}
+        <div class="nav-dropdown">
+            <div class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
             </div>
-            
-            <!-- Orders -->
-            <div class="nav-section">
-                <div class="nav-section-title">Orders</div>
-                <div class="nav-item">
-                    <a href="{% url 'store_admin:orders' %}" class="nav-link {% if request.resolver_match.url_name == 'orders' %}active{% endif %}">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>All Orders</span>
-                    </a>
-                </div>
+            <div class="nav-dropdown-menu">
+                <a href="{% url 'store_admin:analytics' %}" class="nav-link-sub">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard Analytics</span>
+                </a>
+                <a href="{% url 'store_admin:analytics' %}?report=sales" class="nav-link-sub">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Sales Report</span>
+                </a>
+                <a href="{% url 'store_admin:analytics' %}?report=products" class="nav-link-sub">
+                    <i class="fas fa-box"></i>
+                    <span>Product Report</span>
+                </a>
+                <a href="{% url 'store_admin:analytics' %}?report=customers" class="nav-link-sub">
+                    <i class="fas fa-users"></i>
+                    <span>Customer Report</span>
+                </a>
+                <a href="{% url 'store_admin:analytics' %}?report=vendors" class="nav-link-sub">
+                    <i class="fas fa-store"></i>
+                    <span>Vendor Report</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'store_admin:dashboard_export' %}?export=csv" class="nav-link-sub">
+                    <i class="fas fa-file-csv"></i>
+                    <span>Export Data</span>
+                </a>
             </div>
-            
-            <!-- Products -->
-            <div class="nav-section">
-                <div class="nav-section-title">Products</div>
-                <div class="nav-item">
-                    <a href="{% url 'store_admin:products' %}" class="nav-link {% if request.resolver_match.url_name == 'products' %}active{% endif %}">
-                        <i class="fas fa-box"></i>
-                        <span>All Products</span>
-                        {% if low_stock_count %}<span class="nav-badge">{{ low_stock_count }}</span>{% endif %}
-                    </a>
-                </div>
+        </div>
+        {% endif %}
+        
+        <!-- Settings Dropdown -->
+        {% if access.can_edit_settings %}
+        <div class="nav-dropdown">
+            <div class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
             </div>
-            
-            <!-- Customers (Admin/Staff only) -->
-            {% if access.can_view_customers %}
-            <div class="nav-section">
-                <div class="nav-section-title">Customers</div>
-                <div class="nav-item">
-                    <a href="{% url 'store_admin:customers' %}" class="nav-link {% if request.resolver_match.url_name == 'customers' %}active{% endif %}">
-                        <i class="fas fa-users"></i>
-                        <span>All Customers</span>
-                    </a>
-                </div>
+            <div class="nav-dropdown-menu">
+                <a href="{% url 'store_admin:settings' %}" class="nav-link-sub">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>General Settings</span>
+                </a>
+                <a href="{% url 'store_admin:settings' %}?tab=payment" class="nav-link-sub">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Payment Settings</span>
+                </a>
+                <a href="{% url 'store_admin:settings' %}?tab=shipping" class="nav-link-sub">
+                    <i class="fas fa-truck"></i>
+                    <span>Shipping Settings</span>
+                </a>
+                <a href="{% url 'store_admin:settings' %}?tab=email" class="nav-link-sub">
+                    <i class="fas fa-envelope"></i>
+                    <span>Email Settings</span>
+                </a>
+                <a href="{% url 'store_admin:settings' %}?tab=notifications" class="nav-link-sub">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </a>
             </div>
-            {% endif %}
-            
-            <!-- Vendors (Admin only) -->
-            {% if access.can_view_vendors %}
-            <div class="nav-section">
-                <div class="nav-section-title">Vendors</div>
-                <div class="nav-item">
-                    <a href="{% url 'store_admin:vendors' %}" class="nav-link {% if request.resolver_match.url_name == 'vendors' %}active{% endif %}">
-                        <i class="fas fa-store-alt"></i>
-                        <span>All Vendors</span>
-                        {% if pending_vendors %}<span class="nav-badge">{{ pending_vendors }}</span>{% endif %}
-                    </a>
-                </div>
+        </div>
+        {% endif %}
+        
+        <!-- Support -->
+        <div class="nav-section" style="margin-top: 24px;">
+            <div class="nav-item">
+                <a href="#" class="nav-link" onclick="showSupport()">
+                    <i class="fas fa-headset"></i>
+                    <span>Support</span>
+                </a>
             </div>
-            {% endif %}
-            
-            <!-- Staff (Admin only) -->
-            {% if access.can_view_staff %}
-            <div class="nav-section">
-                <div class="nav-section-title">Staff</div>
-                <div class="nav-item">
-                    <a href="{% url 'store_admin:staff' %}" class="nav-link {% if request.resolver_match.url_name == 'staff' %}active{% endif %}">
-                        <i class="fas fa-user-tie"></i>
-                        <span>Staff Management</span>
-                    </a>
-                </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" onclick="showDocumentation()">
+                    <i class="fas fa-book"></i>
+                    <span>Documentation</span>
+                </a>
             </div>
-            {% endif %}
-            
-            <!-- Analytics (Admin only) -->
-            {% if access.can_view_revenue %}
-            <div class="nav-section">
-                <div class="nav-section-title">Reports</div>
-                <div class="nav-item">
-                    <a href="{% url 'store_admin:analytics' %}" class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Analytics</span>
-                    </a>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- Settings (Admin only) -->
-            {% if access.can_edit_settings %}
-            <div class="nav-section">
-                <div class="nav-item">
-                    <a href="{% url 'store_admin:settings' %}" class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
-                        <i class="fas fa-cog"></i>
-                        <span>Shop Settings</span>
-                    </a>
-                </div>
-            </div>
-            {% endif %}
-        </nav>
-    </aside>
+        </div>
+    </nav>
+</aside>
 
     <!-- Main Content -->
     <main class="admin-main" id="adminMain">
@@ -967,6 +1262,49 @@
                 minute: '2-digit'
             });
         }
+        // Dropdown toggle function
+function toggleDropdown(element) {
+    const dropdown = element.closest('.nav-dropdown');
+    dropdown.classList.toggle('active');
+}
+
+// Support function
+function showSupport() {
+    // You can implement a modal or redirect to support page
+    window.open('/support/', '_blank');
+}
+
+// Documentation function
+function showDocumentation() {
+    // You can implement a modal or redirect to docs page
+    window.open('/docs/', '_blank');
+}
+
+// Close dropdowns when clicking outside (optional)
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.nav-dropdown')) {
+        // Uncomment if you want to close all dropdowns when clicking outside
+        // document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+        //     dropdown.classList.remove('active');
+        // });
+    }
+});
+
+// Keep dropdown open based on current page
+document.addEventListener('DOMContentLoaded', function() {
+    const currentUrl = window.location.pathname;
+    const activeLinks = document.querySelectorAll('.nav-link-sub');
+    
+    activeLinks.forEach(link => {
+        if (link.getAttribute('href') === currentUrl) {
+            link.classList.add('active');
+            const dropdown = link.closest('.nav-dropdown');
+            if (dropdown) {
+                dropdown.classList.add('active');
+            }
+        }
+    });
+});
     </script>
 
     <!-- Additional Styles for Dropdown -->
